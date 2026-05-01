@@ -1,0 +1,5 @@
+Files where as_apply is used:
+
+- reduction.v
+- sn_inductive_2a.v
+- sn_inductive_2b.v

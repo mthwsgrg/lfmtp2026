@@ -1,0 +1,21 @@
+-R . CBPV
+
+-install none
+COQDOCFLAGS = "--charset utf-8 -s --parse-comments --with-header ../website/resources/header.html --with-footer ../website/resources/footer.html --index indexpage"
+
+
+# Autosubst
+axioms.v
+fintype.v
+Syntax.v
+NewApply.v
+
+# Abstract Reduction Systems
+Base.v
+AbstractReductionSystems.v
+TMT.v
+
+# CBPV
+Terms.v
+Semantics.v
+

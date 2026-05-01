@@ -1,0 +1,28 @@
+* Tactic Generation
+
+- The code generation for the tactic is implemented in autosubst2/Src/Autosubst/GenTactic.v
+- The implementation only targets scoped syntax now.
+- An example generated tactic for λ-calculus is in examples/lambda_calculus/
+
+
+* Case studies (tested with Rocq 8.20.0)
+
+- examples/poplmark/sysf_pat.v - contains as_apply tactic
+- examples/poplmark/POPLMark22_old.v - contains solution of POPLMark without as_apply
+- examples/POLMark22.v - contains solution of POPLMark B with as_apply
+- examples/eval_inst.v - substitutivity of evaluation relation of System F<: with records
+- examples/poplmark_reloaded/old/ - contains solution of POPLMark reloaded without as_apply
+- examples/poplmark_reloaded/new/ - contains solution of POPLMark reloaded with as_apply (stlc.v contains as_apply tactic)
+- Each usage of as_apply is accompanied with a comment "EXAMPLE <number>"
+
+* Work in Progress developments
+
+- wip/logrel-coq-coq-8.19/  - contains work-in-progress MLTT mechanization (testing with Rocq 8.19.2)
+  + logrel-coq-coq-8.19/NewApply.v - The as_apply tactic is defined here
+  + logrel-coq-coq-8.19/Neutral.v - Tested as_apply in this file
+  
+- wip/cbpv - contains work-in-progress CBPV mechanization (testing with Rocq 8.8.2)
+  + cbpv/NewApply.v - The as_apply tactic is defined here.
+  + cbpv/Semantics.v - Tested as_apply in this file.
+  
+- wip/uniqueness.v - Formal statement of the uniqueness conjecture we are trying to prove.
