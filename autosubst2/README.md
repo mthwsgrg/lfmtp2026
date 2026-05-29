@@ -20,7 +20,7 @@ With Autosubst 2, we present a tool that:
 
 ```
 stack setup
-stack init
+stack init --resolver=lts-20.22
 stack build
 stack exec -- as2-exe <OPTIONS>
 ```

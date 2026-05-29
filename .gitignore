@@ -23,7 +23,6 @@ cabal.project.local~
 .ghc.environment.*
 *.vos
 *.yaml
-*.cabal
 stack.yaml.lock
 *.DS_Store
 *.glob
