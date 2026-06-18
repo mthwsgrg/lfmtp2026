@@ -3,9 +3,10 @@ Unset Elimination Schemes.
 
 
 
-(** σ-expressions 
+(** σ-expressions
 
-- VarExp is the term-expression variables trageted by unification/matching
+- VarExp is the term variables trageted by unification/matching
+- Expressions don't have substitution variables
 - ConstExp/ConstSExp corresponds to the bound variables (as in Dowek et al.'s definition) on which matching/unification won't affect*)
 Inductive exp := Zero
                | App (s t: exp) : exp
@@ -173,7 +174,20 @@ with σ_nfs : sexp -> Prop :=
 | nf_consSub s σ : ~s .: σ = Zero .: ↑ -> (forall τ, s .: σ = (Zero[τ]) .: (↑ >> τ) ) -> σ_nf s -> σ_nfs σ -> σ_nfs (s .: σ).
 
 
-Lemma uniqueness: (forall s t θ (H: ground s) (NF: σ_nf s /\ σ_nf t), σmin_equiv s (inst t θ) -> forall θ', σmin_equiv s (inst t θ') -> (forall x, In x (fvar t) -> σ_equiv (θ x) (θ' x)) ) /\
-                  (forall σ τ θ (H: grounds σ) (NF: σ_nfs σ /\ σ_nfs τ), σmin_equivs σ (insts τ θ) -> forall θ', σmin_equivs σ (insts τ θ') -> (forall x, In x (fvars τ) -> σ_equiv (θ x) (θ' x)) ). 
+
+(** 
+
+We conjecture the uniqueness for σmin-matching: 
+
+For s and t in σ-normal form and without any substitution variables, a solution θ of "s =σmin t" is σ-equal to any other solution θ' of "s =σ t".
+
+*)
+
+Lemma uniqueness: (forall s t θ (H: ground s) (NF: σ_nf s /\ σ_nf t), σmin_equiv s (inst t θ) -> forall θ', σ_equiv s (inst t θ') -> (forall x, In x (fvar t) -> σ_equiv (θ x) (θ' x)) ) /\
+                  (forall σ τ θ (H: grounds σ) (NF: σ_nfs σ /\ σ_nfs τ), σmin_equivs σ (insts τ θ) -> forall θ', σ_equivs σ (insts τ θ') -> (forall x, In x (fvars τ) -> σ_equiv (θ x) (θ' x)) ). 
                            
 Admitted.
+
+
+
+
