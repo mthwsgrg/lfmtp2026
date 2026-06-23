@@ -224,7 +224,7 @@ Inductive matching : list match_eqn -> solution -> Prop :=
 | inst_split_case s t σ τ sol1 sol2  : matching ([exp_eqn s t]) sol1 -> matching ([sexp_eqn σ (insts τ (sol_to_subst sol1)) ]) sol2 -> matching ([exp_eqn s[σ] t[τ]]) (sol1 ++ sol2)
 | comp_case s t σ τ θ sol: matching ([exp_eqn (s[σ])[τ] t[θ]]) sol -> matching ([exp_eqn s[σ>>τ] t[θ]]) sol   
 | assoc_case σ τ θ σ' τ' sol: matching ([sexp_eqn ((σ>>τ)>>θ) (σ'>>τ')]) sol -> matching ([sexp_eqn (σ>>(τ>>θ))  (σ'>>τ')]) sol
-| comp_split_case  σ τ σ' τ' sol1 sol2:  matching ([sexp_eqn σ σ']) sol1 -> matching ([sexp_eqn τ (insts τ' (sol_to_subst sol1))]) sol2 -> matching ([sexp_eqn (σ>>τ) (σ'>>τ')]) (sol1++sol2)                     | mapenv_case s σ τ σ' τ' sol: matching ([sexp_eqn ((s .: σ) >> τ) (σ' >> τ')]) sol -> matching ([ sexp_eqn (s[τ] .: (σ >> τ)) (σ' >> τ')]) sol                                                                
+| comp_split_case  σ τ σ' τ' sol1 sol2:  matching ([sexp_eqn σ σ']) sol1 -> matching ([sexp_eqn τ (insts τ' (sol_to_subst sol1))]) sol2 -> matching ([sexp_eqn (σ>>τ) (σ'>>τ')]) (sol1++sol2)
+| mapenv_case s σ τ σ' τ' sol: matching ([sexp_eqn ((s .: σ) >> τ) (σ' >> τ')]) sol -> matching ([ sexp_eqn (s[τ] .: (σ >> τ)) (σ' >> τ')]) sol                                                                
 | cons_split_case s t σ τ sol1 sol2: matching ([exp_eqn s t]) sol1 -> matching ([sexp_eqn σ (insts τ (sol_to_subst sol1))]) sol2 -> matching ([sexp_eqn (s .: σ) (t .: τ)]) (sol1++sol2)
 | list_merge eqns1 eqns2 sol1 sol2: matching eqns1 sol1 -> matching (map (fun x => inst_sol_eqn x sol1) eqns2) sol2 -> matching (eqns1++eqns2) (sol1++sol2).
-
