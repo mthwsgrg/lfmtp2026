@@ -1,7 +1,7 @@
 Require Import List.
 Unset Elimination Schemes.
-Import ListNotations.
 
+Import ListNotations.
 
 (** σ-expressions
 
@@ -67,7 +67,11 @@ with fvars (σ: sexp) : list nat :=
   | Comp σ τ => app (fvars σ) (fvars τ)
   | _ => nil
  end.    
-  
+
+
+
+
+
 
 (** Equivalence with respect to σ_min-rules *)
 Unset Elimination Schemes.
@@ -97,6 +101,9 @@ with  σmin_equivs_ind := Induction for σmin_equivs Sort Prop.
 Combined Scheme σmin_eqs_ind from σmin_equiv_ind, σmin_equivs_ind.
 
 
+
+
+  
 (** Equivalence with respect to σ-rules *)
 Unset Elimination Schemes.
 Inductive σ_equiv : exp -> exp -> Prop :=
@@ -212,7 +219,6 @@ Definition inst_sol_eqn eqn sol :=
 
 Open Scope list_scope.
 
-(** Relational definition of sigma-min procedure. *)
 Inductive matching : list match_eqn -> solution -> Prop :=
 | var_case s x :  matching ([exp_eqn s (VarExp x)]) ([(x,s)])
 | exp_eq_case (s s: exp) : matching ([exp_eqn s s]) nil
