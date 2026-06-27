@@ -1,3 +1,8 @@
+s[t ⋅ σ] = y[t ⋅ id]
+s[t[up] ⋅ σ >> up] <- s[x ⋅ σ >> up] -> s[0 ⋅ σ >> up] 
+
+s[σ] = x[y]
+
 Require Import List.
 Unset Elimination Schemes.
 Import ListNotations.
