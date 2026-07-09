@@ -13,10 +13,16 @@ Defined.
 
 (** σ-expressions
 
-- VarExp is the term variables trageted by unification/matching
-- Expressions don't have substitution variables (for now).
-*)
+It corresponds to the following syntax:
 
+s,t ::= 0 | s t | λ.s | s[σ] | X
+σ,τ ::= ↑ | I | s .: σ | s >> t  
+
+- VarExp is the term expression variables
+- Expressions don't have substitution variables (for now).
+
+
+*)
 
 Inductive exp := Zero
                | App (s t: exp) : exp
@@ -32,6 +38,85 @@ Scheme exp_ind := Induction for exp Sort Type
 with  sexp_ind := Induction for sexp Sort Type.
 Combined Scheme sigma_ind from exp_ind, sexp_ind.
 
+Notation "s [ σ ]" := (Inst s σ).
+Notation "σ >> τ" := (Comp σ τ) (at level 56, right associativity).
+Notation "s .: σ" := (Cons s σ) (at level 58).
+Notation "↑" := Shift.
+
+
+
+(** Equivalence with respect to σmin-rules *)
+Unset Elimination Schemes.
+Inductive σmin_equiv : exp -> exp -> Prop :=
+| σmin_subst_app (s t : exp) (σ : sexp) :  σmin_equiv ((App s t)[σ]) (App s[σ] t[σ])
+| σmin_subst_lam (s : exp) (σ : sexp) :  σmin_equiv  ((Lam s)[σ])  (Lam (s[Zero .: (σ >> ↑)]))
+| σmin_subst_comp (s: exp) (σ τ: sexp) : σmin_equiv (s[σ])[τ] s[σ >> τ]
+                                               
+| σmin_equiv_refl (s : exp) :  σmin_equiv s s
+| σmin_equiv_sym (s t : exp) :  σmin_equiv s t -> σmin_equiv t s
+| σmin_equiv_trans (s t u : exp) :  σmin_equiv s t -> σmin_equiv t u -> σmin_equiv s u
+| σmin_equiv_app (s1 s2 t1 t2 : exp) :  σmin_equiv s1 s2 -> σmin_equiv t1 t2 -> σmin_equiv (App s1 t1) (App s2 t2)
+| σmin_equiv_lam (s1 s2 : exp) :  σmin_equiv s1 s2 -> σmin_equiv (Lam s1) (Lam s2)
+| σmin_equiv_asubst (s1 s2 : exp) (σ τ : sexp) :  σmin_equiv s1 s2 -> σmin_equivs σ τ -> σmin_equiv s1[σ] s2[τ]
+with σmin_equivs : sexp -> sexp -> Prop :=
+| σmin_comp_cons (s : exp) (σ τ : sexp) :  σmin_equivs  ((s .: σ) >> τ) (s[τ] .: (σ >> τ)) 
+| σmin_comp_assoc (σ τ θ : sexp) :  σmin_equivs ((σ >> τ) >> θ) (σ >> (τ >> θ))
+
+| σmin_equivs_refl (σ : sexp) :  σmin_equivs σ σ
+| σmin_equivs_sym (σ τ : sexp) :  σmin_equivs σ τ -> σmin_equivs τ σ
+| σmin_equivs_trans (σ τ θ : sexp) :  σmin_equivs σ τ -> σmin_equivs τ θ -> σmin_equivs σ θ
+| σmin_equivs_cons (s1 s2 : exp) (σ τ : sexp) :  σmin_equiv s1 s2 -> σmin_equivs σ τ -> σmin_equivs (s1 .: σ) (s2 .: τ)
+| σmin_μequivs_comp (σ1 σ2 τ1 τ2 : sexp) :  σmin_equivs σ1 σ2 -> σmin_equivs τ1 τ2 ->  σmin_equivs (σ1 >> τ1) (σ2 >> τ2).
+Set Elimination Schemes.  
+Scheme σmin_equiv_ind := Induction for σmin_equiv Sort Prop
+with  σmin_equivs_ind := Induction for σmin_equivs Sort Prop.
+Combined Scheme σmin_eqs_ind from σmin_equiv_ind, σmin_equivs_ind.
+
+
+
+(**  An Equation is either a term equation or substitution equation  *)
+
+Inductive Equation : Set :=
+| equ : exp -> exp -> Equation
+| equ_s : sexp -> sexp -> Equation.
+
+
+Open Scope type_scope.
+
+(** Definition of Substitution, Problem, and Tuple where Tuple describe the change of state after each smatch steps*)
+
+Definition Subst := set (Var * exp).
+Definition Problem := set Equation.   
+Definition Tuple := (Subst * Problem).
+
+
+(** Definition of instantiation of a term/substitution with a Subst *)
+
+Fixpoint look_up (X : Var) (S : Subst) {struct S}: exp :=
+match S with
+ | []         => VarExp X
+ | (Y,t)::S0  => if var_eqdec Y X then t else (look_up X S0)
+end.
+
+Fixpoint sub (s: exp) (S: Subst) : exp :=
+match s with
+  | Zero => Zero
+  | App s t => App (sub s S) (sub t S)
+  | Lam s => Lam (sub s S) 
+  | Inst s σ => Inst (sub s S) (sub_s σ S)
+  | VarExp X => look_up X S
+end
+with sub_s (σ: sexp) (S: Subst) : sexp :=
+ match σ with
+ | I => I      
+ | Shift => Shift
+ | Cons s σ => Cons (sub s S) (sub_s σ S)  
+ | Comp σ τ => Comp (sub_s σ S) (sub_s τ S)
+ end.
+
+
+
+(** Expressions, and Equations have decidable equality *)
 
 Lemma expression_eqdec : (forall s t : exp, {s = t} + {s <> t}) *
                            (forall σ τ : sexp, {σ = τ} + {σ <> τ}).
@@ -93,53 +178,6 @@ Lemma sexp_eqdec : forall σ τ: sexp, {σ=τ} + {σ <> τ}.
 Defined.
 
 
-Notation "s [ σ ]" := (Inst s σ).
-Notation "σ >> τ" := (Comp σ τ) (at level 56, right associativity).
-Notation "s .: σ" := (Cons s σ) (at level 58).
-Notation "↑" := Shift.
-
-
-(** Equivalence with respect to σ-rules *)
-Unset Elimination Schemes.
-Inductive σ_equiv : exp -> exp -> Prop :=
-| σsubst_app (s t : exp) (σ : sexp) :  σ_equiv ((App s t)[σ]) (App s[σ] t[σ])
-| σsubst_lam (s : exp) (σ : sexp) :  σ_equiv  ((Lam s)[σ])  (Lam (s[Zero .: (σ >> ↑)]))
-| σ_varcons (s: exp) (σ: sexp) : σ_equiv  Zero[s .: σ] s
-| σ_id (s: exp) : σ_equiv s[I] s
-
-| σequiv_refl (s : exp) :  σ_equiv s s
-| σequiv_sym (s t : exp) :  σ_equiv s t -> σ_equiv t s
-| σequiv_trans (s t u : exp) :  σ_equiv s t -> σ_equiv t u -> σ_equiv s u
-| σequiv_app (s1 s2 t1 t2 : exp) :  σ_equiv s1 s2 -> σ_equiv t1 t2 -> σ_equiv (App s1 t1) (App s2 t2)
-| σequiv_lam (s1 s2 : exp) :  σ_equiv s1 s2 -> σ_equiv (Lam s1) (Lam s2)
-| σequiv_asubst (s1 s2 : exp) (σ τ : sexp) :  σ_equiv s1 s2 -> σ_equivs σ τ -> σ_equiv s1[σ] s2[τ]
-with σ_equivs : sexp -> sexp -> Prop :=
-| σcomp_cons (s : exp) (σ τ : sexp) :  σ_equivs  ((s .: σ) >> τ) (s[τ] .: (σ >> τ)) 
-| σcomp_assoc (σ τ θ : sexp) :  σ_equivs ((σ >> τ) >> θ) (σ >> (τ >> θ))
-| σ_idl (σ: sexp) : σ_equivs (I >> σ) σ
-| σ_idr (σ: sexp) : σ_equivs (σ >> I) σ
-| σ_shiftcons (s: exp) (σ: sexp) : σ_equivs (↑ >> (s .: σ)) σ
-| σ_varshift : σ_equivs (Zero .: ↑) I
-| σ_scons (σ: sexp) : σ_equivs ( (Zero[σ]) .: (↑ >> σ)) σ
-
-| σequivs_refl (σ : sexp) :  σ_equivs σ σ
-| σequivs_sym (σ τ : sexp) :  σ_equivs σ τ -> σ_equivs τ σ
-| σequivs_trans (σ τ θ : sexp) :  σ_equivs σ τ -> σ_equivs τ θ -> σ_equivs σ θ
-| σequivs_cons (s1 s2 : exp) (σ τ : sexp) :  σ_equiv s1 s2 -> σ_equivs σ τ -> σ_equivs (s1 .: σ) (s2 .: τ)
-| σequivs_comp (σ1 σ2 τ1 τ2 : sexp) :  σ_equivs σ1 σ2 -> σ_equivs τ1 τ2 ->  σ_equivs (σ1 >> τ1) (σ2 >> τ2).
-Set Elimination Schemes.  
-Scheme σ_equiv_ind := Induction for σ_equiv Sort Prop
-with  σ_equivs_ind := Induction for σ_equivs Sort Prop.
-Combined Scheme σ_eqs_ind from σ_equiv_ind, σ_equivs_ind.
-
-
-
-Inductive Equation : Set :=
-| equ : exp -> exp -> Equation
-| equ_s : sexp -> sexp -> Equation.
-
-
-
 Lemma Equation_eqdec : forall (e1 e2: Equation), {e1 = e2} + {e1 <> e2}.
 Proof.
   intros.
@@ -163,36 +201,8 @@ Defined.
 
   
 
-Open Scope type_scope.
 
-
-Definition Subst := set (Var * exp).
-Definition Problem := set Equation.   
-Definition Tuple := (Subst * Problem).
-
-Fixpoint look_up (X : Var) (S : Subst) {struct S}: exp :=
-match S with
- | []         => VarExp X
- | (Y,t)::S0  => if var_eqdec Y X then t else (look_up X S0)
-end.
-
-
-Fixpoint sub (s: exp) (S: Subst) : exp :=
-match s with
-  | Zero => Zero
-  | App s t => App (sub s S) (sub t S)
-  | Lam s => Lam (sub s S) 
-  | Inst s σ => Inst (sub s S) (sub_s σ S)
-  | VarExp X => look_up X S
-end
-with sub_s (σ: sexp) (S: Subst) : sexp :=
- match σ with
- | I => I      
- | Shift => Shift
- | Cons s σ => Cons (sub s S) (sub_s σ S)  
- | Comp σ τ => Comp (sub_s σ S) (sub_s τ S)
- end.
-
+(** Some Helper functions *)
 
 Fixpoint alist_rec (S1 S2: Subst) 
                    (F: Var -> exp -> Subst -> Subst -> Subst) : Subst :=
@@ -303,9 +313,6 @@ Fixpoint exps_set_vars (T: set exp) : set Var :=
 Definition im_vars (S : Subst) := exps_set_vars (im_rec S). 
 
 
-
-
-
 Notation "P \ u" := (set_remove Equation_eqdec u P) (at level 67).
 Notation "P |^^ S" := (subs_Problem P S) (at level 67).
 Notation "P |+ u" := (set_add Equation_eqdec u P) (at level 67).
@@ -316,8 +323,11 @@ Notation "X € S" := (In_dom X S) (at level 67).
 Definition subs_equiv (E : exp -> exp -> Prop) (S S' : Subst) := forall X, (X € S) \/ (X € S') -> E (sub (VarExp X) S)
                                                                                            (sub (VarExp X) S'). 
 
-Notation "S ~:c S'" := (subs_equiv σ_equiv S S') (at level 67).
+Notation "S ~:c S'" := (subs_equiv σmin_equiv S S') (at level 67).
 
+
+
+(** Inductive definition of σmin-procedure *)
 Inductive smatch : Tuple -> Tuple -> Prop := 
 | smatch_refl : forall S P s, set_In (equ s s) P -> smatch (S,P) (S,P\(equ s s))
 | smatch_App : forall S P s t s' t', set_In (equ (App s t) (App s' t')) P ->
@@ -356,15 +366,16 @@ Definition valid_tuple (T : Tuple) :=
   ( set_inter var_eqdec (dom_rec S) (im_vars S) = [] ) .
 
 
-
-
+(** A substitution is a solution to a σmin-matching problem if it satisfies this predicate *)
 Definition match_sol (S' :Subst) (T : Tuple) :=
   let S := (fst T) in
   let P := (snd T) in
-  ( forall s t, set_In (equ s t) P ->  σ_equiv s (sub s S') ) /\         
+  ( forall s t, set_In (equ s t) P ->  σmin_equiv s (sub s S') ) /\         
   ( exists S'', (sub_comp S S'') ~:c S' ) /\
   set_inter var_eqdec (lhvars_Probl P) (dom_rec S') = []. 
 
+
+(** Statement of Preservation *)
 Lemma match_sol_preservation : forall Sl T T',
 
       valid_tuple T ->
