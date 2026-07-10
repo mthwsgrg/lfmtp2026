@@ -370,7 +370,7 @@ Definition valid_tuple (T : Tuple) :=
 Definition match_sol (S' :Subst) (T : Tuple) :=
   let S := (fst T) in
   let P := (snd T) in
-  ( forall s t, set_In (equ s t) P ->  σmin_equiv s (sub s S') ) /\         
+  ( forall s t, set_In (equ s t) P ->  σmin_equiv s (sub t S') ) /\         
   ( exists S'', (sub_comp S S'') ~:c S' ) /\
   set_inter var_eqdec (lhvars_Probl P) (dom_rec S') = []. 
 
