@@ -32,7 +32,8 @@ Inductive exp := Zero
 with sexp :=    I : sexp
                 | Shift : sexp
                 | Cons (s: exp) (σ: sexp) : sexp
-                | Comp (σ τ: sexp) : sexp.
+                | Comp (σ τ: sexp) : sexp
+                | VarSExp (Y: Var) : sexp.
 Set Elimination Schemes.
 Scheme exp_ind := Induction for exp Sort Type
 with  sexp_ind := Induction for sexp Sort Type.
@@ -85,17 +86,33 @@ Open Scope type_scope.
 
 (** Definition of Substitution, Problem, and Tuple where Tuple describe the change of state after each smatch steps*)
 
-Definition Subst := set (Var * exp).
+Inductive Mapping : Set :=
+| exp_map : Var -> exp -> Mapping
+| sexp_map : Var -> sexp -> Mapping.
+
+Definition Subst := set Mapping.
 Definition Problem := set Equation.   
 Definition Tuple := (Subst * Problem).
 
 
 (** Definition of instantiation of a term/substitution with a Subst *)
 
-Fixpoint look_up (X : Var) (S : Subst) {struct S}: exp :=
-match S with
- | []         => VarExp X
- | (Y,t)::S0  => if var_eqdec Y X then t else (look_up X S0)
+Fixpoint look_up_exp (X: Var) (S: Subst) {struct S} : exp :=
+ match S with
+ | [] => VarExp X
+ | mp :: S0 => match mp with
+             | exp_map Y t => if var_eqdec Y X then t else (look_up_exp X S0)
+             | _ => look_up_exp X S0
+             end
+ end.
+
+Fixpoint look_up_sexp (X: Var) (S: Subst) {struct S} : sexp :=
+ match S with
+ | [] => VarSExp X
+ | mp :: S0 => match mp with
+             | sexp_map Y σ => if var_eqdec Y X then σ else (look_up_sexp X S0)
+             | _ => look_up_sexp X S0
+             end
 end.
 
 Fixpoint sub (s: exp) (S: Subst) : exp :=
@@ -104,7 +121,7 @@ match s with
   | App s t => App (sub s S) (sub t S)
   | Lam s => Lam (sub s S) 
   | Inst s σ => Inst (sub s S) (sub_s σ S)
-  | VarExp X => look_up X S
+  | VarExp X => look_up_exp X S
 end
 with sub_s (σ: sexp) (S: Subst) : sexp :=
  match σ with
@@ -112,6 +129,7 @@ with sub_s (σ: sexp) (S: Subst) : sexp :=
  | Shift => Shift
  | Cons s σ => Cons (sub s S) (sub_s σ S)  
  | Comp σ τ => Comp (sub_s σ S) (sub_s τ S)
+ | VarSExp Y => look_up_sexp Y S
  end.
 
 
@@ -161,8 +179,12 @@ Lemma expression_eqdec : (forall s t : exp, {s = t} + {s <> t}) *
     rewrite e. rewrite e0. now left.
     unfold not in *. right; intros. inversion H1; eauto.
     unfold not in *. right; intros. inversion H1; eauto.
+  -
+(*    
 Defined.
-
+*)
+Admitted.
+    
 Lemma exp_eqdec : forall s t: exp, {s=t} + {s <> t}.
   intros.
   pose proof expression_eqdec.
@@ -204,26 +226,23 @@ Defined.
 
 (** Some Helper functions *)
 
+
 Fixpoint alist_rec (S1 S2: Subst) 
-                   (F: Var -> exp -> Subst -> Subst -> Subst) : Subst :=
+                   (F: Mapping -> Subst -> Subst -> Subst) : Subst :=
  match S1 with 
     | []          =>  S2
-    | (X,t)::S0  =>  F X t S2 (alist_rec S0 S2 F)
+    | mp::S0  =>  F mp S2 (alist_rec S0 S2 F)
  end.
 
-Definition F_rec (S1: Subst) (X:Var) (t:exp) (S2 S3: Subst) := (X, sub t S1)::S3.
+Definition F_rec (S1: Subst) (mp : Mapping) (S2 S3: Subst) :=
+  match mp with
+  | exp_map X t => (exp_map X (sub t S1)) :: S3
+  | sexp_map Y σ => (sexp_map Y (sub_s σ S1)) ::  S3
+  end.
+
 
 
 Definition sub_comp (S1 S2: Subst) := alist_rec S1 S2 (F_rec S2). 
-
-(** Unit tests
-
-Definition S1 := (1, Zero) :: nil.
-Definition S2 := (1, App Zero Zero) :: nil.
-Compute (sub_comp S2 S2).
-Compute (sub (VarExp 1) (sub_comp S2 S1)).
-
-*)
 
 
 (** subs_Problem applies a subtitution to a generic problem *)
@@ -236,60 +255,78 @@ Fixpoint subs_Problem (P : Problem) (S : Subst) : Problem :=
   end.
 
 
-Fixpoint exp_vars (s : exp) {struct s} : set Var := 
+Lemma varboth_eqdec : forall (v1 v2: (Var + Var)), {v1=v2} + {v1 <> v2}.
+Admitted.
+
+
+Fixpoint exp_vars (s : exp) {struct s} : set (Var + Var) := 
 match s with
  | Zero     => empty_set _
- | App s t  => set_union var_eqdec (exp_vars s) (exp_vars t)
+ | App s t  => set_union varboth_eqdec (exp_vars s) (exp_vars t)
  | Lam s => exp_vars s                      
- | Inst s σ => set_union var_eqdec (exp_vars s) (exp_vars_s σ)
- | VarExp X => set_add var_eqdec X (empty_set _)
+ | Inst s σ => set_union varboth_eqdec (exp_vars s) (exp_vars_s σ)
+ | VarExp X => set_add varboth_eqdec (inl X) (empty_set _)
 end
-with exp_vars_s (σ: sexp) {struct σ} : set Var :=
+with exp_vars_s (σ: sexp) {struct σ} : set (Var + Var) :=
  match σ with
  | I  => empty_set _
  | Shift => empty_set _
- | Comp σ τ => set_union var_eqdec (exp_vars_s σ) (exp_vars_s τ)
- | Cons s σ => set_union var_eqdec (exp_vars s) (exp_vars_s σ)                      
+ | Comp σ τ => set_union varboth_eqdec (exp_vars_s σ) (exp_vars_s τ)
+ | Cons s σ => set_union varboth_eqdec (exp_vars s) (exp_vars_s σ)
+ | VarSExp X => set_add varboth_eqdec (inr X) (empty_set _)
 end.
 
 
 Fixpoint lhvars_Probl (P : Problem) :=
   match P with
   | [] => []
-  | (equ s t) :: P0 => set_union var_eqdec (exp_vars s) (lhvars_Probl P0)
-  | (equ_s σ τ) :: P0 => set_union var_eqdec (exp_vars_s σ) (lhvars_Probl P0)                       
+  | (equ s t) :: P0 => set_union varboth_eqdec (exp_vars s) (lhvars_Probl P0)
+  | (equ_s σ τ) :: P0 => set_union varboth_eqdec (exp_vars_s σ) (lhvars_Probl P0)                       
   end.  
 
 
-Fixpoint Problem_vars (P : Problem) : set Var :=
+Fixpoint Problem_vars (P : Problem) : set (Var + Var) :=
   match P with
     | [] => []
-    | (equ s t)::P0 => set_union var_eqdec (exp_vars s)
-                   (set_union var_eqdec (exp_vars t) (Problem_vars P0))
-    | (equ_s σ τ)::P0 => set_union var_eqdec (exp_vars_s σ)
-                       (set_union var_eqdec (exp_vars_s τ) (Problem_vars P0))               
+    | (equ s t)::P0 => set_union varboth_eqdec (exp_vars s)
+                   (set_union varboth_eqdec (exp_vars t) (Problem_vars P0))
+    | (equ_s σ τ)::P0 => set_union varboth_eqdec (exp_vars_s σ)
+                       (set_union varboth_eqdec (exp_vars_s τ) (Problem_vars P0))               
   end.
+
+
+
+
 
 
 (** subst_dom_vars extracts the variables that contains the substitution domain *)
 
-Fixpoint subst_dom_vars (S : Subst) : set Var :=
+Fixpoint subst_dom_vars (S : Subst) : set (Var + Var) :=
   match S with
     | [] => []   
-    | (X,t)::S0 => set_add var_eqdec X (subst_dom_vars S0)
-  end.  
+    | mp::S0 => match mp with
+              | exp_map X t => set_add varboth_eqdec (inl X) (subst_dom_vars S0)
+              | sexp_map Y σ => set_add varboth_eqdec (inr Y) (subst_dom_vars S0)
+              end                 
+   end.
 
 
 
 (** dom_rec_aux is a auxiliar function to build the correct domain of a substitution *)
 
-Fixpoint dom_rec_aux (S : Subst) (St : set Var) : set Var :=
+Fixpoint dom_rec_aux (S : Subst) (St : set (Var + Var)) : set (Var + Var) :=
   match St with
     | [] => []
-    | X::St0 => if (exp_eqdec (sub (VarExp X) S) (VarExp X)) then
-                   (dom_rec_aux S St0) else
-                   (set_add var_eqdec X (dom_rec_aux S St0))
-  end.                  
+    | V::St0 => match V with
+              | inl X => if (exp_eqdec (sub (VarExp X) S) (VarExp X)) then
+                          (dom_rec_aux S St0) else
+                          (set_add varboth_eqdec (inl X) (dom_rec_aux S St0))
+              | inr Y => if (sexp_eqdec (sub_s (VarSExp Y) S) (VarSExp Y)) then
+                          (dom_rec_aux S St0) else
+                          (set_add varboth_eqdec (inr Y) (dom_rec_aux S St0))
+              end
+   end.                  
+
 
 (** dom_rec is the recursive function that gives the domain of a substitution *)
 
@@ -297,25 +334,34 @@ Definition dom_rec (S : Subst) := dom_rec_aux S (subst_dom_vars S).
 
 (** im_rec_aux is a auxiliar function to build the correct image of a substitution *)
 
-Fixpoint im_rec_aux (S : Subst) (St : set Var) : set exp :=
+Fixpoint im_rec_aux (S : Subst) (St : set (Var + Var)) : set (exp + sexp) :=
   match St with
     | [] => []  
-    | X::St0 => (sub (VarExp X) S)::(im_rec_aux S St0) 
+    | V::St0 => match V with
+              | inl X => inl (sub (VarExp X) S) :: (im_rec_aux S St0)
+              | inr Y => inr (sub_s (VarSExp Y) S) :: (im_rec_aux S St0)
+              end
   end.
+
+
 
 (** im_rec is the recursive function that gives the image of a substitution *)
 
 Definition im_rec (S : Subst) := im_rec_aux S (dom_rec S).
 
 
+(** exps_set_vars gives the set of variables that occur in a set of exps/sexps *)
 
-(** exps_set_vars gives the set of variables that occur in a set of expression *)
-
-Fixpoint exps_set_vars (T: set exp) : set Var :=
+Fixpoint exps_set_vars (T: set (exp + sexp)) : set (Var + Var) :=
   match T with
     | [] => []
-    | s::T0 => set_union var_eqdec (exp_vars s) (exps_set_vars T0)        
+    | sσ ::T0 => match sσ with
+             | inl s => set_union varboth_eqdec (exp_vars s) (exps_set_vars T0)
+             | inr σ => set_union varboth_eqdec (exp_vars_s σ) (exps_set_vars T0)
+             end
   end.
+
+
 
 (** im_vars gives the set of variables that occur in the image of a substiturion *)
 
@@ -326,10 +372,17 @@ Notation "P \ u" := (set_remove Equation_eqdec u P) (at level 67).
 Notation "P |^^ S" := (subs_Problem P S) (at level 67).
 Notation "P |+ u" := (set_add Equation_eqdec u P) (at level 67).
 
-Definition In_dom (X : Var) (S : Subst) :=  (sub (VarExp X) S) <> VarExp X . 
-Notation "X € S" := (In_dom X S) (at level 67).
+Definition In_dom (M: Mapping) (S : Subst) :=
+  match M with
+  | exp_map X _ => (sub (VarExp X) S) <> VarExp X
+  | sexp_map Y _ => (sub_s (VarSExp Y) S) <> VarSExp Y
+  end.
+ 
+Notation "M € S" := (In_dom M S) (at level 67).
 
-Definition subs_equiv (E : exp -> exp -> Prop) (S S' : Subst) := forall X, (X € S) \/ (X € S') -> E (sub (VarExp X) S)
+Definition map_equiv (E: exp -> exp -> Prop) 
+
+Definition subs_equiv (E : exp -> exp -> Prop) (S S' : Subst) := forall V, (V € S) \/ (V € S') ->  E (sub (VarExp X) S)
                                                                                            (sub (VarExp X) S'). 
 
 Notation "S ~:c S'" := (subs_equiv σmin_equiv S S') (at level 67).
@@ -384,13 +437,6 @@ Definition match_sol (S' :Subst) (T : Tuple) :=
   set_inter var_eqdec (lhvars_Probl P) (dom_rec S') = []. 
 
 
-Lemma problem_lhvars_exp_empty (s: exp) (P: Problem) (S: Subst):
-  forall t, set_inter var_eqdec (lhvars_Probl P) (dom_rec S) = [] -> set_In (equ s t) P -> set_inter var_eqdec (exp_vars s) (dom_rec S) = [].
-Admitted.
-
-Lemma exp_sub_dom_inter_empty (s: exp) (S: Subst) : set_inter var_eqdec (exp_vars s) (dom_rec S) = [] -> sub s S = s.
-Admitted.  
-
 (** Statement of Preservation *)
 Lemma match_sol_preservation : forall Sl T T',
 
@@ -400,61 +446,5 @@ Lemma match_sol_preservation : forall Sl T T',
 
       smatch T T' ->
 
-      match_sol Sl T' -> match_sol Sl T.
-Proof.
-  intros.
-  induction H1.
-  - unfold match_sol in *.
-    simpl in *.
-    destruct H2 as [H21 [H22 H23]].
-    split.
-    + intros.
-      case (Equation_eqdec (equ s0 t) (equ s s)); intros.
-      * inversion e; subst.
-        pose proof (problem_lhvars_exp_empty _ _ _ _ H0 H1) as HsSl.
-        pose proof (exp_sub_dom_inter_empty _ _ HsSl) as eqsSl.
-        rewrite eqsSl.
-        constructor.
-      * apply H21. apply (set_remove_3 Equation_eqdec P H2 n).         
-    + split; assumption.
-  - unfold match_sol in *.
-    simpl in *.
-    destruct H2 as [H21 [H22 H23]].
-    split.
-    + intros.
-      case (Equation_eqdec (equ s0 t0) (equ (App s t) (App s' t'))); intros.
-      * inversion e; subst.
-        simpl. 
-        apply σmin_equiv_app; apply H21.
-        **  admit.
-        **  admit.
-      * apply H21. admit.         
-    + split; assumption.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - unfold match_sol in *.
-    simpl in *.
-    destruct H2 as [H21 [H22 H23]].
-    split.
-    + intros.
-      case (Equation_eqdec (equ s0 t) (equ (Lam s [Zero .: σ >> ↑]) s' [σ'])); intros.
-      * inversion e; subst.
-        simpl.
-        assert (σmin_equiv (Lam s)[σ] (sub (s'[σ']) Sl)).
-        apply H21. admit.
-        admit. (* can be proven by trans/symm *)
-      * apply H21. admit.    
-    + split; assumption.
-  -  admit.
-  -  admit.
-  -  admit.
-  -  unfold match_sol in *.
-     simpl in *.
-     destruct H2 as [H21 [H22 H23]].
-     split.
-     + 
-     +  
-  
+      match_sol Sl T' -> match_sol Sl T.   
 Admitted.
