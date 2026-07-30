@@ -453,8 +453,14 @@ Proof.
   -  unfold match_sol in *.
      simpl in *.
      destruct H2 as [H21 [H22 H23]].
+     rewrite H4 in H22.
      split.
-     + 
+     + intros.
+       case (Equation_eqdec (equ s0 t) (equ s (VarExp X))); intros.
+       * inversion e; subst.
+         simpl.
+         assert ( (set_In X (dom_rec Sl)) /\ (σmin_equiv s (look_up X Sl))). admit.  (* Since (S,P) is a valid tuple there shouldn't be X in domain of S *)
+          
      +  
   
 Admitted.
