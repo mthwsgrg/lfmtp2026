@@ -389,7 +389,12 @@ Lemma problem_lhvars_exp_empty (s: exp) (P: Problem) (S: Subst):
 Admitted.
 
 Lemma exp_sub_dom_inter_empty (s: exp) (S: Subst) : set_inter var_eqdec (exp_vars s) (dom_rec S) = [] -> sub s S = s.
-Admitted.  
+Admitted.
+
+(*
+Lemma sub_comp_left_op_preced (S : Subst) (X: Var) : forall S', set_In X (dom_rec S) ->
+                                                           looksub_comp X (sub_comp S S') = look_up X S   
+*)
 
 (** Statement of Preservation *)
 Lemma match_sol_preservation : forall Sl T T',
@@ -459,8 +464,27 @@ Proof.
        case (Equation_eqdec (equ s0 t) (equ s (VarExp X))); intros.
        * inversion e; subst.
          simpl.
+         unfold valid_tuple in H; simpl in H; destruct H as [H_1 H_2].
+         destruct H22 as [S''].
+         (* From H_1 and H2 it's clear that S doesn't have X in domain, and this
+             means sub_comp (sub_comp S [(X,s)]) do have X mapped to s. 
+             Because of H0, we have "sub s Sl = s"
+
+ 
+
+
+
+and since the first argument takes precedence in a composition "lookup X (sub_comp (sub_comp S [(X,s)]) S'') = s" as stated below 
+          *)
+         
+         assert ((look_up X (sub_comp (sub_comp S ((X,s) :: nil)) S'' )) = s).
+         { (* Froim H0 it's clear that (sub s Sl) = s *)
+           assert ((sub s Sl) = s). admit.
+           admit.
+         }
+                                 
          assert ( (set_In X (dom_rec Sl)) /\ (σmin_equiv s (look_up X Sl))). admit.  (* Since (S,P) is a valid tuple there shouldn't be X in domain of S *)
-          
-     +  
+         destruct H as [H41 H42]; assumption.
+       *   
   
 Admitted.
