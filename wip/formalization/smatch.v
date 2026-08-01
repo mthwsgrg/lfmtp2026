@@ -38,6 +38,10 @@ Scheme exp_ind := Induction for exp Sort Type
 with  sexp_ind := Induction for sexp Sort Type.
 Combined Scheme sigma_ind from exp_ind, sexp_ind.
 
+Scheme exp_ind2 := Induction for exp Sort Prop
+with sexp_ind2 := Induction for sexp Sort Prop.
+Combined Scheme sigma_ind2 from exp_ind2, sexp_ind2.
+
 Notation "s [ σ ]" := (Inst s σ).
 Notation "σ >> τ" := (Comp σ τ) (at level 56, right associativity).
 Notation "s .: σ" := (Cons s σ) (at level 58).
@@ -66,7 +70,7 @@ with σmin_equivs : sexp -> sexp -> Prop :=
 | σmin_equivs_sym (σ τ : sexp) :  σmin_equivs σ τ -> σmin_equivs τ σ
 | σmin_equivs_trans (σ τ θ : sexp) :  σmin_equivs σ τ -> σmin_equivs τ θ -> σmin_equivs σ θ
 | σmin_equivs_cons (s1 s2 : exp) (σ τ : sexp) :  σmin_equiv s1 s2 -> σmin_equivs σ τ -> σmin_equivs (s1 .: σ) (s2 .: τ)
-| σmin_μequivs_comp (σ1 σ2 τ1 τ2 : sexp) :  σmin_equivs σ1 σ2 -> σmin_equivs τ1 τ2 ->  σmin_equivs (σ1 >> τ1) (σ2 >> τ2).
+| σmin_equivs_comp (σ1 σ2 τ1 τ2 : sexp) :  σmin_equivs σ1 σ2 -> σmin_equivs τ1 τ2 ->  σmin_equivs (σ1 >> τ1) (σ2 >> τ2).
 Set Elimination Schemes.  
 Scheme σmin_equiv_ind := Induction for σmin_equiv Sort Prop
 with  σmin_equivs_ind := Induction for σmin_equivs Sort Prop.
@@ -235,6 +239,16 @@ Fixpoint subs_Problem (P : Problem) (S : Subst) : Problem :=
     | (equ_s σ τ )::P0 => (equ_s (sub_s σ S) (sub_s τ S))::(subs_Problem P0 S) 
   end.
 
+(** subs_Problem applies a subtitution to right hand side of a generic problem *)
+
+Fixpoint subs_Problem_right (P : Problem) (S : Subst) : Problem :=
+  match P with
+    | [] => []
+    | (equ s t )::P0 => (equ s (sub t S))::(subs_Problem P0 S)
+    | (equ_s σ τ )::P0 => (equ_s σ (sub_s τ S))::(subs_Problem P0 S) 
+  end.
+
+
 
 Fixpoint exp_vars (s : exp) {struct s} : set Var := 
 match s with
@@ -323,7 +337,10 @@ Definition im_vars (S : Subst) := exps_set_vars (im_rec S).
 
 
 Notation "P \ u" := (set_remove Equation_eqdec u P) (at level 67).
-Notation "P |^^ S" := (subs_Problem P S) (at level 67).
+
+(*Notation "P |^^ S" := (subs_Problem P S) (at level 67). *)
+
+Notation "P |^^ S" := (subs_Problem_right P S) (at level 67). 
 Notation "P |+ u" := (set_add Equation_eqdec u P) (at level 67).
 
 Definition In_dom (X : Var) (S : Subst) :=  (sub (VarExp X) S) <> VarExp X . 
@@ -396,6 +413,28 @@ Lemma sub_comp_left_op_preced (S : Subst) (X: Var) : forall S', set_In X (dom_re
                                                            looksub_comp X (sub_comp S S') = look_up X S   
 *)
 
+Lemma subst_sub_σmin : (forall s t t' X, σmin_equiv t t' -> σmin_equiv (sub s ((X,t) :: nil))
+                                                        (sub s ((X,t') :: nil))) /\
+                    (forall σ t t' X, σmin_equiv t t' -> σmin_equivs (sub_s σ ((X,t) :: nil))
+                                                     (sub_s σ ((X,t') :: nil))).
+Proof.  
+  apply sigma_ind2; intros; simpl.
+  - constructor.
+  - apply σmin_equiv_app; eauto.
+  - apply σmin_equiv_lam; eauto.
+  - apply σmin_equiv_asubst; eauto.
+  - case (var_eqdec X0 X); intros.
+    + assumption.
+    + constructor.
+  - constructor.
+  - constructor.
+  - apply σmin_equivs_cons; eauto.
+  - apply σmin_equivs_comp; eauto.
+Qed.  
+
+Lemma var_in_exp : forall X s, set_In X (exp_vars s) \/ ~set_In X (exp_vars s).
+Admitted.
+
 (** Statement of Preservation *)
 Lemma match_sol_preservation : forall Sl T T',
 
@@ -466,25 +505,32 @@ Proof.
          simpl.
          unfold valid_tuple in H; simpl in H; destruct H as [H_1 H_2].
          destruct H22 as [S''].
-         (* From H_1 and H2 it's clear that S doesn't have X in domain, and this
-             means sub_comp (sub_comp S [(X,s)]) do have X mapped to s. 
-             Because of H0, we have "sub s Sl = s"
-
- 
-
-
-
-and since the first argument takes precedence in a composition "lookup X (sub_comp (sub_comp S [(X,s)]) S'') = s" as stated below 
-          *)
-         
-         assert ((look_up X (sub_comp (sub_comp S ((X,s) :: nil)) S'' )) = s).
-         { (* Froim H0 it's clear that (sub s Sl) = s *)
-           assert ((sub s Sl) = s). admit.
-           admit.
+         assert ((look_up X (sub_comp (sub_comp S ((X,s) :: nil)) S'' )) = s) as HSS''s.
+         {
+           (* 
+              1. dom_rec S /\ exp s = ϕ (from H_1 and H2) 
+              2. dom_rec Sl /\ exp s = ϕ (from H0 and H2)
+              3. From 1 and 2, it is clear that dom_rec S'' /\ exp s = ϕ 
+              4. From 4, we have ((S ∘ [(X,s)]) ∘ S'')@X = s because S'' can't modify s  
+           *) admit.
          }
-                                 
-         assert ( (set_In X (dom_rec Sl)) /\ (σmin_equiv s (look_up X Sl))). admit.  (* Since (S,P) is a valid tuple there shouldn't be X in domain of S *)
-         destruct H as [H41 H42]; assumption.
-       *   
-  
+         admit. 
+       *  unfold valid_tuple in H.
+          simpl in *.
+          case (var_in_exp X t); intros.
+          ** admit. 
+          ** admit.
+            
+          (*
+            1. Two cases X∈t and X ~∈ t:
+            1.1) t doesn't have X can be shown from H21
+            1.2) t does have X
+
+            proof 1.2: I can show that "sub_In (equ s0 (sub t [(X,s)])) (P \ (s, X))|^^ [X,s]". This will yield s0 =σ (sub (sub t [(X,s)]) Sl). Since s doesn't share any variable with domain of Sl, (sub (sub t [X,s]) Sl) = sub t ([X,s] ∘ Sl).
+             
+          Now we need to show that, sub t ([X,s] ∘ Sl) =σ sub t Sl from the assumption "look_up X Sl =σ s 
+                
+
+          *)
+       + admit.
 Admitted.
