@@ -220,14 +220,6 @@ Definition F_rec (S1: Subst) (X:Var) (t:exp) (S2 S3: Subst) := (X, sub t S1)::S3
 
 Definition sub_comp (S1 S2: Subst) := alist_rec S1 S2 (F_rec S2). 
 
-(** Unit tests
-
-Definition S1 := (1, Zero) :: nil.
-Definition S2 := (1, App Zero Zero) :: nil.
-Compute (sub_comp S2 S2).
-Compute (sub (VarExp 1) (sub_comp S2 S1)).
-
-*)
 
 
 (** subs_Problem applies a subtitution to a generic problem *)
@@ -352,6 +344,16 @@ Definition subs_equiv (E : exp -> exp -> Prop) (S S' : Subst) := forall X, (X �
 Notation "S ~:c S'" := (subs_equiv σmin_equiv S S') (at level 67).
 
 
+(** Unit tests 
+
+Definition S1 := (1, VarExp 2) :: nil.
+Definition S2 := (1, App Zero Zero) :: nil.
+Compute (sub_comp S1 S2).
+Compute (sub (VarExp 1) (sub_comp S1 S2)).
+Compute dom_rec (sub_comp S1 S2).
+*)
+
+
 
 (** Inductive definition of σmin-procedure *)
 Inductive smatch : Tuple -> Tuple -> Prop := 
@@ -413,6 +415,29 @@ Lemma sub_comp_left_op_preced (S : Subst) (X: Var) : forall S', set_In X (dom_re
                                                            looksub_comp X (sub_comp S S') = look_up X S   
 *)
 
+Lemma subst_sub_σmin_gen : (forall s S S', S ~:c S'  -> σmin_equiv (sub s S)
+                                                        (sub s S')) /\
+                    (forall σ S S', S ~:c S' -> σmin_equivs (sub_s σ S)
+                                                     (sub_s σ S')).
+Proof.  
+  apply sigma_ind2; intros; simpl.
+  - constructor.
+  - apply σmin_equiv_app; eauto.
+  - apply σmin_equiv_lam; eauto.
+  - apply σmin_equiv_asubst; eauto.
+  - unfold subs_equiv in H.
+    specialize (H X).
+    (*case (var_eqdec X0 X); intros.
+    + assumption.
+    + constructor. *) admit.
+  - constructor.
+  - constructor.
+  - apply σmin_equivs_cons; eauto.
+  - apply σmin_equivs_comp; eauto.
+Admitted. 
+
+
+
 Lemma subst_sub_σmin : (forall s t t' X, σmin_equiv t t' -> σmin_equiv (sub s ((X,t) :: nil))
                                                         (sub s ((X,t') :: nil))) /\
                     (forall σ t t' X, σmin_equiv t t' -> σmin_equivs (sub_s σ ((X,t) :: nil))
@@ -431,6 +456,12 @@ Proof.
   - apply σmin_equivs_cons; eauto.
   - apply σmin_equivs_comp; eauto.
 Qed.  
+
+(** set_In_dec :  set_In X + ~set_In X *)
+
+(*
+Lemma eq_sub_dom_eq: forall S S', S ~
+*)
 
 Lemma var_in_exp : forall X s, set_In X (exp_vars s) \/ ~set_In X (exp_vars s).
 Admitted.
@@ -518,15 +549,49 @@ Proof.
        *  unfold valid_tuple in H.
           simpl in *.
           case (var_in_exp X t); intros.
-          ** admit. 
+          ** assert ( σmin_equiv s (look_up X Sl)) as H_sSlX.
+             {
+
+               destruct H22 as [S''].
+               unfold subs_equiv in H6.
+
+               
+               specialize (H6 X). simpl in H6.
+
+
+             }
+
+             assert ( (sub_comp ((X,s) :: nil) Sl) ~:c Sl).
+             {
+               unfold subs_equiv.
+               intros.
+               case (var_eqdec X X0); intros; subst.
+               *** simpl. 
+                   destruct (var_eqdec X0 X0).
+                   **** assert (sub s Sl = s).
+                        {admit.}
+                        rewrite H4.
+                        admit. (* because of symmetry *)
+                   **** destruct n0; reflexivity.
+               *** simpl.
+                   destruct (var_eqdec X X0); intros.
+                   **** admit. (* because contradiction is there *)
+                   **** admit. (* because of reflexivity *)
+            }            
+
+          (* Now it's simple use the lemma of equal subsitutions *)
+            admit.
+
+
+            
           ** admit.
             
           (*
             1. Two cases X∈t and X ~∈ t:
-            1.1) t doesn't have X can be shown from H21
-            1.2) t does have X
+            1.1) t does have X
+            1.2) t doesn't have X can be shown from H21
 
-            proof 1.2: I can show that "sub_In (equ s0 (sub t [(X,s)])) (P \ (s, X))|^^ [X,s]". This will yield s0 =σ (sub (sub t [(X,s)]) Sl). Since s doesn't share any variable with domain of Sl, (sub (sub t [X,s]) Sl) = sub t ([X,s] ∘ Sl).
+            proof 1.1: I can show that "sub_In (equ s0 (sub t [(X,s)])) (P \ (s, X))|^^ [X,s]". This will yield s0 =σ (sub (sub t [(X,s)]) Sl). Since s doesn't share any variable with domain of Sl, (sub (sub t [X,s]) Sl) = sub t ([X,s] ∘ Sl).
              
           Now we need to show that, sub t ([X,s] ∘ Sl) =σ sub t Sl from the assumption "look_up X Sl =σ s 
                 
