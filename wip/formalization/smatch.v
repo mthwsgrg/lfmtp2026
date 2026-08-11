@@ -338,8 +338,7 @@ Notation "P |+ u" := (set_add Equation_eqdec u P) (at level 67).
 Definition In_dom (X : Var) (S : Subst) :=  (sub (VarExp X) S) <> VarExp X . 
 Notation "X € S" := (In_dom X S) (at level 67).
 
-Definition subs_equiv (E : exp -> exp -> Prop) (S S' : Subst) := forall X, (X € S) \/ (X € S') -> E (sub (VarExp X) S)
-                                                                                           (sub (VarExp X) S'). 
+Definition subs_equiv (E : exp -> exp -> Prop) (S S' : Subst) := forall X,  E (sub (VarExp X) S)                                                                                     (sub (VarExp X) S'). 
 
 Notation "S ~:c S'" := (subs_equiv σmin_equiv S S') (at level 67).
 
@@ -378,7 +377,7 @@ Inductive smatch : Tuple -> Tuple -> Prop :=
 | smatch_Complaw : forall S P s s' σ τ ρ, set_In (equ s[σ >> τ] s'[ρ]) P ->
                                      smatch (S, P) (S, (P |+ (equ s[σ][τ] s'[ρ])) \ (equ s[σ >> τ] s'[ρ]))
                                         
-| smatch_inst : forall S S' P X s, (~ set_In X (set_union var_eqdec (exp_vars s) (lhvars_Probl P))) ->
+| smatch_inst : forall S S' P X s, (~ set_In X (lhvars_Probl P)) ->
                            (set_In (equ s (VarExp X)) P) ->
                            S' = sub_comp S ((X,s) :: nil)  -> 
                            smatch (S,P)
@@ -437,6 +436,9 @@ Proof.
 Admitted. 
 
 
+Lemma subst_sub_σmin_gen_left : (forall s S S', S ~:c S'  -> σmin_equiv (sub s S)
+                                                         (sub s S')).
+Admitted.  
 
 Lemma subst_sub_σmin : (forall s t t' X, σmin_equiv t t' -> σmin_equiv (sub s ((X,t) :: nil))
                                                         (sub s ((X,t') :: nil))) /\
@@ -463,9 +465,68 @@ Qed.
 Lemma eq_sub_dom_eq: forall S S', S ~
 *)
 
+
+
+(** Imprtant property of σmin_equiv that may imply preservation may not work in a bigger fragment *)
+
+Lemma var_σmin_only_to_var : forall X s, σmin_equiv (VarExp X) s -> s = VarExp X.
+  Admitted.
+
 Lemma var_in_exp : forall X s, set_In X (exp_vars s) \/ ~set_In X (exp_vars s).
+  Admitted.
+
+Lemma not_in_dom_same : forall s S, (forall X, set_In X (exp_vars s) -> σmin_equiv (look_up X S) (VarExp X)) -> σmin_equiv  s (sub s S).
+   Admitted.
+
+Lemma look_up_sub_comp: forall S S' X, look_up X (sub_comp S S') = sub (look_up X S) S'.
+  Admitted.
+
+Lemma sub_subst_interaction : forall X s t S, sub s (sub_comp ((X,t) :: nil) S) = sub (sub s ((X,t)::nil)) S.
+  Admitted.
+
+Lemma push_subst_problem : forall s t S P, set_In (equ s t) P -> set_In (equ s (sub t S)) (P |^^ S).
+  Admitted.
+
+Lemma problem_eqn_lhvar: forall P Y, set_inter var_eqdec (lhvars_Probl P) Y = [] -> forall s t, set_In (equ s t) P ->
+                                                                                   set_inter var_eqdec (exp_vars s) Y = [].
+Proof.
+  intros.
+  induction P.
+  - simpl. destruct H0.
+  - admit. 
 Admitted.
 
+Lemma problem_eqn_allvar_left : forall P Y, set_inter var_eqdec Y (Problem_vars P) = [] ->
+                                    forall s t, set_In (equ s t) P ->
+                                           set_inter var_eqdec (exp_vars s) Y = [].
+Admitted.
+
+Lemma not_dom_look_same : forall X S, ~ set_In X (dom_rec S) -> look_up X S = (VarExp X). 
+ Admitted.
+
+
+Lemma not_in_if_inter_empty : forall X S S',   set_In X S ->
+                                          set_inter var_eqdec S S' = [] ->
+                                          ~ set_In X S'.
+ Admitted.
+
+Lemma subst_same_var_nocommon : forall s S, set_inter var_eqdec (exp_vars s) (dom_rec S) = [] ->
+                                       sub s S = s.
+ Admitted.  
+
+Lemma σmin_comp_prop1 : forall X S S' Sl,  ~set_In X (dom_rec S)  ->
+                                      ~set_In X (dom_rec Sl) ->
+                                      (sub_comp S S') ~:c Sl ->
+                                      σmin_equiv (look_up X S') (VarExp X).
+  Admitted.
+
+Lemma not_in_problem_not_in_eq_left : forall X P, ~set_In X (Problem_vars P) ->
+                                             forall s t, set_In (equ s t) P ->
+                                                    ~set_In X (exp_vars s).
+Admitted.
+
+ 
+  
 (** Statement of Preservation *)
 Lemma match_sol_preservation : forall Sl T T',
 
@@ -548,14 +609,111 @@ Proof.
          admit. 
        *  unfold valid_tuple in H.
           simpl in *.
+          destruct H as [H_1 H_2].
+          destruct H22 as [S''].
           case (var_in_exp X t); intros.
+          ** apply σmin_equiv_trans with (t := (sub t  (sub_comp ((X,s) :: nil) Sl ))).
+             *** apply σmin_equiv_trans with (t := (sub (sub t ((X,s)::nil)) Sl)).
+                 **** apply H21.
+                      apply push_subst_problem.
+                      apply (set_remove_3 Equation_eqdec P H2 n).
+                 **** rewrite sub_subst_interaction.
+                      apply σmin_equiv_refl.
+             *** apply subst_sub_σmin_gen_left.
+                 unfold subs_equiv; intros.
+                 case (var_eqdec X X0); intros; subst.
+                 **** simpl. destruct (var_eqdec X0 X0); subst.
+                      ***** pose proof (problem_eqn_lhvar _ _ H0 _ _ H2).
+                            pose proof (problem_eqn_lhvar _ _ H0 _ _ H3).
+                            rewrite (subst_same_var_nocommon _ _ H6).
+                            unfold subs_equiv in H; simpl in H.
+                            apply σmin_equiv_trans with (t := sub s S'').
+                            ******  apply not_in_dom_same.
+                                    intros.
+                                    eapply σmin_comp_prop1.
+                                    3: unfold subs_equiv; apply H.
+                                    case (var_eqdec X X0); intros; subst.
+                                    pose proof (
+                                                                           
+                                    pose proof (σmin_comp_prop1 _ _ _ _                         
+                            ******  specialize (H X0).
+                                    rewrite look_up_sub_comp in H.
+                            
+                      assert ( (forall X, set_In X (exp_vars s) ->
+                                σmin_equiv (look_up X (sub_comp (sub_comp S ((X,s):: nil)) S''))
+                                           (VarExp X))) as temp_4.
+             
+                      {
+                           admit.
+
+                      }
+
+                       assert ( (forall X, set_In X (exp_vars s) ->
+                                      σmin_equiv (look_up X S'') (VarExp X))) as temp_5.
+                      {
+                        admit.
+                      }
+                           
+                      specialize (H X0).
+                      rewrite look_up_sub_comp in H.
+                        
+                      assert (look_up X0 (sub_comp S ((X0,s) :: nil)) = s) as temp_6. {admit.}
+                      rewrite temp_6 in H.
+                      admit.
+                      
+                      ***** destruct n0; reflexivity.
+                 **** simpl. destruct (var_eqdec X X0).
+                      ***** admit.
+                      ***** apply σmin_equiv_refl.
+
+
+
+
+
+
+
+
+           (*
+            assert (forall X, set_In X (exp_vars s) -> look_up X S = s) as temp_1.
+             { admit.
+
+             }
+             assert ( (forall X, set_In X (exp_vars s)) ->
+                      σmin_equiv (look_up X (sub_comp (sub_comp S ((X,s):: nil)) S'')) (VarExp X)                       ) as temp_2.
+             
+             {
+               admit.
+
+             }
+
+
+
+             assert (set_inter var_eqdec (exp_vars s) (dom_rec S'') = []).
+             { unfold subs_equiv in H.
+               remember (exp_vars s) as svars.
+
+               (* 
+                  
+                  - Any Y which is not in svars is not present in the domain of Sl by H.
+                  - By H again, I don't have Y∈svars in domain of S.
+                  - Okay, now let's say we have a Y which is not in svars in present in 
+                    domain of S''. This implies S''@Y ≠ Y. But, since Sl@Y = Y this 
+                    result in a contradiction  
+
+
+                *)
+               assert (
+
+               admit.
+
+
+             } *)
           ** assert ( σmin_equiv s (look_up X Sl)) as H_sSlX.
              {
-
-               destruct H22 as [S''].
-               unfold subs_equiv in H6.
+               
 
                
+               unfold subs_equiv in H6               
                specialize (H6 X). simpl in H6.
 
 
