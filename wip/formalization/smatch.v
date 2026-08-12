@@ -465,9 +465,12 @@ Qed.
 Lemma eq_sub_dom_eq: forall S S', S ~
 *)
 
+(** INFRASTRUCTURE LEMMAS START *)
+
+(** Set related infra lemmas *)
 
 
-(** Imprtant property of σmin_equiv that may imply preservation may not work in a bigger fragment *)
+(** More specific ones *)
 
 Lemma var_σmin_only_to_var : forall X s, σmin_equiv (VarExp X) s -> s = VarExp X.
   Admitted.
@@ -490,10 +493,11 @@ Lemma push_subst_problem : forall s t S P, set_In (equ s t) P -> set_In (equ s (
 Lemma problem_eqn_lhvar: forall P Y, set_inter var_eqdec (lhvars_Probl P) Y = [] -> forall s t, set_In (equ s t) P ->
                                                                                    set_inter var_eqdec (exp_vars s) Y = [].
 Proof.
-  intros.
-  induction P.
+  intros P.
+  induction P; intros.
   - simpl. destruct H0.
-  - admit. 
+  - simpl in H.  simpl in H0.
+
 Admitted.
 
 Lemma problem_eqn_allvar_left : forall P Y, set_inter var_eqdec Y (Problem_vars P) = [] ->
@@ -548,6 +552,9 @@ Lemma problem_vars_eqn_right : forall s t P X, set_In (equ s t) P ->
 Lemma comm_empty_inter : forall S S', set_inter var_eqdec S S' = [] ->
                                  set_inter var_eqdec S' S = [].
   Admitted.
+
+
+(** INFRASTRUCTURE LEMMAS END *)
 
 (** Statement of Preservation *)
 Lemma match_sol_preservation : forall Sl T T',
@@ -696,56 +703,8 @@ Proof.
                       ***** admit.
                       ***** apply σmin_equiv_refl.
 
-          ** 
-
-
-
-            assert ( σmin_equiv s (look_up X Sl)) as H_sSlX.
-             {
-               
-
-               
-               unfold subs_equiv in H6.              
-               specialize (H6 X). simpl in H6.
-
-
-             }
-
-             assert ( (sub_comp ((X,s) :: nil) Sl) ~:c Sl).
-             {
-               unfold subs_equiv.
-               intros.
-               case (var_eqdec X X0); intros; subst.
-               *** simpl. 
-                   destruct (var_eqdec X0 X0).
-                   **** assert (sub s Sl = s).
-                        {admit.}
-                        rewrite H4.
-                        admit. (* because of symmetry *)
-                   **** destruct n0; reflexivity.
-               *** simpl.
-                   destruct (var_eqdec X X0); intros.
-                   **** admit. (* because contradiction is there *)
-                   **** admit. (* because of reflexivity *)
-            }            
-
-          (* Now it's simple use the lemma of equal subsitutions *)
-            admit.
-
-
-            
           ** admit.
-            
-          (*
-            1. Two cases X∈t and X ~∈ t:
-            1.1) t does have X
-            1.2) t doesn't have X can be shown from H21
-
-            proof 1.1: I can show that "sub_In (equ s0 (sub t [(X,s)])) (P \ (s, X))|^^ [X,s]". This will yield s0 =σ (sub (sub t [(X,s)]) Sl). Since s doesn't share any variable with domain of Sl, (sub (sub t [X,s]) Sl) = sub t ([X,s] ∘ Sl).
-             
-          Now we need to show that, sub t ([X,s] ∘ Sl) =σ sub t Sl from the assumption "look_up X Sl =σ s 
-                
-
-          *)
-       + admit.
+     + split; eauto.
+       (*by associativity of sub comp *)
+       
 Admitted.
