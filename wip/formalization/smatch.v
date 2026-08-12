@@ -538,6 +538,15 @@ Lemma set_ext_not_in_domain : forall X X0 S s , ~ set_In X (dom_rec S) ->
 
 Lemma look_up_sub_comp_not_in_first : forall S S' X, ~set_In X (dom_rec S) ->
                                                 look_up X (sub_comp S S') = look_up X S'.
+Admitted.
+
+Lemma problem_vars_eqn_right : forall s t P X, set_In (equ s t) P ->
+                                          set_In X (exp_vars t) ->
+                                          set_In X (Problem_vars P).
+ Admitted.                                     
+
+Lemma comm_empty_inter : forall S S', set_inter var_eqdec S S' = [] ->
+                                 set_inter var_eqdec S' S = [].
   Admitted.
 
 (** Statement of Preservation *)
@@ -599,7 +608,9 @@ Proof.
   -  admit.
   -  admit.
   -  admit.
-  -  unfold match_sol in *.
+  - (* This is the hardest case where all the action happens   *)
+    
+     unfold match_sol in *.
      simpl in *.
      destruct H2 as [H21 [H22 H23]].
      rewrite H4 in H22.
@@ -610,16 +621,34 @@ Proof.
          simpl.
          unfold valid_tuple in H; simpl in H; destruct H as [H_1 H_2].
          destruct H22 as [S''].
-         assert ((look_up X (sub_comp (sub_comp S ((X,s) :: nil)) S'' )) = s) as HSS''s.
-         {
-           (* 
-              1. dom_rec S /\ exp s = ϕ (from H_1 and H2) 
-              2. dom_rec Sl /\ exp s = ϕ (from H0 and H2)
-              3. From 1 and 2, it is clear that dom_rec S'' /\ exp s = ϕ 
-              4. From 4, we have ((S ∘ [(X,s)]) ∘ S'')@X = s because S'' can't modify s  
-           *) admit.
-         }
-         admit. 
+         unfold subs_equiv in H; simpl in H.
+         apply σmin_equiv_trans with (t := sub s S'').
+         **  apply not_in_dom_same.
+             intros.
+             eapply σmin_comp_prop1.
+             3: unfold subs_equiv; apply H.
+             case (var_eqdec X X0); intros; subst.
+             pose proof (not_in_prob_lhvar_not_in_eq_left _ _ H1 _ _ H3); contradiction.
+             apply set_ext_not_in_domain.
+             eapply not_in_if_inter_empty.
+             apply H4. eapply problem_eqn_allvar_left. apply H_1. apply H3.
+             unfold not in n. unfold not. intros. symmetry in H5. contradiction.
+             eapply not_in_if_inter_empty; eauto.
+             eapply problem_eqn_lhvar with (P := P); eauto.
+             
+         ** specialize (H X).
+            rewrite look_up_sub_comp in H.
+  
+            rewrite (look_up_sub_comp_not_in_first) in H. 
+            simpl in H.
+            destruct (var_eqdec X X) in H.
+            assumption.
+            contradiction.
+            eapply not_in_if_inter_empty.
+            2: pose proof (comm_empty_inter _ _ H_1) as H_1'; exact H_1'.
+            eapply  problem_vars_eqn_right; eauto.
+            simpl. left; reflexivity. 
+            
        *  unfold valid_tuple in H.
           simpl in *.
           destruct H as [H_1 H_2].
@@ -667,54 +696,16 @@ Proof.
                       ***** admit.
                       ***** apply σmin_equiv_refl.
 
+          ** 
 
 
 
-
-
-
-
-           (*
-            assert (forall X, set_In X (exp_vars s) -> look_up X S = s) as temp_1.
-             { admit.
-
-             }
-             assert ( (forall X, set_In X (exp_vars s)) ->
-                      σmin_equiv (look_up X (sub_comp (sub_comp S ((X,s):: nil)) S'')) (VarExp X)                       ) as temp_2.
-             
-             {
-               admit.
-
-             }
-
-
-
-             assert (set_inter var_eqdec (exp_vars s) (dom_rec S'') = []).
-             { unfold subs_equiv in H.
-               remember (exp_vars s) as svars.
-
-               (* 
-                  
-                  - Any Y which is not in svars is not present in the domain of Sl by H.
-                  - By H again, I don't have Y∈svars in domain of S.
-                  - Okay, now let's say we have a Y which is not in svars in present in 
-                    domain of S''. This implies S''@Y ≠ Y. But, since Sl@Y = Y this 
-                    result in a contradiction  
-
-
-                *)
-               assert (
-
-               admit.
-
-
-             } *)
-          ** assert ( σmin_equiv s (look_up X Sl)) as H_sSlX.
+            assert ( σmin_equiv s (look_up X Sl)) as H_sSlX.
              {
                
 
                
-               unfold subs_equiv in H6               
+               unfold subs_equiv in H6.              
                specialize (H6 X). simpl in H6.
 
 
