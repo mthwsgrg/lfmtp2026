@@ -501,6 +501,12 @@ Lemma problem_eqn_allvar_left : forall P Y, set_inter var_eqdec Y (Problem_vars 
                                            set_inter var_eqdec (exp_vars s) Y = [].
 Admitted.
 
+
+Lemma problem_eqn_allvar_right : forall P Y, set_inter var_eqdec Y (Problem_vars P) = [] ->
+                                    forall s t, set_In (equ s t) P ->
+                                           set_inter var_eqdec (exp_vars t) Y = [].
+Admitted.
+
 Lemma not_dom_look_same : forall X S, ~ set_In X (dom_rec S) -> look_up X S = (VarExp X). 
  Admitted.
 
@@ -520,13 +526,20 @@ Lemma σmin_comp_prop1 : forall X S S' Sl,  ~set_In X (dom_rec S)  ->
                                       σmin_equiv (look_up X S') (VarExp X).
   Admitted.
 
-Lemma not_in_problem_not_in_eq_left : forall X P, ~set_In X (Problem_vars P) ->
+Lemma not_in_prob_lhvar_not_in_eq_left : forall X P, ~set_In X (lhvars_Probl P) ->
                                              forall s t, set_In (equ s t) P ->
                                                     ~set_In X (exp_vars s).
 Admitted.
 
- 
-  
+Lemma set_ext_not_in_domain : forall X X0 S s , ~ set_In X (dom_rec S) ->
+                                  X <> X0 ->
+                                  ~ set_In X (dom_rec (sub_comp S ((X0, s) :: nil))).
+ Admitted.
+
+Lemma look_up_sub_comp_not_in_first : forall S S' X, ~set_In X (dom_rec S) ->
+                                                look_up X (sub_comp S S') = look_up X S'.
+  Admitted.
+
 (** Statement of Preservation *)
 Lemma match_sol_preservation : forall Sl T T',
 
@@ -633,34 +646,22 @@ Proof.
                                     eapply σmin_comp_prop1.
                                     3: unfold subs_equiv; apply H.
                                     case (var_eqdec X X0); intros; subst.
-                                    pose proof (
-                                                                           
-                                    pose proof (σmin_comp_prop1 _ _ _ _                         
+                                    pose proof (not_in_prob_lhvar_not_in_eq_left _ _ H1 _ _ H3).
+                                    contradiction.
+                                    pose proof (problem_eqn_allvar_left _ _ H_1 _ _ H3).
+                                    pose proof (not_in_if_inter_empty _ _ _ H7 H8).
+                                    apply (set_ext_not_in_domain _ _ _ _ H9 n0).
+                                    eapply not_in_if_inter_empty; eauto.                               
                             ******  specialize (H X0).
                                     rewrite look_up_sub_comp in H.
-                            
-                      assert ( (forall X, set_In X (exp_vars s) ->
-                                σmin_equiv (look_up X (sub_comp (sub_comp S ((X,s):: nil)) S''))
-                                           (VarExp X))) as temp_4.
-             
-                      {
-                           admit.
-
-                      }
-
-                       assert ( (forall X, set_In X (exp_vars s) ->
-                                      σmin_equiv (look_up X S'') (VarExp X))) as temp_5.
-                      {
-                        admit.
-                      }
-                           
-                      specialize (H X0).
-                      rewrite look_up_sub_comp in H.
-                        
-                      assert (look_up X0 (sub_comp S ((X0,s) :: nil)) = s) as temp_6. {admit.}
-                      rewrite temp_6 in H.
-                      admit.
-                      
+                                    rewrite (look_up_sub_comp_not_in_first) in H.
+                                    simpl in H.
+                                    destruct (var_eqdec X0 X0) in H.
+                                    assumption.
+                                    contradiction.
+                                    eapply not_in_if_inter_empty.
+                                    apply H5.
+                                    eapply problem_eqn_allvar_right; eauto.             
                       ***** destruct n0; reflexivity.
                  **** simpl. destruct (var_eqdec X X0).
                       ***** admit.
