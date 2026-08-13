@@ -696,7 +696,11 @@ Qed.
   
 Lemma in_subcomp_second_arg : forall X S S', ~set_In X (dom_rec S) ->
                                         look_up X (sub_comp S S') = look_up X S'.
-  Admitted.
+Proof.
+  intros.
+  rewrite look_up_sub_comp.
+  rewrite not_in_dom_lookup_same; eauto.
+Qed.  
 
 Lemma σmin_comp_prop1 : forall X S S' Sl,  ~set_In X (dom_rec S)  ->
                                       ~set_In X (dom_rec Sl) ->
@@ -705,7 +709,7 @@ Lemma σmin_comp_prop1 : forall X S S' Sl,  ~set_In X (dom_rec S)  ->
 Proof.
   intros.
   unfold subs_equiv in H1; specialize (H1 X); simpl in H1.
-  rewrite <- (not_in_dom_lookup_same _ Sl); eauto.
+  rewrite <- (not_in_dom_lookup_same Sl _); eauto.
   rewrite <- (in_subcomp_second_arg _ S S'); eauto.
 Qed.
   
@@ -738,7 +742,7 @@ Lemma comm_empty_inter : forall S S', set_inter var_eqdec S S' = [] ->
                                  set_inter var_eqdec S' S = [].
 Proof.
   apply set_nocommon_3_4.
-
+Qed.
 
 (** INFRASTRUCTURE LEMMAS END *)
 
