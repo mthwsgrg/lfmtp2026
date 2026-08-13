@@ -481,15 +481,17 @@ Lemma eq_sub_dom_eq: forall S S', S ~
 The nominal development uses the third/fourth one, but the first two may be more direct to make use of things from standard library of setList.
 *) 
 
+(*
 Lemma set_nocommon_1_2 : forall S S', (forall (X: Var), set_In X S -> ~set_In X S') <-> (forall (X: Var), set_In X S' -> ~set_In X S') .
 Admitted.
-
+*)
 Lemma set_nocommon_1_3: forall S S', (forall X, set_In X S -> ~set_In X S') <-> set_inter var_eqdec S S' = [].
   intros.
   split.
   -  induction S.
 Admitted.
 
+(** This very likely not needed by some re-arrangement *)
 Lemma set_nocommon_3_4 : forall S S', set_inter var_eqdec S S' = [] <-> set_inter var_eqdec S' S = [].
 Admitted.
   
