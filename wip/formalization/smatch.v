@@ -558,12 +558,10 @@ Proof.
   apply H1; intros.
   destruct (set_nocommon_1_3 (Problem_vars P) Y) as [H4 H5].
   destruct (set_nocommon_3_4 Y (Problem_vars P)) as [H6 H7].
-  rewrite (H6 H) in H.
-  apply (H5 H _ (problem_eqn_allvar_left_in _ _ _ _ H0 H3)).
-  
-  
+  specialize (H6 H).
+  apply (H5 H6 _ (problem_eqn_allvar_left_in _ _ _ _ H0 H3)).  
+Qed.  
 
-Admitted.
 
 
 Lemma problem_eqn_allvar_right : forall P Y, set_inter var_eqdec Y (Problem_vars P) = [] ->
