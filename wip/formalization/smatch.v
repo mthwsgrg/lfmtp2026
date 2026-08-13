@@ -564,10 +564,34 @@ Qed.
 
 
 
+Lemma problem_eqn_allvar_right_in : forall P s t X, set_In (equ s t) P ->
+                                                set_In X (exp_vars t) ->
+                                                set_In X (Problem_vars P).
+Proof.
+  induction P; intros.
+  - destruct H.
+  -simpl in *.
+   destruct H.
+   + rewrite H.
+     apply set_union_intro2; apply set_union_intro1; assumption.
+   + destruct a; apply set_union_intro2; apply set_union_intro2; eapply IHP; eauto.
+Qed.     
+
+
 Lemma problem_eqn_allvar_right : forall P Y, set_inter var_eqdec Y (Problem_vars P) = [] ->
                                     forall s t, set_In (equ s t) P ->
                                            set_inter var_eqdec (exp_vars t) Y = [].
-Admitted.
+intros.
+  destruct (set_nocommon_1_3 (exp_vars t) Y) as [H1 H2].
+  apply H1; intros.
+  destruct (set_nocommon_1_3 (Problem_vars P) Y) as [H4 H5].
+  destruct (set_nocommon_3_4 Y (Problem_vars P)) as [H6 H7].
+  specialize (H6 H).
+  apply (H5 H6 _ (problem_eqn_allvar_right_in _ _ _ _ H0 H3)).  
+Qed.  
+
+  
+  
 
 Lemma not_dom_look_same : forall X S, ~ set_In X (dom_rec S) -> look_up X S = (VarExp X). 
  Admitted.
