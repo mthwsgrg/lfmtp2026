@@ -505,6 +505,7 @@ Lemma not_in_dom_same : forall s S, (forall X, set_In X (exp_vars s) -> σmin_eq
    Admitted.
 
 Lemma look_up_sub_comp: forall S S' X, look_up X (sub_comp S S') = sub (look_up X S) S'.
+(** in Substs.v, 424 *)
   Admitted.
 
 Lemma sub_subst_interaction : forall X s t S, sub s (sub_comp ((X,t) :: nil) S) = sub (sub s ((X,t)::nil)) S.
@@ -606,8 +607,16 @@ Lemma subst_same_var_nocommon : forall s S, set_inter var_eqdec (exp_vars s) (do
  (** The same exist in nominal development, Substs.v line 336 *) 
 Admitted.
 
-Lemma not_in_dom_lookup_same : forall X S, ~set_In X (dom_rec S) -> look_up X S = VarExp X.
-  Admitted.
+Lemma not_in_dom_lookup_same : forall S X, ~set_In X (dom_rec S) -> look_up X S = VarExp X.
+Proof.
+  intro S.
+  induction S; intros.
+  - simpl; reflexivity.
+  - simpl in *.
+    destruct a as (Y, t).
+    destruct (var_eqdec Y X); subst.
+    +  
+  
 
 Lemma in_subcomp_second_arg : forall X S S', ~set_In X (dom_rec S) ->
                                         look_up X (sub_comp S S') = look_up X S'.
