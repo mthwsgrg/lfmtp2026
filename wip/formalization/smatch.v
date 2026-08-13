@@ -425,20 +425,19 @@ Proof.
   - apply σmin_equiv_lam; eauto.
   - apply σmin_equiv_asubst; eauto.
   - unfold subs_equiv in H.
-    specialize (H X).
-    (*case (var_eqdec X0 X); intros.
-    + assumption.
-    + constructor. *) admit.
+    specialize (H X). now simpl in H.
   - constructor.
   - constructor.
   - apply σmin_equivs_cons; eauto.
   - apply σmin_equivs_comp; eauto.
-Admitted. 
+Qed. 
 
 
 Lemma subst_sub_σmin_gen_left : (forall s S S', S ~:c S'  -> σmin_equiv (sub s S)
                                                          (sub s S')).
-Admitted.  
+Proof.
+  apply subst_sub_σmin_gen.
+Qed.
 
 Lemma subst_sub_σmin : (forall s t t' X, σmin_equiv t t' -> σmin_equiv (sub s ((X,t) :: nil))
                                                         (sub s ((X,t') :: nil))) /\
@@ -481,11 +480,11 @@ Lemma eq_sub_dom_eq: forall S S', S ~
 The nominal development uses the third/fourth one, but the first two may be more direct to make use of things from standard library of setList.
 *) 
 
-(*
-Lemma set_nocommon_1_2 : forall S S', (forall (X: Var), set_In X S -> ~set_In X S') <-> (forall (X: Var), set_In X S' -> ~set_In X S') .
-Admitted.
- *)
 
+Lemma set_nocommon_1_2 : forall S S', (forall (X: Var), set_In X S -> ~set_In X S') <-> (forall (X: Var), set_In X S' -> ~set_In X S) .
+  intros.
+  split ; intros; unfold not in *; intros;now specialize (H _ H1). 
+Qed.
 
 Lemma set_nocommon_1_3: forall S S', (forall X, set_In X S -> ~set_In X S') <-> set_inter var_eqdec S S' = [].
   intros.
@@ -514,14 +513,14 @@ Lemma set_nocommon_1_3: forall S S', (forall X, set_In X S -> ~set_In X S') <-> 
         assumption.      
 Qed.
 
-(** This very likely not needed by some re-arrangement *)
+
 Lemma set_nocommon_3_4 : forall S S', set_inter var_eqdec S S' = [] <-> set_inter var_eqdec S' S = [].
-Admitted.
+Proof.
+  intros S S'.
+  split; intros; apply set_nocommon_1_3; apply set_nocommon_1_2;    now apply set_nocommon_1_3.  
+Qed. 
   
 (** More specific ones *)
-
-Lemma var_in_exp : forall X s, set_In X (exp_vars s) \/ ~set_In X (exp_vars s).
-  Admitted.
 
 Lemma not_in_dom_same_both : (forall s S, (forall X, set_In X (exp_vars s) -> σmin_equiv (look_up X S) (VarExp X)) -> σmin_equiv  s (sub s S))
                              /\
@@ -879,7 +878,7 @@ Proof.
           simpl in *.
           destruct H as [H_1 H_2].
           destruct H22 as [S''].
-          case (var_in_exp X t); intros.
+          case (set_In_dec var_eqdec X (exp_vars t)) as [H5 | H5]; intros.
           ** apply σmin_equiv_trans with (t := (sub t  (sub_comp ((X,s) :: nil) Sl ))).
              *** apply σmin_equiv_trans with (t := (sub (sub t ((X,s)::nil)) Sl)).
                  **** apply H21.
