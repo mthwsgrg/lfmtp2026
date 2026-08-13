@@ -501,8 +501,56 @@ Lemma var_σmin_only_to_var : forall X s, σmin_equiv (VarExp X) s -> s = VarExp
 Lemma var_in_exp : forall X s, set_In X (exp_vars s) \/ ~set_In X (exp_vars s).
   Admitted.
 
-Lemma not_in_dom_same : forall s S, (forall X, set_In X (exp_vars s) -> σmin_equiv (look_up X S) (VarExp X)) -> σmin_equiv  s (sub s S).
-   Admitted.
+Lemma not_in_dom_same_both : (forall s S, (forall X, set_In X (exp_vars s) -> σmin_equiv (look_up X S) (VarExp X)) -> σmin_equiv  s (sub s S))
+                             /\
+                               (forall σ S, (forall X, set_In X (exp_vars_s σ) -> σmin_equiv (look_up X S) (VarExp X)) -> σmin_equivs σ (sub_s σ S)).
+  apply sigma_ind2; intros.
+  -  simpl. apply σmin_equiv_refl.
+  -  simpl. apply σmin_equiv_app.
+     + apply H. intros.
+       simpl in H1. apply H1.
+       apply set_union_intro. left. assumption.
+     + apply H0. intros.
+       simpl in H1. apply H1.
+       apply set_union_intro. right. assumption.
+  -  simpl. apply σmin_equiv_lam.
+     apply H. intros.
+     simpl in H0. apply H0; eauto.
+  -  simpl. apply σmin_equiv_asubst.
+     + apply H. intros.
+       simpl in H1. apply H1.
+       apply set_union_intro. left. assumption. 
+     + apply H0. intros.
+       simpl in H1. apply H1.
+       apply set_union_intro. right. assumption.
+  - simpl. simpl in H.
+    specialize (H X).
+    apply σmin_equiv_sym.
+    apply H. left. reflexivity.
+  - simpl. apply σmin_equivs_refl.
+  - simpl. apply σmin_equivs_refl.
+  - simpl. apply σmin_equivs_cons.
+    + apply H. intros.
+       simpl in H1. apply H1.
+       apply set_union_intro. left. assumption.
+     + apply H0. intros.
+       simpl in H1. apply H1.
+       apply set_union_intro. right. assumption.
+  - simpl. apply σmin_equivs_comp.
+    + apply H. intros.
+       simpl in H1. apply H1.
+       apply set_union_intro. left. assumption.
+     + apply H0. intros.
+       simpl in H1. apply H1.
+       apply set_union_intro. right. assumption.
+Qed.
+
+Lemma not_in_dom_same_exp : forall s S, (forall X, set_In X (exp_vars s) -> σmin_equiv (look_up X S) (VarExp X)) -> σmin_equiv  s (sub s S).
+Proof.
+  apply not_in_dom_same_both.
+Qed.  
+  
+  
 
 Lemma look_up_sub_comp: forall S S' X, look_up X (sub_comp S S') = sub (look_up X S) S'.
 (** in Substs.v, 424 *)
@@ -736,7 +784,7 @@ Proof.
          destruct H22 as [S''].
          unfold subs_equiv in H; simpl in H.
          apply σmin_equiv_trans with (t := sub s S'').
-         **  apply not_in_dom_same.
+         **  apply not_in_dom_same_exp.
              intros.
              eapply σmin_comp_prop1.
              3: unfold subs_equiv; apply H.
@@ -783,7 +831,7 @@ Proof.
                             rewrite (subst_same_var_nocommon _ _ H6).
                             unfold subs_equiv in H; simpl in H.
                             apply σmin_equiv_trans with (t := sub s S'').
-                            ******  apply not_in_dom_same.
+                            ******  apply not_in_dom_same_exp.
                                     intros.
                                     eapply σmin_comp_prop1.
                                     3: unfold subs_equiv; apply H.
