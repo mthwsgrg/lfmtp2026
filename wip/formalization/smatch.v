@@ -592,13 +592,14 @@ Qed.
 
   
   
-
-
-
 Lemma not_in_if_inter_empty : forall X S S',   set_In X S ->
                                           set_inter var_eqdec S S' = [] ->
                                           ~ set_In X S'.
- Admitted.
+  
+Proof.
+  intros.
+  destruct (set_nocommon_1_3 S S') as [H1 H2]; eauto.
+Qed.
 
 Lemma subst_same_var_nocommon : forall s S, set_inter var_eqdec (exp_vars s) (dom_rec S) = [] ->
                                        sub s S = s.
@@ -609,6 +610,7 @@ Lemma σmin_comp_prop1 : forall X S S' Sl,  ~set_In X (dom_rec S)  ->
                                       (sub_comp S S') ~:c Sl ->
                                       σmin_equiv (look_up X S') (VarExp X).
   Admitted.
+
 
 Lemma not_in_prob_lhvar_not_in_eq_left : forall X P, ~set_In X (lhvars_Probl P) ->
                                              forall s t, set_In (equ s t) P ->
