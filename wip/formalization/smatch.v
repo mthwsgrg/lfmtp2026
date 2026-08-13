@@ -559,7 +559,9 @@ Lemma look_up_sub_comp: forall S S' X, look_up X (sub_comp S S') = sub (look_up 
   Admitted.
 
 Lemma sub_subst_interaction : forall X s t S, sub s (sub_comp ((X,t) :: nil) S) = sub (sub s ((X,t)::nil)) S.
-  Admitted.
+Proof.
+  intros.
+Admitted.  
 
 Lemma push_subst_problem : forall s t S P, set_In (equ s t) P -> set_In (equ s (sub t S)) (P |^^ S).
   Admitted.
@@ -721,7 +723,13 @@ Qed.
 Lemma not_in_prob_lhvar_not_in_eq_left : forall X P, ~set_In X (lhvars_Probl P) ->
                                              forall s t, set_In (equ s t) P ->
                                                     ~set_In X (exp_vars s).
-Admitted.
+Proof.
+  intros.
+  unfold not in *.
+  intros.
+  apply H. eapply problem_eqn_lhvar_in; eauto.
+Qed.
+    
 
 Lemma set_ext_not_in_domain : forall X X0 S s , ~ set_In X (dom_rec S) ->
                                   X <> X0 ->
