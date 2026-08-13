@@ -511,6 +511,7 @@ Lemma push_subst_problem : forall s t S P, set_In (equ s t) P -> set_In (equ s (
 
 
 Lemma problem_eqn_lhvar_in : forall P s t X, set_In (equ s t) P -> set_In X (exp_vars s) -> set_In X (lhvars_Probl P).
+Proof.  
   induction P; intros.
   - destruct H.
   - simpl in *.
@@ -530,10 +531,26 @@ Proof.
   apply (H5 H _ (problem_eqn_lhvar_in _ _ _ _ H0 H3)).
 Qed.  
   
+Lemma problem_eqn_allvar_left_in : forall P s t X, set_In (equ s t) P ->
+                                                set_In X (exp_vars s) ->
+                                                set_In X (Problem_vars P).
+Proof.
+  induction P; intros.
+  - destruct H.
+  -simpl in *.
+   destruct H.
+   + rewrite H.
+     apply set_union_intro1; assumption.
+   + destruct a; apply set_union_intro2; apply set_union_intro2; eapply IHP; eauto.
+Qed.     
+     
   
 Lemma problem_eqn_allvar_left : forall P Y, set_inter var_eqdec Y (Problem_vars P) = [] ->
                                     forall s t, set_In (equ s t) P ->
                                            set_inter var_eqdec (exp_vars s) Y = [].
+Proof.
+  
+
 Admitted.
 
 
