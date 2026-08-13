@@ -42,6 +42,9 @@ Scheme exp_ind2 := Induction for exp Sort Prop
 with sexp_ind2 := Induction for sexp Sort Prop.
 Combined Scheme sigma_ind2 from exp_ind2, sexp_ind2.
 
+Scheme exp_ind3 := Induction for exp Sort Prop.
+Scheme sexp_ind4 := Induction for sexp Sort Prop.
+
 Notation "s [ σ ]" := (Inst s σ).
 Notation "σ >> τ" := (Comp σ τ) (at level 56, right associativity).
 Notation "s .: σ" := (Cons s σ) (at level 58).
@@ -356,7 +359,9 @@ Compute dom_rec (sub_comp S1 S2).
 
 (** Inductive definition of σmin-procedure *)
 Inductive smatch : Tuple -> Tuple -> Prop := 
-| smatch_refl : forall S P s, set_In (equ s s) P -> smatch (S,P) (S,P\(equ s s))
+| smatch_refl_1 : forall S P s, set_In (equ s s) P -> smatch (S,P) (S,P\(equ s s))
+| smatch_refl_2 : forall S P σ, set_In (equ_s σ σ) P -> smatch (S,P) (S, P\(equ_s σ σ))
+                    
 | smatch_App : forall S P s t s' t', set_In (equ (App s t) (App s' t')) P ->
                                 smatch (S,P) (S, (P |+ (equ s s') |+ (equ t t'))\ (equ (App s t) (App s' t') ))
 | smatch_Lam : forall S P s s', set_In (equ (Lam s) (Lam s')) P ->
@@ -397,7 +402,8 @@ Definition valid_tuple (T : Tuple) :=
 Definition match_sol (S' :Subst) (T : Tuple) :=
   let S := (fst T) in
   let P := (snd T) in
-  ( forall s t, set_In (equ s t) P ->  σmin_equiv s (sub t S') ) /\         
+  ( forall s t, set_In (equ s t) P ->  σmin_equiv s (sub t S') ) /\
+  ( forall σ τ, set_In (equ_s σ τ) P -> σmin_equivs σ (sub_s τ S')) /\  
   ( exists S'', (sub_comp S S'') ~:c S' ) /\
   set_inter var_eqdec (lhvars_Probl P) (dom_rec S') = []. 
 
@@ -406,8 +412,6 @@ Lemma problem_lhvars_exp_empty (s: exp) (P: Problem) (S: Subst):
   forall t, set_inter var_eqdec (lhvars_Probl P) (dom_rec S) = [] -> set_In (equ s t) P -> set_inter var_eqdec (exp_vars s) (dom_rec S) = [].
 Admitted.
 
-Lemma exp_sub_dom_inter_empty (s: exp) (S: Subst) : set_inter var_eqdec (exp_vars s) (dom_rec S) = [] -> sub s S = s.
-Admitted.
 
 (*
 Lemma sub_comp_left_op_preced (S : Subst) (X: Var) : forall S', set_In X (dom_rec S) ->
@@ -688,8 +692,17 @@ Lemma subst_same_var_nocommon : forall s S, set_inter var_eqdec (exp_vars s) (do
 Admitted.
 
 
+Lemma inter_dom_term_vars_iff : forall t S,
+      set_inter var_eqdec (exp_vars t) (dom_rec S) = [] <-> sub t S = t.
+Proof.
+Admitted.   
   
 
+
+Lemma not_occurs : forall X t1 t2, (~ set_In X (exp_vars t1)) -> sub t1 ((X,t2) :: nil) = t1.
+Proof.
+Admitted.
+  
 Lemma In_dom_eq_dom_rec : forall X S, X € S <-> set_In X (dom_rec S).
   (** line 267 Substs.v *)
 Admitted.
@@ -791,7 +804,12 @@ Proof.
 Qed.  
 
 
-(** sub composition is also needed which is present in 441 substs.v *)
+Lemma subst_comp_assoc: forall S1 S2 S3 t, sub t (sub_comp S1 (sub_comp S2 S3)) =
+                                       sub t  (sub_comp (sub_comp S1 S2) S3).
+
+Proof.
+ Admitted.
+(** in 441 substs.v *)
 
 Lemma comm_empty_inter : forall S S', set_inter var_eqdec S S' = [] ->
                                  set_inter var_eqdec S' S = [].
@@ -799,7 +817,32 @@ Proof.
   apply set_nocommon_3_4.
 Qed.
 
+
+Lemma s_noteq_app : forall s t, s = App s t -> False.
+  intro s.
+  induction s using exp_ind3; intros; try (discriminate H).
+  injection H as H_l H_r. eauto.
+Qed.
+
+Lemma t_noteq_app : forall t s, t = App s t -> False.
+  intro t.
+  induction t using exp_ind3; intros; try (discriminate H).
+  injection H as H_l H_r. eauto.
+Qed.
+
+Lemma s_noteq_lam : forall s, s = Lam s -> False.
+Admitted.  
+
+Lemma s_noteq_inst : forall s σ, s = Inst s σ -> False.
+Proof.
+  intro s.
+  induction s using exp_ind3; intros; try (discriminate H).
+  injection H as H_l H_r. eauto.
+Qed.  
+
 (** INFRASTRUCTURE LEMMAS END *)
+
+
 
 (** Statement of Preservation *)
 Lemma match_sol_preservation : forall Sl T T',
@@ -816,32 +859,94 @@ Proof.
   induction H1.
   - unfold match_sol in *.
     simpl in *.
-    destruct H2 as [H21 [H22 H23]].
+    destruct H2 as [H21 [H22 [H23 H24]]].
     split.
     + intros.
       case (Equation_eqdec (equ s0 t) (equ s s)); intros.
       * inversion e; subst.
-        pose proof (problem_lhvars_exp_empty _ _ _ _ H0 H1) as HsSl.
-        pose proof (exp_sub_dom_inter_empty _ _ HsSl) as eqsSl.
+        pose proof (problem_eqn_lhvar _ _  H0 _ _ H1) as HsSl.
+        pose proof (subst_same_var_nocommon _ _ HsSl) as eqsSl.
         rewrite eqsSl.
         constructor.
-      * apply H21. apply (set_remove_3 Equation_eqdec P H2 n).         
-    + split; assumption.
+      * apply H21. apply (set_remove_3 Equation_eqdec P H2 n).
+    + split.
+     *  intros.
+        case (Equation_eqdec (equ_s σ τ) (equ s s)); intros.
+        ** inversion e; subst.
+        ** apply H22. apply (set_remove_3 Equation_eqdec); eauto. 
+       
+     * split; assumption.
+
+  - admit.     
+       
+  - unfold match_sol in *.
+    simpl in *.
+    destruct H2 as [H21 [H22 [H23 H24]]].
+    split.
+    + intros.
+      case (Equation_eqdec (equ s0 t0) (equ (App s t) (App s' t'))); intros.
+      * inversion e; subst.
+        simpl.
+        apply σmin_equiv_app; apply H21.
+        **  apply (set_remove_3 Equation_eqdec).
+            apply set_add_intro1.
+            now apply set_add_intro2.
+            unfold not. intro. inversion H3; subst.
+            eapply s_noteq_app. exact H5.            
+        ** apply (set_remove_3 Equation_eqdec).
+            now apply set_add_intro2.
+            unfold not. intro. inversion H3; subst.
+            eapply t_noteq_app. exact H5.            
+      * apply H21.
+        apply (set_remove_3 Equation_eqdec); eauto.
+        apply set_add_intro1.
+        apply set_add_intro1.
+        apply H2.
+    + split. assumption.
+  (* Lam *)    
   - unfold match_sol in *.
     simpl in *.
     destruct H2 as [H21 [H22 H23]].
     split.
     + intros.
-      case (Equation_eqdec (equ s0 t0) (equ (App s t) (App s' t'))); intros.
+      case (Equation_eqdec (equ s0 t) (equ (Lam s) (Lam s'))); intros.
       * inversion e; subst.
         simpl. 
-        apply σmin_equiv_app; apply H21.
-        **  admit.
-        **  admit.
-      * apply H21. admit.         
+        apply σmin_equiv_lam; apply H21.
+        apply (set_remove_3 Equation_eqdec).  
+        now apply set_add_intro2.
+        unfold not. intro. inversion H3; subst.
+        eapply s_noteq_lam. exact H5.              
+      * apply H21.
+        apply (set_remove_3 Equation_eqdec); eauto.
+        now apply set_add_intro1.
+     + split; assumption.
+  - (* inst *)
+    unfold match_sol in *.
+    simpl in *.
+    destruct H2 as [H21 [H22 H23]].
+    split.
+    + intros.
+      case (Equation_eqdec (equ s0 t) (equ (s [σ]) (s' [σ']))); intros.
+      * inversion e; subst.
+        simpl. 
+        apply σmin_equiv_asubst. apply H21.
+        **  apply (set_remove_3 Equation_eqdec).
+            apply set_add_intro1.
+            now apply set_add_intro2.
+            unfold not. intro. inversion H3; subst.
+            eapply s_noteq_app. exact H5.            
+        ** apply (set_remove_3 Equation_eqdec).
+            now apply set_add_intro2.
+            unfold not. intro. inversion H3; subst.
+            eapply t_noteq_app. exact H5.            
+      * apply H21.
+        apply (set_remove_3 Equation_eqdec); eauto.
+        apply set_add_intro1.
+        apply set_add_intro1.
+        apply H2.
     + split; assumption.
-  - admit.
-  - admit.
+
   - admit.
   - admit.
   - unfold match_sol in *.
@@ -950,8 +1055,16 @@ Proof.
 
           ** apply H21. 
              apply (set_remove_3 Equation_eqdec) with (b:= equ s (VarExp X))  in H2.
-                     
+             apply (push_subst_problem) with (S := (X,s)::nil) in H2. 2: assumption.
+             simpl in H2.
+             rewrite <- not_occurs with (t1 := t) (t2:= s) (X:=X).
+             apply H2.
+             apply H5.
+                                 
      + split; eauto.
-       (*by associativity of sub comp *)
-       
+       destruct H22 as [S''].
+       unfold subs_equiv in *.
+       exists (sub_comp ((X,s) :: nil) S'').
+       intros.
+       specialize (H2 X0). now rewrite <- subst_comp_assoc in H2.       
 Admitted.
