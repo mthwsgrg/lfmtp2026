@@ -476,19 +476,23 @@ Lemma eq_sub_dom_eq: forall S S', S ~
 1. ∀ (X: A), set_In X S → ~set_In X S' 
 2. ∀ (X: A), set_In X S' → ~set_In X S
 3. set_inter A_eqdec S S' = []
+4. set_inter A_eqdec S' S = []
 
-The nominal development uses the third one, but the first two may be more direct to make use of things from standard library of setList.
+The nominal development uses the third/fourth one, but the first two may be more direct to make use of things from standard library of setList.
 *) 
 
-Lemma set_no_common : forall S S', (forall (X: Var), set_In X S -> ~set_In X S') <-> (forall (X: Var), set_In X S' -> ~set_In X S') .
+Lemma set_nocommon_1_2 : forall S S', (forall (X: Var), set_In X S -> ~set_In X S') <-> (forall (X: Var), set_In X S' -> ~set_In X S') .
 Admitted.
 
-Lemma set_inter_eq : forall S S', (forall X, set_In X S -> ~set_In X S') <-> set_inter var_eqdec S S' = [].
+Lemma set_nocommon_1_3: forall S S', (forall X, set_In X S -> ~set_In X S') <-> set_inter var_eqdec S S' = [].
   intros.
   split.
   -  induction S.
-Admitted.     
+Admitted.
 
+Lemma set_nocommon_3_4 : forall S S', set_inter var_eqdec S S' = [] <-> set_inter var_eqdec S' S = [].
+Admitted.
+  
 (** More specific ones *)
 
 Lemma var_σmin_only_to_var : forall X s, σmin_equiv (VarExp X) s -> s = VarExp X.
@@ -525,9 +529,9 @@ Lemma problem_eqn_lhvar: forall P Y, set_inter var_eqdec (lhvars_Probl P) Y = []
                                                                                    set_inter var_eqdec (exp_vars s) Y = [].
 Proof.
   intros.
-  destruct (set_inter_eq (exp_vars s) Y) as [H1 H2].
+  destruct (set_nocommon_1_3 (exp_vars s) Y) as [H1 H2].
   apply H1; intros.
-  destruct (set_inter_eq (lhvars_Probl P) Y) as [H4 H5].
+  destruct (set_nocommon_1_3 (lhvars_Probl P) Y) as [H4 H5].
   apply (H5 H _ (problem_eqn_lhvar_in _ _ _ _ H0 H3)).
 Qed.  
   
@@ -549,6 +553,14 @@ Lemma problem_eqn_allvar_left : forall P Y, set_inter var_eqdec Y (Problem_vars 
                                     forall s t, set_In (equ s t) P ->
                                            set_inter var_eqdec (exp_vars s) Y = [].
 Proof.
+ intros.
+  destruct (set_nocommon_1_3 (exp_vars s) Y) as [H1 H2].
+  apply H1; intros.
+  destruct (set_nocommon_1_3 (Problem_vars P) Y) as [H4 H5].
+  destruct (set_nocommon_3_4 Y (Problem_vars P)) as [H6 H7].
+  rewrite (H6 H) in H.
+  apply (H5 H _ (problem_eqn_allvar_left_in _ _ _ _ H0 H3)).
+  
   
 
 Admitted.
