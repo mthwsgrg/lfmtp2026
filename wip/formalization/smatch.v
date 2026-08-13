@@ -236,8 +236,8 @@ Fixpoint subs_Problem (P : Problem) (S : Subst) : Problem :=
 Fixpoint subs_Problem_right (P : Problem) (S : Subst) : Problem :=
   match P with
     | [] => []
-    | (equ s t )::P0 => (equ s (sub t S))::(subs_Problem P0 S)
-    | (equ_s σ τ )::P0 => (equ_s σ (sub_s τ S))::(subs_Problem P0 S) 
+    | (equ s t )::P0 => (equ s (sub t S))::(subs_Problem_right P0 S)
+    | (equ_s σ τ )::P0 => (equ_s σ (sub_s τ S))::(subs_Problem_right P0 S) 
   end.
 
 
@@ -582,7 +582,16 @@ Lemma subst_comp_expand : forall s S1 S2, sub s (sub_comp S1 S2) = sub (sub s S1
 Admitted.
 
 Lemma push_subst_problem : forall s t S P, set_In (equ s t) P -> set_In (equ s (sub t S)) (P |^^ S).
-  Admitted.
+Proof.
+  intros.
+  induction P.
+  - destruct H.
+  - simpl in *; subst.
+    destruct H.
+    + rewrite H.
+      simpl. now left.
+    + destruct a; simpl; right; now apply IHP.
+Qed.     
 
 
 Lemma problem_eqn_lhvar_in : forall P s t X, set_In (equ s t) P -> set_In X (exp_vars s) -> set_In X (lhvars_Probl P).
@@ -705,7 +714,15 @@ Lemma not_In_dom_lookup : forall X S, ~ In_dom X S -> look_up X S = (VarExp X).
   case (exp_eqdec (look_up X S) (VarExp X)); intros.
   assumption. contradiction.
 Qed.
-  
+
+
+Lemma not_In_dom_lookup_flip : forall X S,  look_up X S = (VarExp X) -> ~ In_dom X S.
+  intros.
+  unfold In_dom. simpl.
+  unfold not in *.
+  now intros.
+Qed.
+
 
 Lemma not_in_dom_lookup_same : forall S X, ~set_In X (dom_rec S) -> look_up X S = VarExp X.
 Proof.
@@ -752,16 +769,26 @@ Qed.
 Lemma set_ext_not_in_domain : forall X X0 S s , ~ set_In X (dom_rec S) ->
                                   X <> X0 ->
                                   ~ set_In X (dom_rec (sub_comp S ((X0, s) :: nil))).
- Admitted.
+Proof.
+  intros.
+  apply In_dom_eq_dom_flip.
+  apply not_In_dom_lookup_flip.
+  rewrite look_up_sub_comp.
+  apply In_dom_eq_dom_flip in H.
+  apply not_In_dom_lookup in H.
+  rewrite H. simpl.
+  destruct (var_eqdec X0 X).
+  - symmetry in e. contradiction.
+  - reflexivity.
+Qed.  
+  
 
 Lemma look_up_sub_comp_not_in_first : forall S S' X, ~set_In X (dom_rec S) ->
                                                 look_up X (sub_comp S S') = look_up X S'.
-Admitted.
-
-Lemma problem_vars_eqn_right : forall s t P X, set_In (equ s t) P ->
-                                          set_In X (exp_vars t) ->
-                                          set_In X (Problem_vars P).
- Admitted.                                     
+Proof.
+  intros.
+  now apply in_subcomp_second_arg.
+Qed.  
 
 
 (** sub composition is also needed which is present in 441 substs.v *)
@@ -871,7 +898,7 @@ Proof.
             contradiction.
             eapply not_in_if_inter_empty.
             2: pose proof (comm_empty_inter _ _ H_1) as H_1'; exact H_1'.
-            eapply  problem_vars_eqn_right; eauto.
+            eapply  problem_eqn_allvar_right_in; eauto.
             simpl. left; reflexivity. 
             
        *  unfold valid_tuple in H.
@@ -918,10 +945,12 @@ Proof.
                                     eapply problem_eqn_allvar_right; eauto.             
                       ***** destruct n0; reflexivity.
                  **** simpl. destruct (var_eqdec X X0).
-                      ***** admit.
+                      ***** contradiction.
                       ***** apply σmin_equiv_refl.
 
-          ** admit.
+          ** apply H21. 
+             apply (set_remove_3 Equation_eqdec) with (b:= equ s (VarExp X))  in H2.
+                     
      + split; eauto.
        (*by associativity of sub comp *)
        
