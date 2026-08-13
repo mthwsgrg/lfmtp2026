@@ -603,7 +603,8 @@ Qed.
 
 Lemma subst_same_var_nocommon : forall s S, set_inter var_eqdec (exp_vars s) (dom_rec S) = [] ->
                                        sub s S = s.
- Admitted.  
+ (** The same exist in nominal development *) 
+Admitted.
 
 Lemma σmin_comp_prop1 : forall X S S' Sl,  ~set_In X (dom_rec S)  ->
                                       ~set_In X (dom_rec Sl) ->
