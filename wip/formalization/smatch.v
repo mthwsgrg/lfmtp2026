@@ -484,21 +484,41 @@ The nominal development uses the third/fourth one, but the first two may be more
 (*
 Lemma set_nocommon_1_2 : forall S S', (forall (X: Var), set_In X S -> ~set_In X S') <-> (forall (X: Var), set_In X S' -> ~set_In X S') .
 Admitted.
-*)
+ *)
+
+
 Lemma set_nocommon_1_3: forall S S', (forall X, set_In X S -> ~set_In X S') <-> set_inter var_eqdec S S' = [].
   intros.
   split.
-  -  induction S.
-Admitted.
+  -  revert S'. induction S; intros.
+     +  now simpl.
+     +  simpl.
+        specialize (H a) as H_a.
+        simpl in H_a. specialize (H_a (or_introl eq_refl)).
+        apply (set_mem_complete2 var_eqdec) in H_a.
+        rewrite H_a.
+        apply IHS; intros.
+        apply H. simpl. now right.     
+  - revert S'.
+    induction S; intros.
+    + destruct H0.
+    + simpl in *.
+      destruct H0.
+      * subst.
+        destruct (set_mem var_eqdec X S') eqn: HEqn.
+        inversion H.
+        now apply (set_mem_complete1 var_eqdec).
+      * apply IHS; eauto.
+        destruct (set_mem var_eqdec a S').
+        inversion H.
+        assumption.      
+Qed.
 
 (** This very likely not needed by some re-arrangement *)
 Lemma set_nocommon_3_4 : forall S S', set_inter var_eqdec S S' = [] <-> set_inter var_eqdec S' S = [].
 Admitted.
   
 (** More specific ones *)
-
-Lemma var_σmin_only_to_var : forall X s, σmin_equiv (VarExp X) s -> s = VarExp X.
-  Admitted.
 
 Lemma var_in_exp : forall X s, set_In X (exp_vars s) \/ ~set_In X (exp_vars s).
   Admitted.
