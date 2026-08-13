@@ -675,27 +675,25 @@ Proof.
      specialize (contrap _ _ H1); eauto.
 Qed. 
 
-(* Probably not needed anymore 
+ 
 Lemma not_In_dom_lookup : forall X S, ~ In_dom X S -> look_up X S = (VarExp X).
   intros.
   unfold In_dom in H. simpl in H.
   unfold not in H.
   case (exp_eqdec (look_up X S) (VarExp X)); intros.
   assumption. contradiction.
-Qed. *)
+Qed.
   
 
 Lemma not_in_dom_lookup_same : forall S X, ~set_In X (dom_rec S) -> look_up X S = VarExp X.
 Proof.
-  intro S.
-  induction S; intros.
-  - simpl; reflexivity.
-  - simpl in *.
-    destruct a as (Y, t).
-    destruct (var_eqdec Y X); subst.
-    + 
-Admitted.  
+  intros.
+  apply not_In_dom_lookup.
+  now apply In_dom_eq_dom_flip.
+Qed.  
 
+
+  
 Lemma in_subcomp_second_arg : forall X S S', ~set_In X (dom_rec S) ->
                                         look_up X (sub_comp S S') = look_up X S'.
   Admitted.
