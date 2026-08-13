@@ -469,8 +469,14 @@ Lemma eq_sub_dom_eq: forall S S', S ~
 
 (** Set related infra lemmas *)
 
+Lemma set_no_common : forall S S', (forall (X: Var), set_In X S -> ~set_In X S') <-> (forall (X: Var), set_In X S' -> ~set_In X S') .
+Admitted.
+
 Lemma set_inter_eq : forall S S', (forall X, set_In X S -> ~set_In X S') <-> set_inter var_eqdec S S' = [].
-  Admitted.
+  intros.
+  split.
+  -  induction S.
+Admitted.     
 
 (** More specific ones *)
 
@@ -493,9 +499,16 @@ Lemma push_subst_problem : forall s t S P, set_In (equ s t) P -> set_In (equ s (
   Admitted.
 
 
-Lemma problem_eqn_lhvar_in : forall s t X P, set_In (equ s t) P -> set_In X (exp_vars s) -> set_In X (lhvars_Probl P).
-  Admitted.
-
+Lemma problem_eqn_lhvar_in : forall P s t X, set_In (equ s t) P -> set_In X (exp_vars s) -> set_In X (lhvars_Probl P).
+  induction P; intros.
+  - destruct H.
+  - simpl in *.
+    destruct H.
+    +  rewrite H.
+       apply set_union_intro1; assumption.
+    + destruct a; apply set_union_intro2; eapply IHP; eauto.
+Qed.
+        
 Lemma problem_eqn_lhvar: forall P Y, set_inter var_eqdec (lhvars_Probl P) Y = [] -> forall s t, set_In (equ s t) P ->
                                                                                    set_inter var_eqdec (exp_vars s) Y = [].
 Proof.
