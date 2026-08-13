@@ -469,7 +469,16 @@ Lemma eq_sub_dom_eq: forall S S', S ~
 
 (** Set related infra lemmas *)
 
-(** Equivalence between three different characterisation to express that two sets don't share the same things. I can use any one of them. *) 
+(** 
+
+ The following are equivalent that express two sets S and S' don't share have any elements in common.
+
+1. ∀ (X: A), set_In X S → ~set_In X S' 
+2. ∀ (X: A), set_In X S' → ~set_In X S
+3. set_inter A_eqdec S S' = []
+
+The nominal development uses the third one, but the first two may be more direct to make use of things from standard library of setList.
+*) 
 
 Lemma set_no_common : forall S S', (forall (X: Var), set_In X S -> ~set_In X S') <-> (forall (X: Var), set_In X S' -> ~set_In X S') .
 Admitted.
