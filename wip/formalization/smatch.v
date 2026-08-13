@@ -650,10 +650,40 @@ Proof.
   destruct (set_nocommon_1_3 S S') as [H1 H2]; eauto.
 Qed.
 
+
 Lemma subst_same_var_nocommon : forall s S, set_inter var_eqdec (exp_vars s) (dom_rec S) = [] ->
                                        sub s S = s.
  (** The same exist in nominal development, Substs.v line 336 *) 
 Admitted.
+
+
+  
+
+Lemma In_dom_eq_dom_rec : forall X S, X € S <-> set_In X (dom_rec S).
+  (** line 267 Substs.v *)
+Admitted.
+
+Lemma In_dom_eq_dom_flip : forall X S, ~ In_dom X S <-> ~ set_In X (dom_rec S).
+Proof.
+  intros.
+  destruct (In_dom_eq_dom_rec X S) as [H1 H2].
+  assert (forall (P Q: Prop), (P -> Q) -> (~Q -> ~P)) as contrap. {eauto.}.
+  split.
+  -  intros.
+     specialize (contrap _ _ H2); eauto.
+  -  intros.
+     specialize (contrap _ _ H1); eauto.
+Qed. 
+
+(* Probably not needed anymore 
+Lemma not_In_dom_lookup : forall X S, ~ In_dom X S -> look_up X S = (VarExp X).
+  intros.
+  unfold In_dom in H. simpl in H.
+  unfold not in H.
+  case (exp_eqdec (look_up X S) (VarExp X)); intros.
+  assumption. contradiction.
+Qed. *)
+  
 
 Lemma not_in_dom_lookup_same : forall S X, ~set_In X (dom_rec S) -> look_up X S = VarExp X.
 Proof.
@@ -663,8 +693,8 @@ Proof.
   - simpl in *.
     destruct a as (Y, t).
     destruct (var_eqdec Y X); subst.
-    +  
-  
+    + 
+Admitted.  
 
 Lemma in_subcomp_second_arg : forall X S S', ~set_In X (dom_rec S) ->
                                         look_up X (sub_comp S S') = look_up X S'.
@@ -703,9 +733,13 @@ Lemma problem_vars_eqn_right : forall s t P X, set_In (equ s t) P ->
                                           set_In X (Problem_vars P).
  Admitted.                                     
 
+
+(** sub composition is also needed which is present in 441 substs.v *)
+
 Lemma comm_empty_inter : forall S S', set_inter var_eqdec S S' = [] ->
                                  set_inter var_eqdec S' S = [].
-  Admitted.
+Proof.
+  apply set_nocommon_3_4.
 
 
 (** INFRASTRUCTURE LEMMAS END *)
