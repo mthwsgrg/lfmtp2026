@@ -603,14 +603,28 @@ Qed.
 
 Lemma subst_same_var_nocommon : forall s S, set_inter var_eqdec (exp_vars s) (dom_rec S) = [] ->
                                        sub s S = s.
- (** The same exist in nominal development *) 
+ (** The same exist in nominal development, Substs.v line 336 *) 
 Admitted.
+
+Lemma not_in_dom_lookup_same : forall X S, ~set_In X (dom_rec S) -> look_up X S = VarExp X.
+  Admitted.
+
+Lemma in_subcomp_second_arg : forall X S S', ~set_In X (dom_rec S) ->
+                                        look_up X (sub_comp S S') = look_up X S'.
+  Admitted.
 
 Lemma σmin_comp_prop1 : forall X S S' Sl,  ~set_In X (dom_rec S)  ->
                                       ~set_In X (dom_rec Sl) ->
                                       (sub_comp S S') ~:c Sl ->
                                       σmin_equiv (look_up X S') (VarExp X).
-  Admitted.
+Proof.
+  intros.
+  unfold subs_equiv in H1; specialize (H1 X); simpl in H1.
+  rewrite <- (not_in_dom_lookup_same _ Sl); eauto.
+  rewrite <- (in_subcomp_second_arg _ S S'); eauto.
+Qed.
+  
+  
 
 
 Lemma not_in_prob_lhvar_not_in_eq_left : forall X P, ~set_In X (lhvars_Probl P) ->
