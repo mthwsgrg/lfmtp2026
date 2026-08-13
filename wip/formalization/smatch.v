@@ -593,8 +593,6 @@ Qed.
   
   
 
-Lemma not_dom_look_same : forall X S, ~ set_In X (dom_rec S) -> look_up X S = (VarExp X). 
- Admitted.
 
 
 Lemma not_in_if_inter_empty : forall X S S',   set_In X S ->
