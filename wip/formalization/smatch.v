@@ -471,7 +471,7 @@ Lemma eq_sub_dom_eq: forall S S', S ~
 
 (** 
 
- The following are equivalent that express two sets S and S' don't share have any elements in common.
+ The following are equivalent that express two sets S and S' don't have any elements in common.
 
 1. ∀ (X: A), set_In X S → ~set_In X S' 
 2. ∀ (X: A), set_In X S' → ~set_In X S
