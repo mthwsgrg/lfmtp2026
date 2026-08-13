@@ -561,12 +561,6 @@ Lemma look_up_sub_comp: forall S S' X, look_up X (sub_comp S S') = sub (look_up 
 Lemma subst_comp_expand : forall s S1 S2, sub s (sub_comp S1 S2) = sub (sub s S1) S2.
  (** in Substs.v line 431 *) 
 Admitted.
-(*  
-Lemma sub_subst_interaction : forall X s t S, sub s (sub_comp ((X,t) :: nil) S) = sub (sub s ((X,t)::nil)) S.
-Proof.
-  intros.
-Admitted.  
-*)
 
 Lemma push_subst_problem : forall s t S P, set_In (equ s t) P -> set_In (equ s (sub t S)) (P |^^ S).
   Admitted.
