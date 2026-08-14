@@ -731,13 +731,6 @@ Qed.
 
 
 
-Lemma inter_dom_term_vars_iff : forall t S,
-      set_inter var_eqdec (exp_vars t) (dom_rec S) = [] <-> sub t S = t.
-Proof.
-(** Only prove this if not_occurs need it *)  
-Admitted.
-
-
 
 Lemma not_occurs : forall X t1 t2, (~ set_In X (exp_vars t1)) -> sub t1 ((X,t2) :: nil) = t1.
 Proof.
@@ -760,28 +753,53 @@ Proof.
  rewrite <- e in H0. contradiction. trivial.
 Qed.
 
+Lemma subst_comp_id_left : forall S, (sub_comp ([]) S) = S.
+Proof.
+  intros.  unfold sub_comp. simpl; trivial.
+Qed.
 
 
 Lemma look_up_sub_comp: forall S S' X, look_up X (sub_comp S S') = sub (look_up X S) S'.
-(** in Substs.v, 424 *)
-  Admitted.
+Proof.
+  intros. induction S; simpl.
+  rewrite subst_comp_id_left; trivial.
+  destruct a. simpl.
+  case (var_eqdec v X); intro H; trivial.
+Qed.  
+
+
+Lemma subst_comp_expand_both : (forall s S1 S2, sub s (sub_comp S1 S2) = sub (sub s S1) S2) /\
+                                 (forall σ S1 S2, sub_s σ (sub_comp S1 S2) = sub_s (sub_s σ S1) S2 ).
+Proof.
+  apply sigma_ind2; intros.
+  - simpl. reflexivity.
+  - simpl. rewrite H. now rewrite H0.
+  - simpl. now rewrite H.
+  - simpl. rewrite H. now rewrite H0.
+  - simpl. now rewrite look_up_sub_comp.
+  - now simpl.
+  - now simpl.
+  - simpl. rewrite H. now rewrite H0.
+  - simpl. rewrite H. now rewrite H0.
+Qed.
 
 Lemma subst_comp_expand : forall s S1 S2, sub s (sub_comp S1 S2) = sub (sub s S1) S2.
- (** in Substs.v line 431 *) 
-Admitted.
+Proof.
+  apply subst_comp_expand_both.
+Qed.  
 
 Lemma subst_comp_expand_sexp : forall σ S1 S2, sub_s σ (sub_comp S1 S2) = sub_s (sub_s σ S1) S2.
 Proof.
-Admitted.
+  apply subst_comp_expand_both.
+Qed.  
 
 
 Lemma subst_comp_assoc: forall S1 S2 S3 t, sub t (sub_comp S1 (sub_comp S2 S3)) =
                                        sub t  (sub_comp (sub_comp S1 S2) S3).
 
 Proof.
- Admitted.
-(** in 441 substs.v *)
-
+  intros. rewrite 4 subst_comp_expand; trivial.
+Qed.
 
 
 
@@ -1531,10 +1549,7 @@ Proof.
              simpl in H2.
              rewrite <- not_occurs_sexp with (σ := τ) (s:= s) (X:=X).
              apply H2.
-             apply H5.
-     
-             
-       
+             apply H5.  
      + eauto.
        destruct H23 as [S''].
        unfold subs_equiv in *.
