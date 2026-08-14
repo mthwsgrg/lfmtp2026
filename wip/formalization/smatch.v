@@ -650,6 +650,13 @@ Proof.
   now apply In_dom_eq_dom_flip.
 Qed.  
 
+Lemma not_in_dom_lookup_rev : forall S X, look_up X S = VarExp X -> ~set_In X (dom_rec S).
+Proof.
+  intros.
+  apply In_dom_eq_dom_flip.
+  now apply not_In_dom_lookup_flip.
+Qed.  
+
 
 
 
@@ -734,12 +741,24 @@ Admitted.
 
 Lemma not_occurs : forall X t1 t2, (~ set_In X (exp_vars t1)) -> sub t1 ((X,t2) :: nil) = t1.
 Proof.
-Admitted.
-
+  intros.
+  apply subst_same_var_nocommon.
+  apply set_nocommon_1_3; intros.
+  apply not_in_dom_lookup_rev. simpl.
+  destruct (var_eqdec) eqn:Heqn.
+  rewrite <- e in H0. contradiction. trivial.
+Qed.
+    
+  
 Lemma not_occurs_sexp : forall X σ s, (~ set_In X (exp_vars_s σ)) -> sub_s σ ((X,s) :: nil) = σ.
 Proof.
-Admitted.
-
+ intros.
+ apply subst_same_var_nocommon_sexp.
+ apply set_nocommon_1_3; intros.
+ apply not_in_dom_lookup_rev. simpl.
+ destruct (var_eqdec) eqn: Heqn.
+ rewrite <- e in H0. contradiction. trivial.
+Qed.
 
 
 
