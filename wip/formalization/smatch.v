@@ -378,7 +378,7 @@ Inductive smatch : Tuple -> Tuple -> Prop :=
 | smatch_Assoc : forall S P σ τ ρ σ' τ', set_In (equ_s (σ >> τ >> ρ)  (σ' >> τ')) P  ->
                                     smatch (S,P) (S, P |+ (equ_s ((σ >> τ) >> ρ) (σ' >> τ')) \ (equ_s (σ >> τ >> ρ)  (σ' >> τ')))
 | smatch_Conslaw : forall S P s σ τ σ' τ', set_In (equ_s (s[σ] .: (σ >> τ)) (σ' >> τ')) P ->
-                                      smatch (S,P) (S, P |+ (equ_s ((s .: σ) >> τ) (σ' >> τ')) \ (equ_s (s[σ] .: (σ >> τ)) (σ' >> τ') ))
+                                      smatch (S,P) (S, P |+ (equ_s ((s .: σ) >> τ) (σ' >> τ')) \ (equ_s (s[τ] .: (σ >> τ)) (σ' >> τ') ))
 | smatch_Complaw : forall S P s s' σ τ ρ, set_In (equ s[σ >> τ] s'[ρ]) P ->
                                      smatch (S, P) (S, (P |+ (equ s[σ][τ] s'[ρ])) \ (equ s[σ >> τ] s'[ρ]))
                                         
@@ -1196,8 +1196,52 @@ Proof.
            now apply (set_add_intro1). assumption.
      + assumption.
      + assumption.
-  -  admit.
-  -  admit.
+  -  unfold match_sol in *.
+     simpl in *.
+     destruct H2 as [H21 [H22 [H23 H24]]].
+     repeat split; intros.
+     + case (Equation_eqdec (equ s0 t) (equ_s (s[τ] .: σ>>τ) (σ' >> τ'))); intros.
+       * inversion e; subst.
+       * apply H21.
+         apply (set_remove_3 Equation_eqdec).
+         now apply (set_add_intro1). assumption.
+     + case (Equation_eqdec (equ_s σ0 τ0) (equ_s (s[τ] .: σ >> τ) (σ' >> τ'))); intros.
+       *  inversion e; subst.
+          apply σmin_equivs_trans with (τ := (s .: σ) >> τ).
+          repeat constructor.
+          apply H22.
+          apply (set_remove_3 Equation_eqdec).
+          now apply (set_add_intro2).
+          unfold not. intro. inversion H3.
+       * apply H22.
+         apply (set_remove_3 Equation_eqdec).
+         now apply (set_add_intro1). assumption.
+     + assumption.
+     + assumption.
+  - unfold match_sol in *.
+    simpl in *.
+    destruct H2 as [H21 [H22 [H23 H24]]].
+    repeat split; intros.
+    + case (Equation_eqdec (equ s0 t) (equ s[σ>>τ] s'[ρ])); intros.
+      *  inversion e; subst.
+         apply σmin_equiv_trans with (t := (s[σ])[τ]).
+         constructor. constructor.
+         apply H21.
+         apply (set_remove_3 Equation_eqdec).
+         now apply (set_add_intro2).
+         unfold not. intro. inversion H3.
+         eapply (τ_noteq_comp). apply H6.
+      * apply H21.
+        apply (set_remove_3 Equation_eqdec).
+        now apply (set_add_intro1). assumption.
+    + case (Equation_eqdec (equ_s σ0 τ0) (equ s[σ >> τ] s'[ρ])); intros.
+      * inversion e; subst.
+      * apply H22.
+        apply (set_remove_3 Equation_eqdec).
+        now apply (set_add_intro1). assumption.
+    + assumption.
+    + assumption.
+       
   - (* This is the hardest case where all the action happens   *)
     
      unfold match_sol in *.
@@ -1357,5 +1401,6 @@ Proof.
        unfold subs_equiv in *.
        exists (sub_comp ((X,s) :: nil) S'').
        intros.
-       specialize (H2 X0). now rewrite <- subst_comp_assoc in H2.       
-Admitted.
+       specialize (H2 X0). now rewrite <- subst_comp_assoc in H2.
+    + assumption.
+Qed.
