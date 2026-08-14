@@ -408,9 +408,6 @@ Definition match_sol (S' :Subst) (T : Tuple) :=
   set_inter var_eqdec (lhvars_Probl P) (dom_rec S') = []. 
 
 
-Lemma problem_lhvars_exp_empty (s: exp) (P: Problem) (S: Subst):
-  forall t, set_inter var_eqdec (lhvars_Probl P) (dom_rec S) = [] -> set_In (equ s t) P -> set_inter var_eqdec (exp_vars s) (dom_rec S) = [].
-Admitted.
 
 
 (*
@@ -469,27 +466,11 @@ Proof.
   - apply σmin_equivs_comp; eauto.
 Qed.  
 
-(** set_In_dec :  set_In X + ~set_In X *)
 
-(*
-Lemma eq_sub_dom_eq: forall S S', S ~
-*)
 
 (** INFRASTRUCTURE LEMMAS START *)
 
-(** Set related infra lemmas *)
-
-(** 
-
- The following are equivalent that express two sets S and S' don't have any elements in common.
-
-1. ∀ (X: A), set_In X S → ~set_In X S' 
-2. ∀ (X: A), set_In X S' → ~set_In X S
-3. set_inter A_eqdec S S' = []
-4. set_inter A_eqdec S' S = []
-
-The nominal development uses the third/fourth one, but the first two may be more direct to make use of things from standard library of setList.
-*) 
+(** SET RELATTED INFRA LEMMAS START *)
 
 
 Lemma set_nocommon_1_2 : forall S S', (forall (X: Var), set_In X S -> ~set_In X S') <-> (forall (X: Var), set_In X S' -> ~set_In X S) .
@@ -525,13 +506,279 @@ Lemma set_nocommon_1_3: forall S S', (forall X, set_In X S -> ~set_In X S') <-> 
 Qed.
 
 
+Lemma set_nocommon_1_3_for: forall S S', (forall X, set_In X S -> ~set_In X S') -> set_inter var_eqdec S S' = [].
+Proof.
+  apply set_nocommon_1_3.
+Qed.
+
+Lemma set_nocommon_1_3_back: forall S S', set_inter var_eqdec S S' = [] -> (forall X, set_In X S -> ~set_In X S').
+Proof.
+  apply set_nocommon_1_3.
+Qed.
+
+
 Lemma set_nocommon_3_4 : forall S S', set_inter var_eqdec S S' = [] <-> set_inter var_eqdec S' S = [].
 Proof.
   intros S S'.
   split; intros; apply set_nocommon_1_3; apply set_nocommon_1_2;    now apply set_nocommon_1_3.  
-Qed. 
+Qed.
+
+
   
-(** More specific ones *)
+Lemma not_in_if_inter_empty : forall X S S',   set_In X S ->
+                                          set_inter var_eqdec S S' = [] ->
+                                          ~ set_In X S'.
+  
+Proof.
+  intros.
+  destruct (set_nocommon_1_3 S S') as [H1 H2]; eauto.
+Qed.
+
+
+Lemma comm_empty_inter : forall S S', set_inter var_eqdec S S' = [] ->
+                                 set_inter var_eqdec S' S = [].
+Proof.
+  apply set_nocommon_3_4.
+Qed.
+
+
+(** SET INFRA LEMMAS END *)
+
+
+(** DOM/SUBST/EXP INFRA LEMMAS START *)
+
+Lemma push_subst_problem : forall s t S P, set_In (equ s t) P -> set_In (equ s (sub t S)) (P |^^ S).
+Proof.
+  intros.
+  induction P.
+  - destruct H.
+  - simpl in *; subst.
+    destruct H.
+    + rewrite H.
+      simpl. now left.
+    + destruct a; simpl; right; now apply IHP.
+Qed.     
+
+Lemma push_subst_problem_sexp : forall σ τ S P, set_In (equ_s σ τ) P -> set_In (equ_s σ (sub_s τ S)) (P |^^ S).
+Proof.
+  intros.
+  induction P.
+  - destruct H.
+  - simpl in *; subst.
+    destruct H.
+    + rewrite H.
+      simpl. now left.
+    + destruct a; simpl; right; now apply IHP.
+Qed.
+
+
+
+Lemma look_up_sub_comp: forall S S' X, look_up X (sub_comp S S') = sub (look_up X S) S'.
+(** in Substs.v, 424 *)
+  Admitted.
+
+Lemma subst_comp_expand : forall s S1 S2, sub s (sub_comp S1 S2) = sub (sub s S1) S2.
+ (** in Substs.v line 431 *) 
+Admitted.
+
+Lemma subst_comp_expand_sexp : forall σ S1 S2, sub_s σ (sub_comp S1 S2) = sub_s (sub_s σ S1) S2.
+Admitted.
+
+
+Lemma inter_dom_term_vars_iff : forall t S,
+      set_inter var_eqdec (exp_vars t) (dom_rec S) = [] <-> sub t S = t.
+Proof.
+  
+Admitted.
+
+Lemma subst_same_var_nocommon_both : (forall s S, set_inter var_eqdec (exp_vars s) (dom_rec S) = [] -> sub s S = s) /\
+                                     (forall σ S, set_inter var_eqdec (exp_vars_s σ) (dom_rec S) = [] -> sub_s σ S = σ).
+Proof.
+  apply sigma_ind2; intros.
+  - simpl. trivial.
+  - simpl. rewrite H. rewrite H0.
+    + trivial.
+    + apply set_nocommon_1_3.
+      intros.
+      apply (set_nocommon_1_3_back (exp_vars (App s t)) (dom_rec S)) with (X:=X) in H1.
+      apply H1. simpl.
+      now apply set_union_intro2.
+    + apply set_nocommon_1_3.
+      intros.
+      apply (set_nocommon_1_3_back (exp_vars (App s t)) (dom_rec S)) with (X:=X) in H1.
+      apply H1. simpl.
+      now apply set_union_intro1.
+  - simpl. rewrite H.
+    + trivial.
+    + apply set_nocommon_1_3.
+      intros.
+      apply (set_nocommon_1_3_back (exp_vars (Lam s)) (dom_rec S)) with (X:=X) in H1; eauto.
+Admitted.
+
+Lemma subst_same_var_nocommon :forall s S, set_inter var_eqdec (exp_vars s) (dom_rec S) = [] ->  sub s S = s.
+
+
+
+  (** The same exist in nominal development, Substs.v line 336 *) 
+Admitted.
+
+
+
+
+Lemma subst_same_var_nocommon_sexp : forall σ S, set_inter var_eqdec (exp_vars_s σ) (dom_rec S) = [] ->
+                                       sub_s σ S = σ.
+ (** The same exist in nominal development, Substs.v line 336 *) 
+Admitted.
+
+  
+
+
+Lemma not_occurs : forall X t1 t2, (~ set_In X (exp_vars t1)) -> sub t1 ((X,t2) :: nil) = t1.
+Proof.
+Admitted.
+
+Lemma not_occurs_sexp : forall X σ s, (~ set_In X (exp_vars_s σ)) -> sub_s σ ((X,s) :: nil) = σ.
+Proof.
+Admitted.
+
+
+Lemma In_dom_eq_dom_rec : forall X S, X € S <-> set_In X (dom_rec S).
+  (** line 267 Substs.v *)
+Admitted.
+
+
+Lemma subst_comp_assoc: forall S1 S2 S3 t, sub t (sub_comp S1 (sub_comp S2 S3)) =
+                                       sub t  (sub_comp (sub_comp S1 S2) S3).
+
+Proof.
+ Admitted.
+(** in 441 substs.v *)
+
+
+Lemma In_dom_eq_dom_flip : forall X S, ~ In_dom X S <-> ~ set_In X (dom_rec S).
+Proof.
+  intros.
+  destruct (In_dom_eq_dom_rec X S) as [H1 H2].
+  assert (forall (P Q: Prop), (P -> Q) -> (~Q -> ~P)) as contrap. {eauto.}.
+  split.
+  -  intros.
+     specialize (contrap _ _ H2); eauto.
+  -  intros.
+     specialize (contrap _ _ H1); eauto.
+Qed. 
+
+ 
+Lemma not_In_dom_lookup : forall X S, ~ In_dom X S -> look_up X S = (VarExp X).
+  intros.
+  unfold In_dom in H. simpl in H.
+  unfold not in H.
+  case (exp_eqdec (look_up X S) (VarExp X)); intros.
+  assumption. contradiction.
+Qed.
+
+
+Lemma not_In_dom_lookup_flip : forall X S,  look_up X S = (VarExp X) -> ~ In_dom X S.
+  intros.
+  unfold In_dom. simpl.
+  unfold not in *.
+  now intros.
+Qed.
+
+
+Lemma not_in_dom_lookup_same : forall S X, ~set_In X (dom_rec S) -> look_up X S = VarExp X.
+Proof.
+  intros.
+  apply not_In_dom_lookup.
+  now apply In_dom_eq_dom_flip.
+Qed.  
+
+
+  
+Lemma in_subcomp_second_arg : forall X S S', ~set_In X (dom_rec S) ->
+                                        look_up X (sub_comp S S') = look_up X S'.
+Proof.
+  intros.
+  rewrite look_up_sub_comp.
+  rewrite not_in_dom_lookup_same; eauto.
+Qed.  
+
+
+Lemma set_ext_not_in_domain : forall X X0 S s , ~ set_In X (dom_rec S) ->
+                                  X <> X0 ->
+                                  ~ set_In X (dom_rec (sub_comp S ((X0, s) :: nil))).
+Proof.
+  intros.
+  apply In_dom_eq_dom_flip.
+  apply not_In_dom_lookup_flip.
+  rewrite look_up_sub_comp.
+  apply In_dom_eq_dom_flip in H.
+  apply not_In_dom_lookup in H.
+  rewrite H. simpl.
+  destruct (var_eqdec X0 X).
+  - symmetry in e. contradiction.
+  - reflexivity.
+Qed.  
+
+
+
+Lemma look_up_sub_comp_not_in_first : forall S S' X, ~set_In X (dom_rec S) ->
+                                                look_up X (sub_comp S S') = look_up X S'.
+Proof.
+  intros.
+  now apply in_subcomp_second_arg.
+Qed.  
+
+
+Lemma s_noteq_app : forall s t, s = App s t -> False.
+  intro s.
+  induction s using exp_ind3; intros; try (discriminate H).
+  injection H as H_l H_r. eauto.
+Qed.
+
+Lemma t_noteq_app : forall t s, t = App s t -> False.
+  intro t.
+  induction t using exp_ind3; intros; try (discriminate H).
+  injection H as H_l H_r. eauto.
+Qed.
+
+Lemma s_noteq_lam : forall s, s = Lam s -> False.
+Admitted.  
+
+Lemma s_noteq_inst : forall s σ, s = Inst s σ -> False.
+Proof.
+  intro s.
+  induction s using exp_ind3; intros; try (discriminate H).
+  injection H as H_l H_r. eauto.
+Qed.  
+
+Lemma σ_noteq_cons : forall σ s, σ = Cons s σ -> False.
+Proof.
+  intro σ.
+  induction σ using sexp_ind3; intros; try (discriminate H).
+  injection H as H_l H_r. eauto.
+Qed.  
+
+
+Lemma σ_noteq_comp : forall σ τ, σ = σ >> τ -> False.
+Proof.
+  intro σ.
+  induction σ using sexp_ind3; intros; (try (discriminate H)).
+  injection H as H_l H_r. eauto.
+Qed.
+
+Lemma τ_noteq_comp : forall τ σ, τ = σ >> τ -> False.
+Proof.
+  intro τ.
+  induction τ using sexp_ind3; intros; (try (discriminate H)).
+  injection H as H_l H_r. eauto.
+Qed.
+
+
+
+(** DOM/SUBST/EXP INFRA LEMMAS END *)
+
+
+(** σmin INFRA LEMMAS START *)
 
 Lemma not_in_dom_same_both : (forall s S, (forall X, set_In X (exp_vars s) -> σmin_equiv (look_up X S) (VarExp X)) -> σmin_equiv  s (sub s S))
                              /\
@@ -581,45 +828,24 @@ Lemma not_in_dom_same_exp : forall s S, (forall X, set_In X (exp_vars s) -> σmi
 Proof.
   apply not_in_dom_same_both.
 Qed.  
-  
-  
-
-Lemma look_up_sub_comp: forall S S' X, look_up X (sub_comp S S') = sub (look_up X S) S'.
-(** in Substs.v, 424 *)
-  Admitted.
-
-Lemma subst_comp_expand : forall s S1 S2, sub s (sub_comp S1 S2) = sub (sub s S1) S2.
- (** in Substs.v line 431 *) 
-Admitted.
-
-Lemma subst_comp_expand_sexp : forall σ S1 S2, sub_s σ (sub_comp S1 S2) = sub_s (sub_s σ S1) S2.
-Admitted.
 
 
-Lemma push_subst_problem : forall s t S P, set_In (equ s t) P -> set_In (equ s (sub t S)) (P |^^ S).
+Lemma σmin_comp_prop1 : forall X S S' Sl,  ~set_In X (dom_rec S)  ->
+                                      ~set_In X (dom_rec Sl) ->
+                                      (sub_comp S S') ~:c Sl ->
+                                      σmin_equiv (look_up X S') (VarExp X).
 Proof.
   intros.
-  induction P.
-  - destruct H.
-  - simpl in *; subst.
-    destruct H.
-    + rewrite H.
-      simpl. now left.
-    + destruct a; simpl; right; now apply IHP.
-Qed.     
-
-Lemma push_subst_problem_sexp : forall σ τ S P, set_In (equ_s σ τ) P -> set_In (equ_s σ (sub_s τ S)) (P |^^ S).
-Proof.
-  intros.
-  induction P.
-  - destruct H.
-  - simpl in *; subst.
-    destruct H.
-    + rewrite H.
-      simpl. now left.
-    + destruct a; simpl; right; now apply IHP.
+  unfold subs_equiv in H1; specialize (H1 X); simpl in H1.
+  rewrite <- (not_in_dom_lookup_same Sl _); eauto.
+  rewrite <- (in_subcomp_second_arg _ S S'); eauto.
 Qed.
   
+
+(** σmin INFRA LEMMAS END *)
+
+
+(** MATCHING INFRA LEMMAS START *)
 
 Lemma problem_eqn_lhvar_in : forall P s t X, set_In (equ s t) P -> set_In X (exp_vars s) -> set_In X (lhvars_Probl P).
 Proof.  
@@ -750,107 +976,6 @@ Qed.
 
   
   
-Lemma not_in_if_inter_empty : forall X S S',   set_In X S ->
-                                          set_inter var_eqdec S S' = [] ->
-                                          ~ set_In X S'.
-  
-Proof.
-  intros.
-  destruct (set_nocommon_1_3 S S') as [H1 H2]; eauto.
-Qed.
-
-
-Lemma subst_same_var_nocommon : forall s S, set_inter var_eqdec (exp_vars s) (dom_rec S) = [] ->
-                                       sub s S = s.
- (** The same exist in nominal development, Substs.v line 336 *) 
-Admitted.
-
-
-Lemma subst_same_var_nocommon_sexp : forall σ S, set_inter var_eqdec (exp_vars_s σ) (dom_rec S) = [] ->
-                                       sub_s σ S = σ.
- (** The same exist in nominal development, Substs.v line 336 *) 
-Admitted.
-
-
-Lemma inter_dom_term_vars_iff : forall t S,
-      set_inter var_eqdec (exp_vars t) (dom_rec S) = [] <-> sub t S = t.
-Proof.
-Admitted.   
-  
-
-
-Lemma not_occurs : forall X t1 t2, (~ set_In X (exp_vars t1)) -> sub t1 ((X,t2) :: nil) = t1.
-Proof.
-Admitted.
-
-Lemma not_occurs_sexp : forall X σ s, (~ set_In X (exp_vars_s σ)) -> sub_s σ ((X,s) :: nil) = σ.
-Proof.
-Admitted.
-
-
-Lemma In_dom_eq_dom_rec : forall X S, X € S <-> set_In X (dom_rec S).
-  (** line 267 Substs.v *)
-Admitted.
-
-Lemma In_dom_eq_dom_flip : forall X S, ~ In_dom X S <-> ~ set_In X (dom_rec S).
-Proof.
-  intros.
-  destruct (In_dom_eq_dom_rec X S) as [H1 H2].
-  assert (forall (P Q: Prop), (P -> Q) -> (~Q -> ~P)) as contrap. {eauto.}.
-  split.
-  -  intros.
-     specialize (contrap _ _ H2); eauto.
-  -  intros.
-     specialize (contrap _ _ H1); eauto.
-Qed. 
-
- 
-Lemma not_In_dom_lookup : forall X S, ~ In_dom X S -> look_up X S = (VarExp X).
-  intros.
-  unfold In_dom in H. simpl in H.
-  unfold not in H.
-  case (exp_eqdec (look_up X S) (VarExp X)); intros.
-  assumption. contradiction.
-Qed.
-
-
-Lemma not_In_dom_lookup_flip : forall X S,  look_up X S = (VarExp X) -> ~ In_dom X S.
-  intros.
-  unfold In_dom. simpl.
-  unfold not in *.
-  now intros.
-Qed.
-
-
-Lemma not_in_dom_lookup_same : forall S X, ~set_In X (dom_rec S) -> look_up X S = VarExp X.
-Proof.
-  intros.
-  apply not_In_dom_lookup.
-  now apply In_dom_eq_dom_flip.
-Qed.  
-
-
-  
-Lemma in_subcomp_second_arg : forall X S S', ~set_In X (dom_rec S) ->
-                                        look_up X (sub_comp S S') = look_up X S'.
-Proof.
-  intros.
-  rewrite look_up_sub_comp.
-  rewrite not_in_dom_lookup_same; eauto.
-Qed.  
-
-Lemma σmin_comp_prop1 : forall X S S' Sl,  ~set_In X (dom_rec S)  ->
-                                      ~set_In X (dom_rec Sl) ->
-                                      (sub_comp S S') ~:c Sl ->
-                                      σmin_equiv (look_up X S') (VarExp X).
-Proof.
-  intros.
-  unfold subs_equiv in H1; specialize (H1 X); simpl in H1.
-  rewrite <- (not_in_dom_lookup_same Sl _); eauto.
-  rewrite <- (in_subcomp_second_arg _ S S'); eauto.
-Qed.
-  
-  
 
 
 Lemma not_in_prob_lhvar_not_in_eq_left : forall X P, ~set_In X (lhvars_Probl P) ->
@@ -863,89 +988,7 @@ Proof.
   apply H. eapply problem_eqn_lhvar_in; eauto.
 Qed.
     
-
-Lemma set_ext_not_in_domain : forall X X0 S s , ~ set_In X (dom_rec S) ->
-                                  X <> X0 ->
-                                  ~ set_In X (dom_rec (sub_comp S ((X0, s) :: nil))).
-Proof.
-  intros.
-  apply In_dom_eq_dom_flip.
-  apply not_In_dom_lookup_flip.
-  rewrite look_up_sub_comp.
-  apply In_dom_eq_dom_flip in H.
-  apply not_In_dom_lookup in H.
-  rewrite H. simpl.
-  destruct (var_eqdec X0 X).
-  - symmetry in e. contradiction.
-  - reflexivity.
-Qed.  
-  
-
-Lemma look_up_sub_comp_not_in_first : forall S S' X, ~set_In X (dom_rec S) ->
-                                                look_up X (sub_comp S S') = look_up X S'.
-Proof.
-  intros.
-  now apply in_subcomp_second_arg.
-Qed.  
-
-
-Lemma subst_comp_assoc: forall S1 S2 S3 t, sub t (sub_comp S1 (sub_comp S2 S3)) =
-                                       sub t  (sub_comp (sub_comp S1 S2) S3).
-
-Proof.
- Admitted.
-(** in 441 substs.v *)
-
-Lemma comm_empty_inter : forall S S', set_inter var_eqdec S S' = [] ->
-                                 set_inter var_eqdec S' S = [].
-Proof.
-  apply set_nocommon_3_4.
-Qed.
-
-
-Lemma s_noteq_app : forall s t, s = App s t -> False.
-  intro s.
-  induction s using exp_ind3; intros; try (discriminate H).
-  injection H as H_l H_r. eauto.
-Qed.
-
-Lemma t_noteq_app : forall t s, t = App s t -> False.
-  intro t.
-  induction t using exp_ind3; intros; try (discriminate H).
-  injection H as H_l H_r. eauto.
-Qed.
-
-Lemma s_noteq_lam : forall s, s = Lam s -> False.
-Admitted.  
-
-Lemma s_noteq_inst : forall s σ, s = Inst s σ -> False.
-Proof.
-  intro s.
-  induction s using exp_ind3; intros; try (discriminate H).
-  injection H as H_l H_r. eauto.
-Qed.  
-
-Lemma σ_noteq_cons : forall σ s, σ = Cons s σ -> False.
-Proof.
-  intro σ.
-  induction σ using sexp_ind3; intros; try (discriminate H).
-  injection H as H_l H_r. eauto.
-Qed.  
-
-
-Lemma σ_noteq_comp : forall σ τ, σ = σ >> τ -> False.
-Proof.
-  intro σ.
-  induction σ using sexp_ind3; intros; (try (discriminate H)).
-  injection H as H_l H_r. eauto.
-Qed.
-
-Lemma τ_noteq_comp : forall τ σ, τ = σ >> τ -> False.
-Proof.
-  intro τ.
-  induction τ using sexp_ind3; intros; (try (discriminate H)).
-  injection H as H_l H_r. eauto.
-Qed.
+(** MATCHING INFRA LEMMAS END *)
 
 
 (** INFRASTRUCTURE LEMMAS END *)
