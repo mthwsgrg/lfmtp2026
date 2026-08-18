@@ -543,35 +543,27 @@ Proof.
   apply set_nocommon_3_4.
 Qed.
 
+Lemma set_list_app_neq {A: Type} (Aeq_dec : forall (x y:A), {x = y} +{x<>y} ):  forall P a b, a<> b ->
+                                                           set_add Aeq_dec b (a :: P) =
+                                                             a :: (set_add Aeq_dec b P).
+  intros.
+  simpl.
+  destruct (Aeq_dec b a) as [Heq | Hn].
+  congruence.
+  reflexivity.
+Qed.
 
-(*
-Section Whatever.
-Context {A: Type}.
-Variable Aeq_dec : forall x y : A, {x = y} + {x <> y}.
-Lemma set_list_app : forall P a b,
-    a <> b -> 
-    set_add Aeq_dec b (a :: P)  = a :: (set_add Aeq_dec b P).
-  Proof.
-    intros P a b Hneq.
-    
-    (* simpl evaluates the definition of set_add on the cons cell (a :: P).
-       It exposes the underlying if-statement testing whether b = a. *)
-    simpl.
-    
-    (* We destruct the decision procedure to branch into the two possibilities *)
-    destruct (Aeq_dec b a) as [Heq | Hn].
-    
-    - (* Case 1: b = a. 
-         This contradicts our hypothesis (Hneq: a <> b).
-         The `congruence` tactic automatically solves goals with contradictory equalities. *)
-      congruence.
-      
-    - (* Case 2: b <> a. 
-         Because they are not equal, set_add correctly skips 'a' and recurses on 'P'.
-         This perfectly matches our right-hand side. *)
-      reflexivity.
-  Qed.
-*)
+Lemma set_list_app_eq {A: Type} (Aeq_dec : forall (x y:A), {x = y} +{x<>y} ):  forall P a,
+                                                           set_add Aeq_dec a (a :: P) =
+                                                             a :: P.
+  intros.
+  simpl.
+  destruct (Aeq_dec a a).
+  reflexivity.
+  contradiction.
+Qed.
+
+
 
 (** SET INFRA LEMMAS END *)
 
@@ -1051,6 +1043,19 @@ Proof.
    + rewrite H.
      apply set_union_intro1; assumption.
    + destruct a; apply set_union_intro2; apply set_union_intro2; eapply IHP; eauto.
+Qed.
+
+Lemma problem_eqn_allvar_left_in_sexp : forall P σ τ X, set_In (equ_s σ τ) P ->
+                                                set_In X (exp_vars_s σ) ->
+                                                set_In X (Problem_vars P).
+Proof.
+  induction P; intros.
+  - destruct H.
+  -simpl in *.
+   destruct H.
+   + rewrite H.
+     apply set_union_intro1; assumption.
+   + destruct a; apply set_union_intro2; apply set_union_intro2; eapply IHP; eauto.
 Qed.     
      
   
@@ -1136,6 +1141,41 @@ Proof.
   apply H. eapply problem_eqn_allvar_left_in; eauto.
 Qed.
 
+
+Lemma not_in_prob_allvar_not_in_eq_right : forall X P, ~set_In X (Problem_vars P) ->
+                                             forall s t, set_In (equ s t) P ->
+                                                    ~set_In X (exp_vars t).
+Proof.
+  intros.
+  unfold not in *.
+  intros.
+  apply H. eapply problem_eqn_allvar_right_in; eauto.
+Qed.
+
+
+Lemma not_in_prob_allvar_not_in_eq_left_sexp : forall X P, ~set_In X (Problem_vars P) ->
+                                               forall σ τ, set_In (equ_s σ τ) P ->
+                                                     ~set_In X (exp_vars_s σ).
+Proof.
+  intros.
+  unfold not in *.
+  intros.
+  apply H. eapply problem_eqn_allvar_left_in_sexp; eauto.
+Qed.
+
+Lemma not_in_prob_allvar_not_in_eq_right_sexp : forall X P, ~set_In X (Problem_vars P) ->
+                                                forall σ τ, set_In (equ_s σ τ) P ->
+                                                      ~set_In X (exp_vars_s τ).
+Proof.
+  intros.
+  unfold not in *.
+  intros.
+  apply H. eapply problem_eqn_allvar_right_in_sexp; eauto.
+Qed.
+
+
+
+
 Lemma not_in_prob_lhvar_not_in_eq_left : forall X P, ~set_In X (lhvars_Probl P) ->
                                              forall s t, set_In (equ s t) P ->
                                                     ~set_In X (exp_vars s).
@@ -1147,16 +1187,6 @@ Proof.
 Qed.
 
 
-(*
-Lemma problem_X_clear' : forall P X s, set_In X (Problem_vars (P|^^((X,s) :: nil))) ->
-                                  (set_In X (exp_vars s) \/ set_In X (lhvars_Probl P)).
-Proof.
-  intro P.
-  induction P; intros.
-  - now destruct H.
-  - destruct a as [ s' t' | σ τ].
-    + simpl in *.
-*)
 
 Lemma exp_X_clear_both : (forall t s X, ~set_In X (exp_vars s) -> ~set_In X (exp_vars (sub t ((X,s) :: nil)))) /\ (forall σ X s, ~set_In X (exp_vars s) -> ~set_In X (exp_vars_s (sub_s σ ((X,s) :: nil)))).
   apply sigma_ind2; intros.
@@ -1431,25 +1461,16 @@ Proof.
       eapply IHP; eauto.
 Qed.  
 
-(*
 
- (equ s t)::P0 => set_union var_eqdec (exp_vars s)
-                   (set_union var_eqdec (exp_vars t) (Problem_vars P0))
-    | (equ_s σ τ)::P0 => set_union var_eqdec (exp_vars_s σ)
-                       (set_union var_eqdec (exp_vars_s τ) (Problem_vars P0))               
-
-*)
-
-Lemma problem_vars_eqn1 : forall s t P0, Problem_vars ((equ s t)::P0) = set_union var_eqdec (exp_vars s)
-                   (set_union var_eqdec (exp_vars t) (Problem_vars P0)).
+Lemma problem_vars_neq : forall P0 s t a, (equ s t <> a) -> Problem_vars (equ s t:: P0 |+ a) = Problem_vars (equ s t :: (P0 |+ a)).
 Proof.
- now  simpl.
+  intros.
+  rewrite set_list_app_neq.
+  reflexivity.
+  assumption.
 Qed.
 
-Lemma problem_vars_eqn2 : forall P0 s t a, Problem_vars (equ s t:: P0 |+ a) = Problem_vars (equ s t :: (P0 |+ a)).
-Proof.
-  simpl.
-Admitted.
+
 
 Lemma problem_var_ext_vars_exp : forall P s t X, set_In X (Problem_vars (P |+ (equ s t))) ->
                                             ~set_In X (exp_vars s) -> ~ set_In X (exp_vars t) ->
@@ -1460,12 +1481,78 @@ Proof.
   - simpl in *.
     apply set_union_elim in H. destruct H; contradiction.
   - destruct a as [s' t' | σ τ].
-     + destruct (exp_eqdec s s'); subst.
-       destruct (exp_eqdec t t'); subst.
-       Unset Printing Notations.
-       rewrite problem_vars_eqn2 in H.
-       simpl in *.
+    + destruct (Equation_eqdec (equ s t) (equ s' t')); subst.
+      rewrite e in H.
+      rewrite set_list_app_eq in H. assumption.
+      rewrite  set_list_app_neq in H; eauto.
+      simpl in *.
+      apply set_union_elim in H.
+      destruct H.
+      now apply set_union_intro1.
+      apply set_union_elim in H.
+      destruct H.
+      apply set_union_intro2.
+      now apply set_union_intro1.
+      apply set_union_intro2.
+      apply set_union_intro2.
+      eapply IHP; eauto.
+    + destruct (Equation_eqdec (equ_s σ τ) (equ s t)); subst.
+      inversion e.
+       rewrite  set_list_app_neq in H; eauto.
+      simpl in *.
+      apply set_union_elim in H.
+      destruct H.
+      now apply set_union_intro1.
+      apply set_union_elim in H.
+      destruct H.
+      apply set_union_intro2.
+      now apply set_union_intro1.
+      apply set_union_intro2.
+      apply set_union_intro2.
+      eapply IHP; eauto.
+Qed.
 
+Lemma problem_var_ext_vars_sexp : forall P σ τ X, set_In X (Problem_vars (P |+ (equ_s σ τ))) ->
+                                            ~set_In X (exp_vars_s σ) -> ~ set_In X (exp_vars_s τ) ->
+                                            set_In X (Problem_vars P).
+Proof.
+  intro P.
+  induction P; intros.
+  - simpl in *.
+    apply set_union_elim in H. destruct H; contradiction.
+  - destruct a as [s t | σ' τ'].
+    + destruct (Equation_eqdec (equ s t) (equ_s σ τ)); subst.
+      inversion e.
+      rewrite set_list_app_neq in H; eauto.
+      simpl in *.
+      apply set_union_elim in H.
+      destruct H.
+      now apply set_union_intro1.
+      apply set_union_elim in H.
+      destruct H.
+      apply set_union_intro2.
+      now apply set_union_intro1.
+      apply set_union_intro2.
+      apply set_union_intro2.
+      eapply IHP; eauto.
+    + destruct (Equation_eqdec (equ_s σ τ) (equ_s σ' τ')); subst.
+       rewrite e in H.
+      rewrite set_list_app_eq in H. assumption.
+      rewrite  set_list_app_neq in H; eauto.
+      simpl in *.
+      apply set_union_elim in H.
+      destruct H.
+      now apply set_union_intro1.
+      apply set_union_elim in H.
+      destruct H.
+      apply set_union_intro2.
+      now apply set_union_intro1.
+      apply set_union_intro2.
+      apply set_union_intro2.
+      eapply IHP; eauto.
+Qed.       
+      
+    
 (** MATCHING INFRA LEMMAS END *)
 
 
@@ -1940,23 +2027,162 @@ Proof.
     
   - apply set_nocommon_1_3_back with (X:=X) in H'; eauto.
     intro.
-    apply problem_var_remove_one_mem in H1. 
-    admit.
+    apply problem_var_remove_one_mem in H1.
+    apply problem_var_ext_vars_exp in H1.
+    apply problem_var_ext_vars_exp in H1.
+    contradiction.
+    apply not_in_prob_allvar_not_in_eq_left  with (s := App s t) (t:= App s' t') (X:=X)in H;eauto.
+    simpl in H.
+    intro. apply H.
+    now apply set_union_intro1.
+    apply not_in_prob_allvar_not_in_eq_right  with (s := App s t) (t:= App s' t') (X:=X)in H;eauto.
+    simpl in H.
+    intro. apply H.
+    now apply set_union_intro1.
+    apply not_in_prob_allvar_not_in_eq_left  with (s := App s t) (t:= App s' t') (X:=X)in H;eauto.
+    simpl in H.
+    intro. apply H.
+    now apply set_union_intro2.
+    apply not_in_prob_allvar_not_in_eq_right  with (s := App s t) (t:= App s' t') (X:=X)in H;eauto.
+    simpl in H.
+    intro. apply H.
+    now apply set_union_intro2.
 
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - (* 1. S doesn't have X in domain : Because of H0 and H 
-       2. By 1, S' does have X in domain 
-       3. s doesn't have X by H.
-       
-     *)
-    case (var_eqdec X X0); intro; subst.
+  - apply set_nocommon_1_3_back with (X:=X) in H'; eauto.
+    intro.
+    apply problem_var_remove_one_mem in H1.
+    apply problem_var_ext_vars_exp in H1.
+    contradiction.
+    apply not_in_prob_allvar_not_in_eq_left with (s:= Lam s) (t:= Lam s') (X:=X) in H'; eauto.
+    apply not_in_prob_allvar_not_in_eq_right with (s:= Lam s) (t:= Lam s') (X:=X) in H'; eauto.
+    
+  - apply set_nocommon_1_3_back with (X:=X) in H'; eauto.
+    intro.
+    apply problem_var_remove_one_mem in H1.
+    apply problem_var_ext_vars_sexp in H1.
+    apply problem_var_ext_vars_exp in H1.
+    contradiction.
+    apply not_in_prob_allvar_not_in_eq_left with (s := s[σ]) (t:= s'[σ']) (X:=X) in H; eauto.
+    intro.
+    simpl in H. apply H. now apply set_union_intro1.
+    apply not_in_prob_allvar_not_in_eq_right with (s := s[σ]) (t := s'[σ']) (X := X) in H; eauto.
+    intro.
+    simpl in H. apply H.  now apply set_union_intro1.
+    apply not_in_prob_allvar_not_in_eq_left with (s := s[σ]) (t:= s'[σ']) (X:=X) in H; eauto.
+    intro.
+    simpl in H. apply H. now apply set_union_intro2.
+    apply not_in_prob_allvar_not_in_eq_right with (s := s[σ]) (t := s'[σ']) (X := X) in H; eauto.
+    intro.
+    simpl in H. apply H.  now apply set_union_intro2.
+    
+  - apply set_nocommon_1_3_back with (X := X) in H'; eauto.
+    intro.
+    apply problem_var_remove_one_mem in H1.
+    apply problem_var_ext_vars_sexp in H1.
+    apply problem_var_ext_vars_exp in H1.
+    contradiction.
+    apply not_in_prob_allvar_not_in_eq_left_sexp with (σ := s .:σ) (τ := s' .: σ') (X := X) in H; eauto.
+    intro.
+    apply H. simpl. now apply set_union_intro1.
+    apply not_in_prob_allvar_not_in_eq_right_sexp with (σ := s .:σ) (τ := s' .: σ') (X := X) in H; eauto.
+    intro.
+    apply H. simpl. now apply set_union_intro1.
+    apply not_in_prob_allvar_not_in_eq_left_sexp with (σ := s .:σ) (τ := s' .: σ') (X := X) in H; eauto.
+    intro.
+    apply H. simpl. now apply set_union_intro2.
+    apply not_in_prob_allvar_not_in_eq_right_sexp with (σ := s .:σ) (τ := s' .: σ') (X := X) in H; eauto.
+    intro.
+    apply H. simpl. now apply set_union_intro2.
+    
+  - apply set_nocommon_1_3_back with (X := X) in H'; eauto.
+    intro.
+    apply problem_var_remove_one_mem in H1.
+    apply problem_var_ext_vars_sexp in H1.
+    apply problem_var_ext_vars_sexp in H1.
+    contradiction.
+    apply not_in_prob_allvar_not_in_eq_left_sexp with (σ := σ >> τ) (τ := σ' >> τ') (X := X) in H; eauto.
+    intro.
+    apply H. simpl. now apply set_union_intro1.
+    apply not_in_prob_allvar_not_in_eq_right_sexp with (σ := σ >> τ) (τ := σ' >> τ') (X := X) in H; eauto.
+    intro.
+    apply H. simpl. now apply set_union_intro1.
+    apply not_in_prob_allvar_not_in_eq_left_sexp with (σ := σ >> τ) (τ := σ' >> τ') (X := X) in H; eauto.
+    intro.
+    apply H. simpl. now apply set_union_intro2.
+    apply not_in_prob_allvar_not_in_eq_right_sexp with (σ := σ >> τ) (τ := σ' >> τ') (X := X) in H; eauto.
+    intro.
+    apply H. simpl. now apply set_union_intro2.
+   
+    
+  - apply set_nocommon_1_3_back with (X:=X) in H'; eauto.
+    intro.
+    apply problem_var_remove_one_mem in H1.
+    apply problem_var_ext_vars_exp in H1.
+    contradiction.
+    apply not_in_prob_allvar_not_in_eq_left with (s := Lam s [Zero .: σ >> ↑]) (t:= s'[σ']) in H';eauto. simpl in *.
+    intro.
+    apply H'.
+    apply set_union_elim in H2.
+    destruct H2. now apply set_union_intro1.
+    apply set_union_intro2. now apply set_union_intro2.
+    apply not_in_prob_allvar_not_in_eq_right with (s := Lam s [Zero .: σ >> ↑]) (t:= s'[σ']) in H';eauto.
+    
+    
+  - apply set_nocommon_1_3_back with (X:=X) in H'; eauto.
+    intro.
+    apply problem_var_remove_one_mem in H1.
+    apply problem_var_ext_vars_sexp in H1.
+    contradiction.
+    apply not_in_prob_allvar_not_in_eq_left_sexp with (σ := σ >> τ >> ρ) (τ := σ' >> τ') in H'; eauto.
+    intro. apply H'. simpl.  simpl in H2.
+    apply set_union_elim in H2.
+    destruct H2.
+    apply set_union_elim in H2.
+    destruct H2.
+    now apply set_union_intro1.
+    apply set_union_intro2.
+    now apply set_union_intro1.
+    apply set_union_intro2. now apply set_union_intro2.
+    apply not_in_prob_allvar_not_in_eq_right_sexp with (σ := σ >> τ >> ρ) (τ := σ' >> τ') in H'; eauto.  
+    
+    
+  - apply set_nocommon_1_3_back with (X:=X) in H'; eauto.
+    intro.
+    apply problem_var_remove_one_mem in H1.
+    apply problem_var_ext_vars_sexp in H1.
+    contradiction.
+    apply not_in_prob_allvar_not_in_eq_left_sexp with (σ := s[σ] .: σ >> τ) (τ := σ' >> τ') in H'; eauto.
+    intro. apply H'. simpl.  simpl in H2.
+    apply set_union_elim in H2.
+    destruct H2.
+    apply set_union_elim in H2.
+    destruct H2.
+    apply set_union_intro1.
+    now apply set_union_intro1.
+    apply set_union_intro2.
+    now apply set_union_intro1.
+    apply set_union_intro2. now apply set_union_intro2.
+    apply not_in_prob_allvar_not_in_eq_right_sexp with (σ := s[σ] .: σ >> τ) (τ := σ' >> τ') in H'; eauto.
+    
+  - apply set_nocommon_1_3_back with (X:=X) in H'; eauto.
+    intro.
+    apply problem_var_remove_one_mem in H1.
+    apply problem_var_ext_vars_exp in H1.
+    contradiction.
+    apply not_in_prob_allvar_not_in_eq_left with (s := s[σ >> τ]) (t := s'[ρ]) in H'; eauto.
+    intro. apply H'. simpl. simpl in H2.
+    apply set_union_elim in H2.
+    destruct H2.
+    apply set_union_elim in H2.
+    destruct H2.
+    now apply set_union_intro1.
+    apply set_union_intro2.
+    now apply set_union_intro1.
+    apply set_union_intro2.
+    now apply set_union_intro2.
+    apply not_in_prob_allvar_not_in_eq_right with (s := s[σ >> τ]) (t := s'[ρ]) in H'; eauto.
+    
+  - case (var_eqdec X X0); intro; subst.
     + apply problem_X_clear.
       split. intro. apply H.
       eapply problem_eqn_lhvar_in.
@@ -1971,4 +2197,4 @@ Proof.
       apply (set_nocommon_1_3_back _ _) with (X:= X0) in H'; eauto.
       apply (set_nocommon_1_3_back _ _) with (X:= X0) in H'; eauto.
       eapply (not_in_prob_allvar_not_in_eq_left); eauto.   
-Admitted.   
+Qed.
