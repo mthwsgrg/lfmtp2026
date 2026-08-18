@@ -1,4 +1,6 @@
 Require Import List ListSet.
+Require Import ARS.
+
 Unset Elimination Schemes.
 Import ListNotations.
 
@@ -394,8 +396,8 @@ Inductive smatch : Tuple -> Tuple -> Prop :=
 Definition valid_tuple (T : Tuple) :=
   let S := (fst T) in
   let P := (snd T) in
-  ( set_inter var_eqdec (dom_rec S) (Problem_vars P) = [] ) /\
-  ( set_inter var_eqdec (dom_rec S) (im_vars S) = [] ) .
+  ( set_inter var_eqdec (dom_rec S) (Problem_vars P) = [] ) /\ True
+ (*  ( set_inter var_eqdec (dom_rec S) (im_vars S) = [] ) *) .
 
 
 (** A substitution is a solution to a σmin-matching problem if it satisfies this predicate *)
@@ -541,6 +543,35 @@ Proof.
   apply set_nocommon_3_4.
 Qed.
 
+
+(*
+Section Whatever.
+Context {A: Type}.
+Variable Aeq_dec : forall x y : A, {x = y} + {x <> y}.
+Lemma set_list_app : forall P a b,
+    a <> b -> 
+    set_add Aeq_dec b (a :: P)  = a :: (set_add Aeq_dec b P).
+  Proof.
+    intros P a b Hneq.
+    
+    (* simpl evaluates the definition of set_add on the cons cell (a :: P).
+       It exposes the underlying if-statement testing whether b = a. *)
+    simpl.
+    
+    (* We destruct the decision procedure to branch into the two possibilities *)
+    destruct (Aeq_dec b a) as [Heq | Hn].
+    
+    - (* Case 1: b = a. 
+         This contradicts our hypothesis (Hneq: a <> b).
+         The `congruence` tactic automatically solves goals with contradictory equalities. *)
+      congruence.
+      
+    - (* Case 2: b <> a. 
+         Because they are not equal, set_add correctly skips 'a' and recurses on 'P'.
+         This perfectly matches our right-hand side. *)
+      reflexivity.
+  Qed.
+*)
 
 (** SET INFRA LEMMAS END *)
 
@@ -961,6 +992,9 @@ Qed.
 
 (** MATCHING INFRA LEMMAS START *)
 
+
+(** TODO 1: Many of these lemmas can be generalized for equation *)
+
 Lemma problem_eqn_lhvar_in : forall P s t X, set_In (equ s t) P -> set_In X (exp_vars s) -> set_In X (lhvars_Probl P).
 Proof.  
   induction P; intros.
@@ -1092,6 +1126,16 @@ Qed.
   
 
 
+Lemma not_in_prob_allvar_not_in_eq_left : forall X P, ~set_In X (Problem_vars P) ->
+                                             forall s t, set_In (equ s t) P ->
+                                                    ~set_In X (exp_vars s).
+Proof.
+  intros.
+  unfold not in *.
+  intros.
+  apply H. eapply problem_eqn_allvar_left_in; eauto.
+Qed.
+
 Lemma not_in_prob_lhvar_not_in_eq_left : forall X P, ~set_In X (lhvars_Probl P) ->
                                              forall s t, set_In (equ s t) P ->
                                                     ~set_In X (exp_vars s).
@@ -1101,7 +1145,327 @@ Proof.
   intros.
   apply H. eapply problem_eqn_lhvar_in; eauto.
 Qed.
+
+
+(*
+Lemma problem_X_clear' : forall P X s, set_In X (Problem_vars (P|^^((X,s) :: nil))) ->
+                                  (set_In X (exp_vars s) \/ set_In X (lhvars_Probl P)).
+Proof.
+  intro P.
+  induction P; intros.
+  - now destruct H.
+  - destruct a as [ s' t' | σ τ].
+    + simpl in *.
+*)
+
+Lemma exp_X_clear_both : (forall t s X, ~set_In X (exp_vars s) -> ~set_In X (exp_vars (sub t ((X,s) :: nil)))) /\ (forall σ X s, ~set_In X (exp_vars s) -> ~set_In X (exp_vars_s (sub_s σ ((X,s) :: nil)))).
+  apply sigma_ind2; intros.
+  - now simpl.
+  - simpl. intro.
+    specialize (H _ _ H1). specialize (H0 _ _ H1).
+    apply set_union_elim in H2.
+    destruct H2; contradiction.
+  - simpl. intro.
+    specialize (H _ _ H0). contradiction.
+  - simpl. intro.
+    specialize (H _ _ H1). specialize (H0 _ _ H1).
+    apply set_union_elim in H2.
+    destruct H2; contradiction.
+  - simpl. destruct (var_eqdec X0 X); subst. assumption. simpl. intro.
+    destruct H0. symmetry in H0. contradiction. assumption.
+  - now simpl.
+  - now simpl.
+  - simpl. intro.
+    specialize (H _ _ H1). specialize (H0 _ _ H1).
+    apply set_union_elim in H2.
+    destruct H2; contradiction.
+  - simpl. intro.
+    specialize (H _ _ H1). specialize (H0 _ _ H1).
+    apply set_union_elim in H2.
+    destruct H2; contradiction.
+Qed.
+
+Lemma exp_X_clear : (forall t s X, ~set_In X (exp_vars s) -> ~set_In X (exp_vars (sub t ((X,s) :: nil)))).
+Proof.
+  apply exp_X_clear_both.
+Qed.
+
+Lemma exp_X_clear_sexp :  (forall σ X s, ~set_In X (exp_vars s) -> ~set_In X (exp_vars_s (sub_s σ ((X,s) :: nil)))).
+Proof.
+  apply exp_X_clear_both.
+Qed.
     
+
+Lemma problem_X_clear : forall P X s, ~set_In X (exp_vars s) /\ ~set_In X (lhvars_Probl P) ->
+                                 ~set_In X (Problem_vars (P|^^((X,s) :: nil))).
+  intro P.
+  induction P; intros.
+  - now simpl.
+  - destruct a as [s' t' | σ τ].
+    + simpl in *.
+      destruct H as [H_1 H_2].
+      intro. apply set_union_elim in H.
+      destruct H. apply H_2.
+      apply set_union_intro.
+      now left.
+      apply set_union_elim in H.
+      destruct H. revert H. now apply exp_X_clear.
+      revert H. apply IHP.
+      split. apply H_1.
+      intro. apply H_2. apply set_union_intro. now right.
+    + simpl in *.
+      destruct H as [H_1 H_2].
+      intro. apply set_union_elim in H.
+      destruct H. apply H_2.
+      apply set_union_intro.
+      now left.
+      apply set_union_elim in H.
+      destruct H. revert H. now apply exp_X_clear_sexp.
+      revert H. apply IHP.
+      split. apply H_1.
+      intro. apply H_2. apply set_union_intro. now right.
+Qed.
+
+Lemma problem_lhvar_remove_one_mem : forall P e X , set_In X (lhvars_Probl (P \ e)) -> set_In X (lhvars_Probl P).
+Proof.
+  intro P.
+  induction P; intros.
+  - now simpl.
+  - simpl in *. destruct e as [s t | σ τ]; destruct a as [s' t' | σ' τ'].
+    + destruct (Equation_eqdec (equ s t) (equ s' t')); subst.
+      now apply set_union_intro2.
+      simpl in H. apply set_union_intro.
+      apply set_union_elim in H.
+      destruct H. now left.
+      right. eapply IHP. apply H.
+    + destruct (Equation_eqdec (equ s t) (equ_s σ' τ')); subst.
+      inversion e. simpl in H.
+      apply set_union_intro. apply set_union_elim in H.
+      destruct H. now left.
+      right. eapply IHP. apply H.
+    + destruct (Equation_eqdec (equ_s σ τ) (equ s' t')); subst.
+      inversion e. simpl in H.
+      apply set_union_intro. apply set_union_elim in H.
+      destruct H. now left.
+      right. eapply IHP. apply H.
+    + destruct (Equation_eqdec (equ_s σ τ) (equ_s σ' τ')); subst.
+      now apply set_union_intro2.
+      simpl in H. apply set_union_intro.
+      apply set_union_elim in H.
+      destruct H. now left.
+      right. eapply IHP. apply H.
+Qed.   
+
+
+
+
+Lemma exp_X_desubst_both : (forall t s X0 X, set_In X0 (exp_vars (sub t ((X,s) ::  nil))) ->
+                                        X0 <> X -> ~set_In X0 (exp_vars s) ->
+                                        set_In X0 (exp_vars t)) /\
+                             (forall σ s X0 X, set_In X0 (exp_vars_s (sub_s σ ((X,s) :: nil))) ->
+                                          X0 <> X -> ~set_In X0 (exp_vars s) ->
+                                          set_In X0 (exp_vars_s σ)).
+Proof.
+  apply sigma_ind2; intros.
+  - now simpl in *.
+  - simpl in *.
+    apply set_union_elim in H1.
+    destruct H1.
+    apply set_union_intro1.
+    eapply H; eauto.
+    apply set_union_intro2.
+    eapply H0; eauto.
+  - simpl in *.
+    eapply H; eauto.
+  - simpl in *.
+    apply set_union_elim in H1.
+    destruct H1.
+    apply set_union_intro1.
+    eapply H; eauto.
+    apply set_union_intro2.
+    eapply H0; eauto.
+  - simpl in *.
+    destruct (var_eqdec X1 X); subst.
+    contradiction. simpl in H. assumption.
+  - now simpl in *.
+  - now simpl in *.
+  - simpl in *.
+    apply set_union_elim in H1.
+    destruct H1.
+    apply set_union_intro1.
+    eapply H; eauto.
+    apply set_union_intro2.
+    eapply H0; eauto.
+   - simpl in *.
+    apply set_union_elim in H1.
+    destruct H1.
+    apply set_union_intro1.
+    eapply H; eauto.
+    apply set_union_intro2.
+    eapply H0; eauto.
+Qed.
+
+
+Lemma exp_X_desubst : (forall t s X0 X, set_In X0 (exp_vars (sub t ((X,s) ::  nil))) ->
+                                        X0 <> X -> ~set_In X0 (exp_vars s) ->
+                                        set_In X0 (exp_vars t)).
+Proof.
+  apply exp_X_desubst_both.
+Qed.
+
+Lemma exp_X_desubst_sexp : (forall σ s X0 X, set_In X0 (exp_vars_s (sub_s σ ((X,s) :: nil))) ->
+                                          X0 <> X -> ~set_In X0 (exp_vars s) ->
+                                          set_In X0 (exp_vars_s σ)).
+Proof.
+  apply exp_X_desubst_both.
+Qed.
+
+
+    
+Lemma problem_vars_X_desubst : forall P X0 X s, set_In X0 (Problem_vars (P |^^ ((X,s) :: nil)))
+                                          -> X0 <> X -> ~ set_In X0 (exp_vars s) ->
+                                          set_In X0 (Problem_vars P).
+Proof.
+  intro P.
+  induction P; intros.
+  - simpl. now simpl in H.
+  - destruct a as [s' t' | σ τ]; subst.
+    + simpl in *.
+      apply set_union_elim in H.
+      destruct H.
+      apply set_union_intro. now left.
+      apply set_union_elim in H.
+      destruct H.
+      apply set_union_intro. right.
+      apply set_union_intro. left.
+      eapply exp_X_desubst; eauto.
+      apply set_union_intro. right.
+      apply set_union_intro. right.
+      eapply IHP; eauto.
+    + simpl in *.
+      apply set_union_elim in H.
+      destruct H.
+      apply set_union_intro. now left.
+      apply set_union_elim in H.
+      destruct H.
+      apply set_union_intro. right.
+      apply set_union_intro. left.
+      eapply exp_X_desubst_sexp; eauto.
+      apply set_union_intro. right.
+      apply set_union_intro. right.
+      eapply IHP; eauto.
+Qed.
+
+
+Lemma sub_comp_var_diff_left: forall S X0 X s,  set_In X0 (dom_rec (sub_comp S ((X, s) :: nil))) ->
+                                           X0 <> X ->
+                                           set_In X0 (dom_rec S).
+Proof.
+  intros.
+  apply In_dom_eq_dom_rec.
+  apply In_dom_eq_dom_rec in H.
+  unfold In_dom. simpl.
+  unfold In_dom in H. simpl in H.
+  revert X0 X s H H0.
+  induction S; intros.
+  - simpl in *.
+    destruct (var_eqdec X X0); subst; eauto.
+  - simpl in *.
+    destruct a as (Y, t); subst.
+    simpl in *.
+    destruct (var_eqdec Y X0); subst.
+    intro. apply H. rewrite H1. simpl.
+    destruct (var_eqdec X X0); subst.
+    simpl in H. contradiction. reflexivity. 
+    unfold sub_comp in IHS.
+    eapply IHS; eauto.
+Qed.    
+
+
+Lemma problem_var_remove_one_mem : forall P e X , set_In X (Problem_vars (P \ e)) -> set_In X (Problem_vars P).
+Proof.
+  induction P; intros.
+  - now simpl in *.
+    - simpl in *. destruct e as [s t | σ τ]; destruct a as [s' t' | σ' τ'].
+    + destruct (Equation_eqdec (equ s t) (equ s' t')); subst.
+      apply set_union_intro2.
+      now apply set_union_intro2.
+      simpl in H. apply set_union_intro.
+      apply set_union_elim in H.
+      destruct H. now left.
+      apply set_union_elim in H.
+      destruct H. right.
+      apply set_union_intro. now left.
+      right. apply set_union_intro. right.
+      eapply IHP; eauto.
+    + destruct (Equation_eqdec (equ s t) (equ_s σ' τ')); subst.
+      inversion e.
+      simpl in H. apply set_union_intro.
+      apply set_union_elim in H.
+      destruct H. now left.
+      apply set_union_elim in H.
+      destruct H. right.
+      apply set_union_intro. now left.
+      right. apply set_union_intro. right.
+      eapply IHP; eauto.
+    + destruct (Equation_eqdec (equ_s σ τ) (equ s' t')); subst.
+      inversion e.
+      simpl in H. apply set_union_intro.
+      apply set_union_elim in H.
+      destruct H. now left.
+      apply set_union_elim in H.
+      destruct H. right.
+      apply set_union_intro. now left.
+      right. apply set_union_intro. right.
+      eapply IHP; eauto.
+    + destruct (Equation_eqdec (equ_s σ τ) (equ_s σ' τ')); subst.
+      apply set_union_intro2.
+      now apply set_union_intro2.
+      simpl in H. apply set_union_intro.
+      apply set_union_elim in H.
+      destruct H. now left.
+      apply set_union_elim in H.
+      destruct H. right.
+      apply set_union_intro. now left.
+      right. apply set_union_intro. right.
+      eapply IHP; eauto.
+Qed.  
+
+(*
+
+ (equ s t)::P0 => set_union var_eqdec (exp_vars s)
+                   (set_union var_eqdec (exp_vars t) (Problem_vars P0))
+    | (equ_s σ τ)::P0 => set_union var_eqdec (exp_vars_s σ)
+                       (set_union var_eqdec (exp_vars_s τ) (Problem_vars P0))               
+
+*)
+
+Lemma problem_vars_eqn1 : forall s t P0, Problem_vars ((equ s t)::P0) = set_union var_eqdec (exp_vars s)
+                   (set_union var_eqdec (exp_vars t) (Problem_vars P0)).
+Proof.
+ now  simpl.
+Qed.
+
+Lemma problem_vars_eqn2 : forall P0 s t a, Problem_vars (equ s t:: P0 |+ a) = Problem_vars (equ s t :: (P0 |+ a)).
+Proof.
+  simpl.
+Admitted.
+
+Lemma problem_var_ext_vars_exp : forall P s t X, set_In X (Problem_vars (P |+ (equ s t))) ->
+                                            ~set_In X (exp_vars s) -> ~ set_In X (exp_vars t) ->
+                                            set_In X (Problem_vars P).
+Proof.
+  intro P.
+  induction P; intros.
+  - simpl in *.
+    apply set_union_elim in H. destruct H; contradiction.
+  - destruct a as [s' t' | σ τ].
+     + destruct (exp_eqdec s s'); subst.
+       destruct (exp_eqdec t t'); subst.
+       Unset Printing Notations.
+       rewrite problem_vars_eqn2 in H.
+       simpl in *.
+
 (** MATCHING INFRA LEMMAS END *)
 
 
@@ -1558,3 +1922,53 @@ Proof.
        specialize (H2 X0). now rewrite <- subst_comp_assoc in H2.
     + assumption.
 Qed.
+
+Lemma match_step_validity : forall T T', smatch T T' -> valid_tuple T -> valid_tuple T'.
+Proof.
+  intros T T' H H'.
+  destruct H'. clear H1. rename H0 into H'. 
+  
+  destruct H; intros; simpl in H'; unfold valid_tuple; repeat split; simpl;apply set_nocommon_1_3; intros.
+  - apply set_nocommon_1_3_back with (X:=X) in H'; eauto.
+    intro.
+    apply H'.
+    eapply problem_var_remove_one_mem; eauto.
+  - apply set_nocommon_1_3_back with (X:=X) in H'; eauto.
+    intro.
+    apply H'.
+    eapply problem_var_remove_one_mem; eauto.
+    
+  - apply set_nocommon_1_3_back with (X:=X) in H'; eauto.
+    intro.
+    apply problem_var_remove_one_mem in H1. 
+    admit.
+
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - (* 1. S doesn't have X in domain : Because of H0 and H 
+       2. By 1, S' does have X in domain 
+       3. s doesn't have X by H.
+       
+     *)
+    case (var_eqdec X X0); intro; subst.
+    + apply problem_X_clear.
+      split. intro. apply H.
+      eapply problem_eqn_lhvar_in.
+      apply H0. apply H1.
+      intro. apply H.
+      eapply problem_lhvar_remove_one_mem.
+      apply H1.
+    + apply sub_comp_var_diff_left in H2; eauto.
+      intro.
+      apply problem_vars_X_desubst in H1; eauto.
+      apply problem_var_remove_one_mem in H1; eauto.
+      apply (set_nocommon_1_3_back _ _) with (X:= X0) in H'; eauto.
+      apply (set_nocommon_1_3_back _ _) with (X:= X0) in H'; eauto.
+      eapply (not_in_prob_allvar_not_in_eq_left); eauto.   
+Admitted.   
