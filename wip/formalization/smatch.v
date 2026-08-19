@@ -53,7 +53,6 @@ Notation "s .: σ" := (Cons s σ) (at level 58).
 Notation "↑" := Shift.
 
 
-
 (** Equivalence with respect to σmin-rules *)
 Unset Elimination Schemes.
 Inductive σmin_equiv : exp -> exp -> Prop :=
@@ -343,8 +342,10 @@ Notation "P |+ u" := (set_add Equation_eqdec u P) (at level 67).
 Definition In_dom (X : Var) (S : Subst) :=  (sub (VarExp X) S) <> VarExp X . 
 Notation "X € S" := (In_dom X S) (at level 67).
 
-Definition subs_equiv (E : exp -> exp -> Prop) (S S' : Subst) := forall X,  E (sub (VarExp X) S)                                                                                     (sub (VarExp X) S'). 
+Definition subs_equiv (E : exp -> exp -> Prop) (S S' : Subst) := forall X,  E (sub (VarExp X) S) (sub (VarExp X) S'). 
 
+
+(** TODO : change to some other notation *)
 Notation "S ~:c S'" := (subs_equiv σmin_equiv S S') (at level 67).
 
 
@@ -406,8 +407,7 @@ Definition match_sol (S' :Subst) (T : Tuple) :=
   let P := (snd T) in
   ( forall s t, set_In (equ s t) P ->  σmin_equiv s (sub t S') ) /\
   ( forall σ τ, set_In (equ_s σ τ) P -> σmin_equivs σ (sub_s τ S')) /\  
-  ( exists S'', (sub_comp S S'') ~:c S' ) /\
-  set_inter var_eqdec (lhvars_Probl P) (dom_rec S') = []. 
+  ( exists S'', (sub_comp S S'') ~:c S' ) /\ True.
 
 
 
@@ -1794,7 +1794,6 @@ Proof.
       apply (set_remove_3 Equation_eqdec); eauto.
       now repeat apply set_add_intro1.
     + assumption.  
-    + assumption.   
   (* Lam *)    
   - unfold match_sol in *.
     simpl in *.
@@ -1818,7 +1817,6 @@ Proof.
        apply H22.
        apply (set_remove_3 Equation_eqdec); eauto.
        now repeat apply set_add_intro1.
-    + assumption.
     + assumption.
   - (* inst *) 
     unfold match_sol in *.
@@ -1851,8 +1849,6 @@ Proof.
         apply (set_remove_3 Equation_eqdec); eauto.
         now repeat apply set_add_intro1.
     +  assumption.
-    +  assumption.
-
   - unfold match_sol in *.
     simpl in *.
     destruct H2 as [H21 [H22 [H23 H24]]].
@@ -1879,7 +1875,6 @@ Proof.
          apply (set_remove_3 Equation_eqdec).
          now repeat apply set_add_intro1. apply n.
     + assumption.
-    + assumption.  
   - unfold match_sol in *.
     simpl in *.
     destruct H2 as [H21 [H22 [H23 H24]]].
@@ -1908,7 +1903,6 @@ Proof.
         apply set_add_intro1.
         apply H2.
     + assumption.  
-    + assumption.        
   - unfold match_sol in *.
     simpl in *.
     destruct H2 as [H21 [H22 [H23 H24]]].
@@ -1928,7 +1922,6 @@ Proof.
       * apply H22.
         apply (set_remove_3 Equation_eqdec).
         now apply (set_add_intro1). assumption.
-    + assumption.
     + assumption.
   -  unfold match_sol in *.
      simpl in *.
@@ -1952,7 +1945,6 @@ Proof.
            apply (set_remove_3 Equation_eqdec).
            now apply (set_add_intro1). assumption.
      + assumption.
-     + assumption.
   -  unfold match_sol in *.
      simpl in *.
      destruct H2 as [H21 [H22 [H23 H24]]].
@@ -1973,7 +1965,6 @@ Proof.
        * apply H22.
          apply (set_remove_3 Equation_eqdec).
          now apply (set_add_intro1). assumption.
-     + assumption.
      + assumption.
   - unfold match_sol in *.
     simpl in *.
@@ -1996,7 +1987,6 @@ Proof.
       * apply H22.
         apply (set_remove_3 Equation_eqdec).
         now apply (set_add_intro1). assumption.
-    + assumption.
     + assumption.
        
   - (* This is the hardest case where all the action happens   *)
@@ -2156,7 +2146,6 @@ Proof.
        exists (sub_comp ((X,s) :: nil) S'').
        intros.
        specialize (H2 X0). now rewrite <- subst_comp_assoc in H2.
-    + assumption.
 Qed.
 
 Lemma match_step_validity : forall T T', smatch T T' -> valid_tuple T -> valid_tuple T'.
