@@ -1,0 +1,253 @@
+\documentclass[10pt]{beamer}
+\geometry{paperwidth=160mm, paperheight=120mm}
+
+% Minimal theme setup with zero clutter
+\usepackage{listings}
+\usepackage{xcolor}
+\usetheme{default}
+\usecolortheme{seahorse}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}[frame number]
+
+
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+
+
+% listings start
+\newcommand\evar[1]{\textcolor{red}{#1}}
+\newcommand\cdm[1]{(*$#1$*)}
+\newcommand\code[1]{{\tt\small #1}}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{ltblue}{rgb}{0,0.4,0.4}
+\definecolor{dkviolet}{rgb}{0.3,0,0.5}
+\definecolor{dkblue}{rgb}{0,0,1}
+\definecolor{dkred}{rgb}{1,0,0}
+
+% lstlisting coq style (inspired from a file of Assia Mahboubi)
+\lstdefinelanguage{Coq}{ 
+	% Anything between $ becomes LaTeX math mode
+	mathescape=true,
+	% Comments may or not include Latex commands
+	texcl=false, 
+	% Vernacular commands
+	morekeywords=[1]{Section, Module, End, Require, Import, Export,
+		Variable, Variables, Parameter, Parameters, Axiom, Hypothesis,
+		Hypotheses, Notation, Local, Tactic, Reserved, Scope, Open, Close,
+		Bind, Delimit, Definition, Let, Ltac, Fixpoint, CoFixpoint, Add,
+		Morphism, Relation, Implicit, Arguments, Unset, Contextual,
+		Strict, Prenex, Implicits, Inductive, CoInductive, Record,
+		Structure, Canonical, Coercion, Context, Class, Global, Instance,
+		Program, Infix, Theorem, Lemma, Corollary, Proposition, Fact,
+		Remark, Example, Proof, Goal, Save, Qed, Defined, Hint, Resolve,
+		Rewrite, View, Search, Show, Print, Printing, All, Eval, Check,
+		Projections, inside, outside, Def},
+	% Gallina
+	morekeywords=[2]{forall, exists, exists2, fun, fix, cofix, struct,
+		match, with, end, as, in, return, let, if, is, then, else, for, of,
+		nosimpl, when},
+	% Sorts
+	morekeywords=[3]{Type, Prop, Set, true, false, option},
+	% Various tactics, some are std Coq subsumed by ssr, for the manual purpose
+	morekeywords=[4]{pose, set, move, case, elim, apply, clear, hnf,
+		intro, intros, generalize, rename, pattern, after, destruct,
+		induction, using, refine, inversion, injection, rewrite, congr,
+		unlock, compute, ring, field, fourier, replace, fold, unfold,
+		change, cutrewrite, simpl, have, suff, wlog, suffices, without,
+		loss, nat_norm, assert, cut, trivial, revert, bool_congr, nat_congr,
+		symmetry, transitivity, auto, split, left, right, autorewrite},
+	% Terminators
+	morekeywords=[5]{by, done, exact, reflexivity, tauto, romega, omega,
+		assumption, solve, contradiction, discriminate},
+	% Control
+	morekeywords=[6]{do, last, first, try, idtac, repeat},
+	% Comments delimiters, we do turn this off for the manual
+	morecomment=[s]{(*}{*)},
+	% Spaces are not displayed as a special character
+	showstringspaces=false,
+	% String delimiters
+	morestring=[b]",
+	morestring=[d]’,
+	% Size of tabulations
+	tabsize=3,
+	% Enables ASCII chars 128 to 255
+	extendedchars=false,
+	% Case sensitivity
+	sensitive=true,
+	% Automatic breaking of long lines
+	breaklines=false,
+	% Default style fors listings
+	basicstyle=\small,
+	% Position of captions is bottom
+	captionpos=b,
+	% flexible columns
+	columns=[l]flexible,
+	% Style for (listings') identifiers
+	identifierstyle={\ttfamily\color{black}},
+	% Style for declaration keywords
+	keywordstyle=[1]{\ttfamily\color{dkviolet}},
+	% Style for gallina keywords
+	keywordstyle=[2]{\ttfamily\color{dkgreen}},
+	% Style for sorts keywords
+	keywordstyle=[3]{\ttfamily\color{ltblue}},
+	% Style for tactics keywords
+	keywordstyle=[4]{\ttfamily\color{dkblue}},
+	% Style for terminators keywords
+	keywordstyle=[5]{\ttfamily\color{dkred}},
+	%Style for iterators
+	%keywordstyle=[6]{\ttfamily\color{dkpink}},
+	% Style for strings
+	stringstyle=\ttfamily,
+	% Style for comments
+	commentstyle={\ttfamily\color{dkgreen}},
+	%moredelim=**[is][\ttfamily\color{red}]{/&}{&/},
+	literate=
+	{\\forall}{{\color{dkgreen}{$\forall\;$}}}1
+	{\\exists}{{$\exists\;$}}1
+	{<-}{{$\leftarrow\;$}}1
+	{=>}{{$\Rightarrow\;$}}1
+	{==}{{\code{==}\;}}1
+	{==>}{{\code{==>}\;}}1
+	%    {:>}{{\code{:>}\;}}1
+	{->}{{$\rightarrow\;$}}1
+	{<->}{{$\leftrightarrow\;$}}1
+	{<==}{{$\leq\;$}}1
+	{\#}{{$^\star$}}1 
+	{\\o}{{$\circ\;$}}1 
+	{\@}{{$\cdot$}}1 
+	{\/\\}{{$\wedge\;$}}1
+	{\\\/}{{$\vee\;$}}1
+	{++}{{\code{++}}}1
+	{~}{{$\sim$}}1
+	{\@\@}{{$@$}}1
+	{\\mapsto}{{$\mapsto\;$}}1
+	{\\hline}{{\rule{\linewidth}{0.5pt}}}1
+	%
+}[keywords,comments,strings]
+
+
+
+
+\begin{document}
+
+% -------------------------------------------------------------------
+% Frame 1: Core Definitions & Target Theorem Statement
+% -------------------------------------------------------------------
+\begin{frame}[t]{Some definitions}
+\begin{align*}
+	Subst &:= set \ (Var * Exp) \\
+	Problem &:= set \ Equation \\
+	Tuple &:= set \ (Subst * Problem) \\
+	\_\langle \_\rangle &: exp \to Subst \to exp \\
+	dom &: Subst \to set \ Var \\
+	smatch &: Tuple \to Tuple \to Prop
+\end{align*}
+
+\end{frame}
+
+% -------------------------------------------------------------------
+% Frame 2: Side-by-Side Proof Walkthrough (Definitions Left, Steps Right)
+% -------------------------------------------------------------------
+\begin{frame}[t]{\textit{smatch} steps are classified into three}
+\begin{block}{Congruence steps}
+	\begin{align*}
+		smatch\_app\_congr : \ \  &(s \ t =_? s' \ t') \in P \to \\
+		                    & smatch \ (S,P) \ (S, P + (s =_? s') + (t=_?t') \ \backslash \ (s  t =_? s' \ t'))  
+	\end{align*}
+\end{block}
+\pause
+\begin{block}{$\sigma$-min steps}
+	\begin{align*}
+		smatch\_subst\_comp : \ \ &(s[\sigma \circ \tau] =_? s'[\rho]) \in P \to \\
+		                        & smatch \ (S,P) \ (S, P + (s[\sigma][\tau] =_? s'[\rho]) \backslash (s[\sigma \circ \tau]=_?s'[\rho])) 
+	\end{align*}
+\end{block}
+\pause
+\begin{block}{Instantiation case}
+	\begin{align*}
+		smatch\_inst : \ \ & (s=_?X) \in P \to \\
+		                   & X \notin lhs\_vars \ P \to \\
+		                   & S' =_{\sigma_{min}} S \gg \{(X,s)\} \to \\
+		                    &  smatch \ (S,P) \ (S', (P \backslash (s=_?X))\langle \{(X,s)\} \rangle)  
+	\end{align*}
+\end{block}
+\end{frame}
+
+\begin{frame}[t]{Preservation statement}
+\begin{block}{Validity}
+	\begin{align*}
+		valid\_tuple \ (S,P) :=  \underline{(dom \ S) \cap (vars\_of \ P) = \phi}
+	\end{align*}
+\end{block}
+
+\begin{block}{Matching solution}
+	\begin{align*}
+		match\_sol \ Sl \ (S,P) \ := \ &\underline{(s=_?t) \in P \to s =_{\sigma_{min}} t\langle Sl\rangle} \ \wedge  \\
+		&\underline{\exists S', S \gg S' =_{\sigma_{min}} Sl} 
+	\end{align*}
+\end{block}
+
+\begin{block}{Preservation theorem}
+	\begin{align*}
+	   match\_pres  \ : \ &valid\_tuple \ T \to \\
+	                     &(dom \ Sl) \cap (lhvars\_of \ P) \to \\
+	                     & smatch \ T \ T' \to  \\
+	                     & match\_sol \ Sl \ T' \to \\
+	                     & match\_sol \ Sl \ T 
+	\end{align*}
+\end{block}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Proof proceeds by case analysis on $smatch$}
+	\begin{block}{Inst case }
+		\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
+		    (*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
+		    (*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
+		    (*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
+		    (*$H_4$*) : (*$match\_sol \ Sl \ (S \gg \{(X,s)\}, \ (P \ \backslash \ (s,X))\langle \{(X,s)\} \rangle$*) 
+			----------------------------------
+			(*$match\_sol \ Sl \ P$*)
+		\end{lstlisting}
+	\end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]{}
+	\begin{block}{Inst case (Unfolded $match\_sol$) }
+		\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
+			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
+			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
+			(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
+			(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s,X))\langle \{(X,s)\}\rangle \to s=_{\sigma_{min}} t\langle Sl\rangle$*)
+			(*$H_5$*) : (*$\exists S', Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
+			----------------------------------
+			(*$\forall s_0,t_0, (s_0 =_? t_0) \in P \to s_0 =_{\sigma_{min}} t_0\langle Sl\rangle \ \ \ \ \wedge $*)
+			(*$\exists S', Sl =_{\sigma_{min}} S \gg S' $*)
+		\end{lstlisting}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{}
+	\begin{block}{Inst case continued.. }
+		\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
+			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
+			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
+			(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
+			(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s,X))\langle \{(X,s)\}\rangle \to s'=_{\sigma_{min}} t'\langle Sl\rangle$*)
+			(*$H_5$*) : (*$\exists S', Sl = (S \gg \{(X,s)\}) \gg S' $*)
+			(*$s_0,t_0$*) : exp
+			(*$H_6$*) : (*$(s_0 =_? t_0) \in P$*)
+			----------------------------------
+			(*$s_0 =_{\sigma_{min}} t_0\langle Sl\rangle$*)
+		\end{lstlisting}
+	\end{block}
+\pause
+
+Case analysis : $\{s_0 =_? t_0 \ =  \ s =_? X\} + \{s_0 =_? t_0 \ \neq s =_? X\}$
+\end{frame}
+
+
+
+\end{document}
