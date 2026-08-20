@@ -141,7 +141,6 @@ $set$ is finite sets implemented as Lists.
 	Problem &:= set \ Equation \\
 	Tuple &:= Subst * Problem \\
 	\_\langle \_\rangle &: exp \to Subst \to exp \\
-	\_\langle \_\rangle &: sexp \to Subst \to sexp \\
 	\_\langle \_\rangle &: Problem \to Subst \to Problem \\
 	\_ \ @ \ \_ &: Subst \to Var \to exp \\
 	dom &: Subst \to set \ Var \\
@@ -319,7 +318,7 @@ Case analysis : $\{s_0 =_? t_0 \ =  \ s =_? X\} + \{s_0 =_? t_0 \ \neq s =_? X\}
 
 \pause
 Property mentioned in 5: 
-$\forall \ X \ S \ S' \ Sl, \ X \notin dom \ S \to X \notin Sl \to S \gg S' =_{\sigma_{min}} Sl \to S'@X =_{\sigma_{min}}X$
+$\forall \ X \ S \ S' \ Sl, \ X \notin dom \ Sl \to X \notin dom \ S \to S \gg S' =_{\sigma_{min}} Sl \to S'@X =_{\sigma_{min}}X$
 
 \end{frame}
 
