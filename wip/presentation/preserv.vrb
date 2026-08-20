@@ -1,17 +1,18 @@
 \frametitle{}
-\begin{block}{Inst case continued.. }
+\begin{block}{Case 2.2: $s_0 =_? t_0 \neq s =_?X$, when $X \notin vars\_of \ t_0$}
 		\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
 			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
 			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
 			(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
-			(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s,X))\langle \{(X,s)\}\rangle \to s'=_{\sigma_{min}} t'\langle Sl\rangle$*)
-			(*$H_5$*) : (*$\exists S', Sl = (S \gg \{(X,s)\}) \gg S' $*)
+			(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s=_?X))\langle \{(X,s)\}\rangle \to s'=_{\sigma_{min}} t'\langle Sl\rangle$*)
+			(*$H_5$*) : (*$ Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
 			(*$s_0,t_0$*) : exp
 			(*$H_6$*) : (*$(s_0 =_? t_0) \in P$*)
 			----------------------------------
 			(*$s_0 =_{\sigma_{min}} t_0\langle Sl\rangle$*)
 		\end{lstlisting}
 	\end{block}
-\pause
-
-Case analysis : $\{s_0 =_? t_0 \ =  \ s =_? X\} + \{s_0 =_? t_0 \ \neq s =_? X\}$
+\begin{enumerate}
+	\item Apply $H_4$.
+	\item $(s_0=_?t_0) \in (P \backslash (s,X))\langle \{(X,s)\}\rangle$ is provable by knowing $H_6$, $X \notin vars\_of \ t_0$, and $s_0 \neq s$ and $t_0 \neq X$.
+\end{enumerate}

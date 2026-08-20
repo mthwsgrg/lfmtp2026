@@ -134,11 +134,16 @@
 % Frame 1: Core Definitions & Target Theorem Statement
 % -------------------------------------------------------------------
 \begin{frame}[t]{Some definitions}
+$set$ is finite sets implemented as Lists. 	
 \begin{align*}
 	Subst &:= set \ (Var * Exp) \\
+	Equation &:= set \ ((exp * exp) + (sexp * sexp)) \\
 	Problem &:= set \ Equation \\
-	Tuple &:= set \ (Subst * Problem) \\
+	Tuple &:= Subst * Problem \\
 	\_\langle \_\rangle &: exp \to Subst \to exp \\
+	\_\langle \_\rangle &: sexp \to Subst \to sexp \\
+	\_\langle \_\rangle &: Problem \to Subst \to Problem \\
+	\_ \ @ \ \_ &: Subst \to exp \\
 	dom &: Subst \to set \ Var \\
 	smatch &: Tuple \to Tuple \to Prop
 \end{align*}
@@ -149,10 +154,11 @@
 % Frame 2: Side-by-Side Proof Walkthrough (Definitions Left, Steps Right)
 % -------------------------------------------------------------------
 \begin{frame}[t]{\textit{smatch} steps are classified into three}
+\pause
 \begin{block}{Congruence steps}
 	\begin{align*}
 		smatch\_app\_congr : \ \  &(s \ t =_? s' \ t') \in P \to \\
-		                    & smatch \ (S,P) \ (S, P + (s =_? s') + (t=_?t') \ \backslash \ (s  t =_? s' \ t'))  
+		                    & smatch \ (S,P) \ (S, P + (s =_? s') + (t=_?t') \ \backslash \ (s \ t =_? s' \ t'))  
 	\end{align*}
 \end{block}
 \pause
@@ -166,7 +172,7 @@
 \begin{block}{Instantiation case}
 	\begin{align*}
 		smatch\_inst : \ \ & (s=_?X) \in P \to \\
-		                   & X \notin lhs\_vars \ P \to \\
+		                   & X \notin lhvars\_of \ P \to \\
 		                   & S' =_{\sigma_{min}} S \gg \{(X,s)\} \to \\
 		                    &  smatch \ (S,P) \ (S', (P \backslash (s=_?X))\langle \{(X,s)\} \rangle)  
 	\end{align*}
@@ -206,7 +212,7 @@
 		    (*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
 		    (*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
 		    (*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
-		    (*$H_4$*) : (*$match\_sol \ Sl \ (S \gg \{(X,s)\}, \ (P \ \backslash \ (s,X))\langle \{(X,s)\} \rangle$*) 
+		    (*$H_4$*) : (*$match\_sol \ Sl \ (S \gg \{(X,s)\}, \ (P \ \backslash \ (s=_?X))\langle \{(X,s)\} \rangle$*) 
 			----------------------------------
 			(*$match\_sol \ Sl \ P$*)
 		\end{lstlisting}
@@ -220,13 +226,15 @@
 			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
 			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
 			(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
-			(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s,X))\langle \{(X,s)\}\rangle \to s=_{\sigma_{min}} t\langle Sl\rangle$*)
+			(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s=_?X))\langle \{(X,s)\}\rangle \to s=_{\sigma_{min}} t\langle Sl\rangle$*)
 			(*$H_5$*) : (*$\exists S', Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
 			----------------------------------
 			(*$\forall s_0,t_0, (s_0 =_? t_0) \in P \to s_0 =_{\sigma_{min}} t_0\langle Sl\rangle \ \ \ \ \wedge $*)
 			(*$\exists S', Sl =_{\sigma_{min}} S \gg S' $*)
 		\end{lstlisting}
 	\end{block}
+\pause
+Second conjunct is solvable associativity property of substitution composition.
 \end{frame}
 
 \begin{frame}[fragile]{}
@@ -235,8 +243,8 @@
 			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
 			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
 			(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
-			(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s,X))\langle \{(X,s)\}\rangle \to s'=_{\sigma_{min}} t'\langle Sl\rangle$*)
-			(*$H_5$*) : (*$\exists S', Sl = (S \gg \{(X,s)\}) \gg S' $*)
+			(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s=_?X))\langle \{(X,s)\}\rangle \to s'=_{\sigma_{min}} t'\langle Sl\rangle$*)
+			(*$H_5$*) : (*$ Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
 			(*$s_0,t_0$*) : exp
 			(*$H_6$*) : (*$(s_0 =_? t_0) \in P$*)
 			----------------------------------
@@ -248,6 +256,93 @@
 Case analysis : $\{s_0 =_? t_0 \ =  \ s =_? X\} + \{s_0 =_? t_0 \ \neq s =_? X\}$
 \end{frame}
 
+\begin{frame}[fragile]{}
+	\begin{block}{Case 1: $s_0 =_? t_0 \ =  \ s =_? X$}
+	\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
+		(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
+		(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
+		(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
+		(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s=_?X))\langle \{(X,s)\}\rangle \to s'=_{\sigma_{min}} t'\langle Sl\rangle$*)
+		(*$H_5$*) : (*$ Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
+		(*$s_0,t_0$*) : exp
+		(*$H_6$*) : (*$(s =_? X) \in P$*)
+		----------------------------------
+		(*$s =_{\sigma_{min}} X\langle Sl\rangle$*)
+	\end{lstlisting}
+\end{block}
+\pause
+\textcolor{red}{$s =_{\sigma_{min}} Sl @ X$ is not immediate}
+\begin{enumerate}
+	\pause
+		\item $Y \in (vars\_of \ s) \to Y \notin dom \ Sl$, from $H_2$ and $H_6$
+		\pause
+	\item $Y \in (vars\_of \ s) \to Y \notin dom \ (S \gg \{(X,s)\})$, from $H_1$ and $H_3$.
+	\pause
+	\item $(S \gg \{(X,s)\})@X = s$, from $H_1$ and $H_6$
+	\pause
+	\item $((S \gg \{(X,s)\}) \gg S')@X = ((S \gg \{(X,s)\})@X)\langle S'\rangle = s\langle S'\rangle$, from 3 and lookup property
+	\pause
+	\item $Y \in (vars\_of \ s) \to S'@Y =_{\sigma_{min}} Y$, from a substitution property
+	\pause
+	\item $s =_{\sigma_{min}} s\langle S'\rangle$, from 5
+\end{enumerate}
+
+\pause
+Property mentioned in 5: 
+$\forall \ X \ S \ S' \ Sl, \ X \notin dom \ S \to X \notin Sl \to S \gg S' =_{\sigma_{min}} Sl \to S'@X =_{\sigma_{min}}X$
+
+\end{frame}
+
+\begin{frame}[fragile]{}
+	\begin{block}{Case 2.1: $s_0 =_? t_0 \neq s =_?X$, when $X \in vars\_of \ t_0$}
+	\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
+		(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
+		(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
+		(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
+		(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s=_?X))\langle \{(X,s)\}\rangle \to s'=_{\sigma_{min}} t'\langle Sl\rangle$*)
+		(*$H_5$*) : (*$ Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
+		(*$s_0,t_0$*) : exp
+		(*$H_6$*) : (*$(s_0 =_? t_0) \in P$*)
+		----------------------------------
+		(*$s_0 =_{\sigma_{min}} t_0\langle Sl\rangle$*)
+	\end{lstlisting}
+	\end{block}
+\begin{enumerate}
+	\pause
+	\item We can show $\underline{s_0=_?t_0\langle\{(X,s)\} \rangle} \in (P \backslash (s,X))\langle \{(X,s)\}\rangle $.
+	\pause
+	\item 1 in $H_4$ gives us $s_0 =_{\sigma_{min}} t_0\langle\{(X,s)\} \rangle\langle Sl\rangle$
+	\pause
+	\item $s_0 =_{\sigma_{min}} t_0\langle\{(X,s)\} \gg Sl\rangle$, due to substitution composition property.
+	\item  $Y \in (vars\_of \ s) \to Y \notin dom \ Sl$, from $H_2$ and $H_6$
+	\pause
+	\item  $Sl @ X =_{\sigma_{min}} s$, same as in case 1.
+	\pause 
+	\item $Sl =_{\sigma_{min}} \{(X,s)\} \gg Sl$, from 4 and 5.
+	\pause
+	\item $t_0\langle Sl \rangle =_{\sigma_{min}} t_0\langle \{(X,s)\} \gg Sl\rangle$
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]{}
+	\begin{block}{Case 2.2: $s_0 =_? t_0 \neq s =_?X$, when $X \notin vars\_of \ t_0$}
+		\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
+			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
+			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
+			(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
+			(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s=_?X))\langle \{(X,s)\}\rangle \to s'=_{\sigma_{min}} t'\langle Sl\rangle$*)
+			(*$H_5$*) : (*$ Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
+			(*$s_0,t_0$*) : exp
+			(*$H_6$*) : (*$(s_0 =_? t_0) \in P$*)
+			----------------------------------
+			(*$s_0 =_{\sigma_{min}} t_0\langle Sl\rangle$*)
+		\end{lstlisting}
+	\end{block}
+\begin{enumerate}
+	\item Apply $H_4$.
+	\item $(s_0=_?t_0) \in (P \backslash (s,X))\langle \{(X,s)\}\rangle$ is provable by knowing $H_6$, $X \notin vars\_of \ t_0$, and $s_0 \neq s$ and $t_0 \neq X$.
+\end{enumerate}
+\end{frame}
 
 
 \end{document}
