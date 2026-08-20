@@ -47,6 +47,7 @@ Notation "↑" := Shift.
 
 
 (** Equivalence with respect to σmin-rules *)
+
 Unset Elimination Schemes.
 Inductive σmin_equiv : exp -> exp -> Prop :=
 | σmin_subst_app (s t : exp) (σ : sexp) :  σmin_equiv ((App s t)[σ]) (App s[σ] t[σ])
