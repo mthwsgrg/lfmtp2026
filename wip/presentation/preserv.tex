@@ -179,7 +179,7 @@ $set$ is finite sets implemented as Lists.
 \end{block}
 \end{frame}
 
-\begin{frame}[t]{Preservation statement}
+\begin{frame}[t]{Preservation}
 \begin{block}{Validity}
 	\begin{align*}
 		valid\_tuple \ (S,P) :=  \underline{(dom \ S) \cap (vars\_of \ P) = \phi}
@@ -202,6 +202,18 @@ $set$ is finite sets implemented as Lists.
 	                     & match\_sol \ Sl \ T 
 	\end{align*}
 \end{block}
+\end{frame}
+
+\begin{frame}[t]{Soundness}
+	\begin{block}{$smatch$ is sound}
+	\begin{align*}
+		match\_pres  \ : \ &valid\_tuple \ T \to \\
+		&(dom \ Sl) \cap (lhvars\_of \ P) \to \\
+		& star \ smatch \ T \ T' \to  \\
+		& match\_sol \ Sl \ T' \to \\
+		& match\_sol \ Sl \ T 
+	\end{align*}
+	\end{block}
 \end{frame}
 
 
