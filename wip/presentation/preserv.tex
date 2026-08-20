@@ -137,7 +137,7 @@
 $set$ is finite sets implemented as Lists. 	
 \begin{align*}
 	Subst &:= set \ (Var * exp) \\
-	Equation &:= set \ ((exp * exp) + (sexp * sexp)) \\
+	Equation &:= (exp * exp) + (sexp * sexp) \\
 	Problem &:= set \ Equation \\
 	Tuple &:= Subst * Problem \\
 	\_\langle \_\rangle &: exp \to Subst \to exp \\
