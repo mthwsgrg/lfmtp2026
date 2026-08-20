@@ -153,30 +153,38 @@ $set$ is finite sets implemented as Lists.
 % -------------------------------------------------------------------
 % Frame 2: Side-by-Side Proof Walkthrough (Definitions Left, Steps Right)
 % -------------------------------------------------------------------
-\begin{frame}[t]{\textit{smatch} steps are classified into three}
+\begin{frame}[t]{\textit{smatch} steps can be classified into four}
 \pause
-\begin{block}{Congruence steps}
+\begin{block}{1. Reflexive steps}
+	\begin{align*}
+		smatch\_refl : (s=_?s) \in P \to smatch \ (S,P) \ (S, P \backslash (s=_?s)) 
+	\end{align*}
+\end{block}
+\pause
+\begin{block}{2. Congruence steps}
 	\begin{align*}
 		smatch\_app\_congr : \ \  &(s \ t =_? s' \ t') \in P \to \\
 		                    & smatch \ (S,P) \ (S, P + (s =_? s') + (t=_?t') \ \backslash \ (s \ t =_? s' \ t'))  
 	\end{align*}
 \end{block}
 \pause
-\begin{block}{$\sigma$-min steps}
+\begin{block}{3. $\sigma$-min steps}
 	\begin{align*}
 		smatch\_subst\_comp : \ \ &(s[\sigma \circ \tau] =_? s'[\rho]) \in P \to \\
 		                        & smatch \ (S,P) \ (S, P + (s[\sigma][\tau] =_? s'[\rho]) \backslash (s[\sigma \circ \tau]=_?s'[\rho])) 
 	\end{align*}
 \end{block}
-\pause
-\begin{block}{Instantiation case}
-	\begin{align*}
-		smatch\_inst : \ \ & (s=_?X) \in P \to \\
-		                   & X \notin lhvars\_of \ P \to \\
-		                   & S' =_{\sigma_{min}} S \gg \{(X,s)\} \to \\
-		                    &  smatch \ (S,P) \ (S', (P \backslash (s=_?X))\langle \{(X,s)\} \rangle)  
-	\end{align*}
-\end{block}
+\end{frame}
+
+\begin{frame}
+	\begin{block}{4.Instantiation case}
+		\begin{align*}
+			smatch\_inst : \ \ & (s=_?X) \in P \to \\
+			& X \notin lhvars\_of \ P \to \\
+			& S' =_{\sigma_{min}} S \gg \{(X,s)\} \to \\
+			&  smatch \ (S,P) \ (S', (P \backslash (s=_?X))\langle \{(X,s)\} \rangle)  
+		\end{align*}
+	\end{block}
 \end{frame}
 
 \begin{frame}[t]{Preservation}
@@ -196,7 +204,7 @@ $set$ is finite sets implemented as Lists.
 \begin{block}{Preservation theorem}
 	\begin{align*}
 	   match\_pres  \ : \ &valid\_tuple \ T \to \\
-	                     &(dom \ Sl) \cap (lhvars\_of \ P) \to \\
+	                     &(dom \ Sl) \cap (lhvars\_of \ P) = \phi \to \\
 	                     & smatch \ T \ T' \to  \\
 	                     & match\_sol \ Sl \ T' \to \\
 	                     & match\_sol \ Sl \ T 
@@ -205,10 +213,17 @@ $set$ is finite sets implemented as Lists.
 \end{frame}
 
 \begin{frame}[t]{Soundness}
+	\begin{block}{Validity and bound variable preservation}
+		\begin{align*}
+			valid\_pres &: \ smatch \ T \ T' \to valid\_tuple \ T \to valid\_tuple \ T' \\
+			lhvars\_pres &: \ smatch \ T \ T' \to (dom \ Sl) \cap (lhvars\_of \ \pi_2 T) = \phi \to (dom \ Sl) \cap (lhvars\_of \ \pi_2 T') = \phi
+		\end{align*}
+	\end{block}
+	\pause
 	\begin{block}{$smatch$ is sound}
 	\begin{align*}
 		match\_pres  \ : \ &valid\_tuple \ T \to \\
-		&(dom \ Sl) \cap (lhvars\_of \ P) \to \\
+		&(dom \ Sl) \cap (lhvars\_of \ P) = \phi \to \\
 		& star \ smatch \ T \ T' \to  \\
 		& match\_sol \ Sl \ T' \to \\
 		& match\_sol \ Sl \ T 
@@ -218,15 +233,16 @@ $set$ is finite sets implemented as Lists.
 
 
 
-\begin{frame}[fragile]{Proof proceeds by case analysis on $smatch$}
+\begin{frame}[fragile]{Preservation proof proceeds by case analysis on $smatch$}
 	\begin{block}{Inst case }
 		\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
-		    (*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
-		    (*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
+			 (*$H_0$*) : (*$s=_?X \in P$*)
+		    (*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \phi$*)
+		    (*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \phi$*)
 		    (*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
-		    (*$H_4$*) : (*$match\_sol \ Sl \ (S \gg \{(X,s)\}, \ (P \ \backslash \ (s=_?X))\langle \{(X,s)\} \rangle$*) 
+		    (*$H_4$*) : (*$match\_sol \ Sl \ (S \gg \{(X,s)\}, \ (P \ \backslash \ (s=_?X))\langle \{(X,s)\} \rangle$)*) 
 			----------------------------------
-			(*$match\_sol \ Sl \ P$*)
+			(*$match\_sol \ Sl \ (S,P)$*)
 		\end{lstlisting}
 	\end{block}
 \end{frame}
@@ -234,9 +250,10 @@ $set$ is finite sets implemented as Lists.
 
 \begin{frame}[fragile]{}
 	\begin{block}{Inst case (Unfolded $match\_sol$) }
-		\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
-			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
-			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
+		\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]     
+		   (*$H_0$*) : (*$s=_?X \in P$*)
+			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \phi$*)
+			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \phi$*)
 			(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
 			(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s=_?X))\langle \{(X,s)\}\rangle \to s=_{\sigma_{min}} t\langle Sl\rangle$*)
 			(*$H_5$*) : (*$\exists S', Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
@@ -252,8 +269,9 @@ Second conjunct is solvable associativity property of substitution composition.
 \begin{frame}[fragile]{}
 	\begin{block}{Inst case continued.. }
 		\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
-			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
-			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
+			(*$H_0$*) : (*$s=_?X \in P$*)
+			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \phi$*)
+			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \phi$*)
 			(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
 			(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s=_?X))\langle \{(X,s)\}\rangle \to s'=_{\sigma_{min}} t'\langle Sl\rangle$*)
 			(*$H_5$*) : (*$ Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
@@ -271,8 +289,8 @@ Case analysis : $\{s_0 =_? t_0 \ =  \ s =_? X\} + \{s_0 =_? t_0 \ \neq s =_? X\}
 \begin{frame}[fragile]{}
 	\begin{block}{Case 1: $s_0 =_? t_0 \ =  \ s =_? X$}
 	\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
-		(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
-		(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
+		(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \phi$*)
+		(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \phi$*)
 		(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
 		(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s=_?X))\langle \{(X,s)\}\rangle \to s'=_{\sigma_{min}} t'\langle Sl\rangle$*)
 		(*$H_5$*) : (*$ Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
@@ -308,8 +326,9 @@ $\forall \ X \ S \ S' \ Sl, \ X \notin dom \ S \to X \notin Sl \to S \gg S' =_{\
 \begin{frame}[fragile]{}
 	\begin{block}{Case 2.1: $s_0 =_? t_0 \neq s =_?X$, when $X \in vars\_of \ t_0$}
 	\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
-		(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
-		(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
+		(*$H_0$*) : (*$s=_?X \in P$*)
+		(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \phi$*)
+		(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \phi$*)
 		(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
 		(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s=_?X))\langle \{(X,s)\}\rangle \to s'=_{\sigma_{min}} t'\langle Sl\rangle$*)
 		(*$H_5$*) : (*$ Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
@@ -339,8 +358,9 @@ $\forall \ X \ S \ S' \ Sl, \ X \notin dom \ S \to X \notin Sl \to S \gg S' =_{\
 \begin{frame}[fragile]{}
 	\begin{block}{Case 2.2: $s_0 =_? t_0 \neq s =_?X$, when $X \notin vars\_of \ t_0$}
 		\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
-			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
-			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
+			(*$H_0$*) : (*$s=_?X \in P$*)
+			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \phi$*)
+			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \phi$*)
 			(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
 			(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s=_?X))\langle \{(X,s)\}\rangle \to s'=_{\sigma_{min}} t'\langle Sl\rangle$*)
 			(*$H_5$*) : (*$ Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)

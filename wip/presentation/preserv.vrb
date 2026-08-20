@@ -1,8 +1,9 @@
 \frametitle{}
 \begin{block}{Case 2.2: $s_0 =_? t_0 \neq s =_?X$, when $X \notin vars\_of \ t_0$}
 		\begin{lstlisting}[language=Coq, escapeinside={(*}{*)}]
-			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \{\}$*)
-			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \{\}$*)
+			(*$H_0$*) : (*$s=_?X \in P$*)
+			(*$H_1$*) : (*$(dom \ S) \ \cap \ vars\_of \ P = \phi$*)
+			(*$H_2$*) : (*$(dom \ Sl) \cap \ lhvars\_of \ P = \phi$*)
 			(*$H_3$*) : (*$X \notin lhvars\_of \ P$*)
 			(*$H_4$*) : (*$\forall \ s' \ t', (s'=_?t') \in (P \backslash (s=_?X))\langle \{(X,s)\}\rangle \to s'=_{\sigma_{min}} t'\langle Sl\rangle$*)
 			(*$H_5$*) : (*$ Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
