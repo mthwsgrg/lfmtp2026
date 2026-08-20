@@ -2449,7 +2449,7 @@ Qed.
      
 
 
-Lemma mstep_match_sol_preservation : forall Sl T T',
+Lemma soundness_match : forall Sl T T',
 
       valid_tuple T ->
 

@@ -136,14 +136,14 @@
 \begin{frame}[t]{Some definitions}
 $set$ is finite sets implemented as Lists. 	
 \begin{align*}
-	Subst &:= set \ (Var * Exp) \\
+	Subst &:= set \ (Var * exp) \\
 	Equation &:= set \ ((exp * exp) + (sexp * sexp)) \\
 	Problem &:= set \ Equation \\
 	Tuple &:= Subst * Problem \\
 	\_\langle \_\rangle &: exp \to Subst \to exp \\
 	\_\langle \_\rangle &: sexp \to Subst \to sexp \\
 	\_\langle \_\rangle &: Problem \to Subst \to Problem \\
-	\_ \ @ \ \_ &: Subst \to exp \\
+	\_ \ @ \ \_ &: Subst \to Var \to exp \\
 	dom &: Subst \to set \ Var \\
 	smatch &: Tuple \to Tuple \to Prop
 \end{align*}
