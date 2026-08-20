@@ -334,13 +334,14 @@ $\forall \ X \ S \ S' \ Sl, \ X \notin dom \ S \to X \notin Sl \to S \gg S' =_{\
 		(*$H_5$*) : (*$ Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
 		(*$s_0,t_0$*) : exp
 		(*$H_6$*) : (*$(s_0 =_? t_0) \in P$*)
+		(*$H_7$*) : (*$s_0=_?t_0 \neq s=_?X$*)
 		----------------------------------
 		(*$s_0 =_{\sigma_{min}} t_0\langle Sl\rangle$*)
 	\end{lstlisting}
 	\end{block}
 \begin{enumerate}
 	\pause
-	\item We can show $\underline{s_0=_?t_0\langle\{(X,s)\} \rangle} \in (P \backslash (s,X))\langle \{(X,s)\}\rangle $.
+	\item We can show $\underline{s_0=_?t_0\langle\{(X,s)\} \rangle} \in (P \backslash (s,X))\langle \{(X,s)\}\rangle $, from $H_6$, $H_7$ and a substitution property.
 	\pause
 	\item 1 in $H_4$ gives us $s_0 =_{\sigma_{min}} t_0\langle\{(X,s)\} \rangle\langle Sl\rangle$
 	\pause
@@ -366,13 +367,15 @@ $\forall \ X \ S \ S' \ Sl, \ X \notin dom \ S \to X \notin Sl \to S \gg S' =_{\
 			(*$H_5$*) : (*$ Sl =_{\sigma_{min}} (S \gg \{(X,s)\}) \gg S' $*)
 			(*$s_0,t_0$*) : exp
 			(*$H_6$*) : (*$(s_0 =_? t_0) \in P$*)
+			(*$H_7$*) : (*$s_0=_?t_0 \neq s=_?X$*)
+			(*$H_8$*) : (*$X \notin vars\_of \ t_0$*)
 			----------------------------------
 			(*$s_0 =_{\sigma_{min}} t_0\langle Sl\rangle$*)
 		\end{lstlisting}
 	\end{block}
 \begin{enumerate}
 	\item Apply $H_4$.
-	\item $(s_0=_?t_0) \in (P \backslash (s,X))\langle \{(X,s)\}\rangle$ is provable by knowing $H_6$, $X \notin vars\_of \ t_0$, and $s_0 \neq s$ and $t_0 \neq X$.
+	\item $(s_0=_?t_0) \in (P \backslash (s,X))\langle \{(X,s)\}\rangle$ is provable by knowing $H_6$, $H_7$, and $H_8$.
 \end{enumerate}
 \end{frame}
 
