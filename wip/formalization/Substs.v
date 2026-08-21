@@ -1,0 +1,208 @@
+Require Export Exps.
+
+Open Scope type_scope.
+
+Inductive Assignment : Set :=
+| exp_assign : Var -> exp -> Assignment
+| sexp_assign : Var -> sexp -> Assignment.
+
+Definition Subst := set Assignment.
+
+
+Fixpoint look_up_exp (X: Var) (S: Subst) {struct S} : exp :=
+ match S with
+ | [] => VarExp X
+ | mp :: S0 => match mp with
+             | exp_assign Y t => if var_eqdec Y X then t else (look_up_exp X S0)
+             | _ => look_up_exp X S0
+             end
+ end.
+
+Fixpoint look_up_sexp (X: Var) (S: Subst) {struct S} : sexp :=
+ match S with
+ | [] => VarSExp X
+ | mp :: S0 => match mp with
+             | sexp_assign Y σ => if var_eqdec Y X then σ else (look_up_sexp X S0)
+             | _ => look_up_sexp X S0
+             end
+end.
+
+Fixpoint sub (s: exp) (S: Subst) : exp :=
+match s with
+  | Zero => Zero
+  | App s t => App (sub s S) (sub t S)
+  | Lam s => Lam (sub s S) 
+  | Inst s σ => Inst (sub s S) (sub_s σ S)
+  | VarExp X => look_up_exp X S
+end
+with sub_s (σ: sexp) (S: Subst) : sexp :=
+ match σ with
+ | I => I      
+ | Shift => Shift
+ | Cons s σ => Cons (sub s S) (sub_s σ S)  
+ | Comp σ τ => Comp (sub_s σ S) (sub_s τ S)
+ | VarSExp Y => look_up_sexp Y S
+ end.
+
+
+Fixpoint alist_rec (S1 S2: Subst) 
+                   (F: Assignment -> Subst -> Subst -> Subst) : Subst :=
+ match S1 with 
+    | []          =>  S2
+    | asmnt ::S0  =>  F asmnt S2 (alist_rec S0 S2 F)
+ end.
+
+Definition F_rec (S1: Subst) (asmnt : Assignment) (S2 S3: Subst) :=
+  match asmnt with
+  | exp_assign X t => (exp_assign X (sub t S1)) :: S3
+  | sexp_assign Y σ => (sexp_assign Y (sub_s σ S1)) ::  S3
+  end.
+
+Definition sub_comp (S1 S2: Subst) := alist_rec S1 S2 (F_rec S2). 
+
+Fixpoint subst_dom_vars (S : Subst) : set SortedVar :=
+  match S with
+    | [] => []   
+    | asmnt :: S0 => match asmnt with
+                   | exp_assign X t => set_add sortedvar_eqdec (exp_var X) (subst_dom_vars S0)
+                   | sexp_assign Y σ => set_add sortedvar_eqdec (sexp_var Y) (subst_dom_vars S0)
+                   end                 
+   end.
+
+
+Fixpoint dom_rec_aux (S : Subst) (St : set SortedVar) : set SortedVar :=
+  match St with
+    | [] => []
+    | V::St0 => match V with
+              | exp_var X => if (exp_eqdec (sub (VarExp X) S) (VarExp X)) then
+                               (dom_rec_aux S St0) else
+                               (set_add sortedvar_eqdec (exp_var X) (dom_rec_aux S St0))
+              | sexp_var Y => if (sexp_eqdec (sub_s (VarSExp Y) S) (VarSExp Y)) then
+                                (dom_rec_aux S St0) else
+                                (set_add sortedvar_eqdec (sexp_var Y) (dom_rec_aux S St0))
+              end
+   end.                  
+
+
+Definition dom_rec (S : Subst) := dom_rec_aux S (subst_dom_vars S).
+
+
+Fixpoint im_rec_aux (S : Subst) (St : set SortedVar) : set SortedExp :=
+  match St with
+    | [] => []  
+    | V::St0 => match V with
+              | exp_var X => Exp (sub (VarExp X) S) :: (im_rec_aux S St0)
+              | sexp_var Y => SExp (sub_s (VarSExp Y) S) :: (im_rec_aux S St0)
+              end
+  end.
+
+Definition im_rec (S : Subst) := im_rec_aux S (dom_rec S).
+
+Fixpoint exps_set_vars (E: set SortedExp) : set SortedVar :=
+  match E with
+    | [] => []
+    | sσ ::T0 => match sσ with
+             | Exp s => set_union sortedvar_eqdec (vars_of_exp s) (exps_set_vars T0)
+             | SExp σ => set_union sortedvar_eqdec (vars_of_sexp σ) (exps_set_vars T0)
+             end
+  end.
+
+
+
+Definition In_dom_exp (X: Var) (S: Subst) := (sub (VarExp X) S) <> VarExp X.
+Definition In_dom_sexp (Y: Var) (S: Subst) := (sub_s (VarSExp Y) S) <> VarSExp Y.
+
+
+
+Definition subs_equiv (R1 : exp -> exp -> Prop) (R2: sexp -> sexp -> Prop) (S1 S2 : Subst) := (forall X, R1 (sub (VarExp X) S1) (sub (VarExp X) S2)) /\
+                                                                                        (forall X, R2 (sub_s (VarSExp X) S1) (sub_s (VarSExp X) S2)).
+
+
+
+Lemma dom_rec_aux_to_In_dom_exp : forall X S St, set_In (exp_var X) (dom_rec_aux S St) -> In_dom_exp X S.
+Proof.
+  intros. unfold In_dom_exp. simpl.
+  induction St; simpl in H; try contradiction.
+  destruct a as [X' | Y'].
+  - destruct (exp_eqdec (look_up_exp X' S) (VarExp X')); subst; eauto.
+    apply set_add_elim in H.
+    destruct H. injection H as H; subst. trivial.
+    now apply IHSt. 
+  - destruct (sexp_eqdec (look_up_sexp Y' S) (VarSExp Y')); subst; eauto.
+    apply set_add_elim in H.
+    destruct H. inversion H.
+    now apply IHSt.
+Qed.
+
+Lemma In_dom_to_dom_rec_aux_exp : forall X S St, In_dom_exp X S -> set_In (exp_var X) St -> set_In (exp_var X) (dom_rec_aux S St).
+  intros. unfold In_dom_exp in H.
+  simpl in H. induction St; simpl in H0|-*; try contradiction.
+  destruct a as [X' | Y'].
+  - case (exp_eqdec (look_up_exp  X' S) (VarExp X')); intro H1.
+    + destruct H0. injection H0 as H0. rewrite H0 in H1. contradiction.
+      now apply IHSt.
+    + destruct H0. apply set_add_intro2. symmetry in H0. trivial.
+      apply set_add_intro1. now apply IHSt.
+  - case (sexp_eqdec (look_up_sexp Y' S) (VarSExp Y')); intro H1.
+    + destruct H0. inversion H0. now apply IHSt.
+    + destruct H0. inversion H0. apply set_add_intro1. now apply IHSt. 
+Qed.
+
+Lemma In_dom_to_subst_dom_vars_exp : forall X S,
+    In_dom_exp X S -> set_In (exp_var X) (subst_dom_vars S).
+Proof.
+  intros. unfold In_dom_exp in H.
+  simpl in H. induction S; simpl in *|-*.
+  - apply H; trivial.
+  - revert H.
+    destruct a as [X' | Y'].
+     +  case (var_eqdec X' X); intros H0 H.
+       rewrite H0. apply set_add_intro2. trivial.
+       apply set_add_intro1. apply IHS; trivial.
+     + intro. apply set_add_intro1. now apply IHS.
+Qed.
+
+Lemma In_dom_eq_dom_rec_exp : forall X S, In_dom_exp X S <-> set_In (exp_var X) (dom_rec S).
+Proof.
+  intros. split; intro H.
+  apply In_dom_to_dom_rec_aux_exp; trivial.
+  apply In_dom_to_subst_dom_vars_exp; trivial.
+  apply dom_rec_aux_to_In_dom_exp in H; trivial.
+Qed.  
+  
+Lemma In_dom_eq_dom_flip : forall X S, ~ In_dom_exp X S <-> ~ set_In (exp_var X) (dom_rec S).
+Proof.
+  intros.
+  destruct (In_dom_eq_dom_rec_exp X S) as [H1 H2].
+  assert (forall (P Q: Prop), (P -> Q) -> (~Q -> ~P)) as contrap. {
+    eauto. }
+  split.
+  -  intros.
+     specialize (contrap _ _ H2); eauto.
+  -  intros.
+     specialize (contrap _ _ H1); eauto.
+Qed. 
+
+
+Lemma not_In_dom_lookup_exp : forall X S, ~ In_dom_exp X S -> look_up_exp X S = (VarExp X).
+  intros.
+  unfold In_dom_exp in H. simpl in H.
+  unfold not in H.
+  case (exp_eqdec (look_up_exp X S) (VarExp X)); intros.
+  assumption. contradiction.
+Qed.
+
+Lemma not_In_dom_lookup_flip_exp : forall X S,  look_up_exp X S = (VarExp X) -> ~ In_dom_exp X S.
+Proof.
+  now trivial. 
+Qed.
+
+
+Lemma not_in_dom_lookup_same_exp : forall S X, ~set_In (exp_var X) (dom_rec S) -> look_up_exp X S = VarExp X.
+Proof.
+  intros.
+  apply not_In_dom_lookup_exp.
+  now apply In_dom_eq_dom_flip.
+Qed.  
+
+

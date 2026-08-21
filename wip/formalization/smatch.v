@@ -473,8 +473,6 @@ Qed.
 (** INFRASTRUCTURE LEMMAS START *)
 
 (** SET RELATTED INFRA LEMMAS START *)
-
-
 Lemma set_nocommon_1_2 : forall S S', (forall (X: Var), set_In X S -> ~set_In X S') <-> (forall (X: Var), set_In X S' -> ~set_In X S) .
   intros.
   split ; intros; unfold not in *; intros;now specialize (H _ H1). 
@@ -524,6 +522,7 @@ Proof.
   intros S S'.
   split; intros; apply set_nocommon_1_3; apply set_nocommon_1_2;    now apply set_nocommon_1_3.  
 Qed.
+
 
 
   
@@ -2467,3 +2466,11 @@ Proof.
     eapply match_step_validity; eauto.
     eapply match_step_lhvar_dom_preservation; eauto.
 Qed.    
+
+
+(* Dep graph generations below *)
+From dpdgraph Require Import dpdgraph.
+
+
+Print DependGraph soundness_match.
+Print DependGraph σmin_comp_prop1.
