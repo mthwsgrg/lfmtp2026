@@ -28,6 +28,10 @@ Notation "s .: σ" := (Cons s σ) (at level 58).
 Notation "↑" := Shift.
 
 
+Scheme exp_ind2 := Induction for exp Sort Prop
+with sexp_ind2 := Induction for sexp Sort Prop.
+Combined Scheme sigma_ind2 from exp_ind2, sexp_ind2.
+
 
 
 Lemma expression_eqdec : (forall s t : exp, {s = t} + {s <> t}) *

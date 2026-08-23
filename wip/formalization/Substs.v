@@ -134,6 +134,21 @@ Proof.
     now apply IHSt.
 Qed.
 
+Lemma dom_rec_aux_to_In_dom_sexp : forall X S St, set_In (sexp_var X) (dom_rec_aux S St) -> In_dom_sexp X S.
+Proof.
+  intros. unfold In_dom_exp. simpl.
+  induction St; simpl in H; try contradiction.
+  destruct a as [X' | Y'].
+  - destruct (exp_eqdec (look_up_exp X' S) (VarExp X')); subst; eauto.
+    apply set_add_elim in H.
+    destruct H. inversion H. now apply IHSt.
+  - destruct (sexp_eqdec (look_up_sexp Y' S) (VarSExp Y')); subst; eauto.
+    apply set_add_elim in H.
+    destruct H. injection H as H; subst. trivial.
+    now apply IHSt. 
+Qed.
+
+
 Lemma In_dom_to_dom_rec_aux_exp : forall X S St, In_dom_exp X S -> set_In (exp_var X) St -> set_In (exp_var X) (dom_rec_aux S St).
   intros. unfold In_dom_exp in H.
   simpl in H. induction St; simpl in H0|-*; try contradiction.
@@ -147,6 +162,22 @@ Lemma In_dom_to_dom_rec_aux_exp : forall X S St, In_dom_exp X S -> set_In (exp_v
     + destruct H0. inversion H0. now apply IHSt.
     + destruct H0. inversion H0. apply set_add_intro1. now apply IHSt. 
 Qed.
+
+Lemma In_dom_to_dom_rec_aux_sexp : forall X S St, In_dom_sexp X S -> set_In (sexp_var X) St -> set_In (sexp_var X) (dom_rec_aux S St).
+  intros. unfold In_dom_exp in H.
+  simpl in H. induction St; simpl in H0|-*; try contradiction.
+  destruct a as [X' | Y'].
+   - case (exp_eqdec (look_up_exp X' S) (VarExp X')); intro H1.
+    + destruct H0. inversion H0. now apply IHSt.
+    + destruct H0. inversion H0. apply set_add_intro1. now apply IHSt. 
+  - case (sexp_eqdec (look_up_sexp  Y' S) (VarSExp Y')); intro H1.
+    + destruct H0. injection H0 as H0. rewrite H0 in H1. contradiction.
+      now apply IHSt.
+    + destruct H0. apply set_add_intro2. symmetry in H0. trivial.
+      apply set_add_intro1. now apply IHSt.
+Qed.
+
+
 
 Lemma In_dom_to_subst_dom_vars_exp : forall X S,
     In_dom_exp X S -> set_In (exp_var X) (subst_dom_vars S).
@@ -162,6 +193,23 @@ Proof.
      + intro. apply set_add_intro1. now apply IHS.
 Qed.
 
+
+Lemma In_dom_to_subst_dom_vars_sexp : forall X S,
+    In_dom_sexp X S -> set_In (sexp_var X) (subst_dom_vars S).
+Proof.
+  intros. unfold In_dom_sexp in H.
+  simpl in H. induction S; simpl in *|-*.
+  - apply H; trivial.
+  - revert H.
+    destruct a as [X' | Y'].
+     + intro. apply set_add_intro1. now apply IHS.
+     + case (var_eqdec Y' X); intros H0 H.
+       rewrite H0. apply set_add_intro2. trivial.
+       apply set_add_intro1. apply IHS; trivial.
+Qed.
+
+
+(* Jumping between two notion of expressing variable in domain *)
 Lemma In_dom_eq_dom_rec_exp : forall X S, In_dom_exp X S <-> set_In (exp_var X) (dom_rec S).
 Proof.
   intros. split; intro H.
@@ -169,11 +217,33 @@ Proof.
   apply In_dom_to_subst_dom_vars_exp; trivial.
   apply dom_rec_aux_to_In_dom_exp in H; trivial.
 Qed.  
-  
-Lemma In_dom_eq_dom_flip : forall X S, ~ In_dom_exp X S <-> ~ set_In (exp_var X) (dom_rec S).
+
+Lemma In_dom_eq_dom_rec_sexp : forall X S, In_dom_sexp X S <-> set_In (sexp_var X) (dom_rec S).
+Proof.
+  intros. split; intro H.
+  apply In_dom_to_dom_rec_aux_sexp; trivial.
+  apply In_dom_to_subst_dom_vars_sexp; trivial.
+  apply dom_rec_aux_to_In_dom_sexp in H; trivial.
+Qed.  
+
+
+Lemma In_dom_eq_dom_flip_exp : forall X S, ~ In_dom_exp X S <-> ~ set_In (exp_var X) (dom_rec S).
 Proof.
   intros.
   destruct (In_dom_eq_dom_rec_exp X S) as [H1 H2].
+  assert (forall (P Q: Prop), (P -> Q) -> (~Q -> ~P)) as contrap. {
+    eauto. }
+  split.
+  -  intros.
+     specialize (contrap _ _ H2); eauto.
+  -  intros.
+     specialize (contrap _ _ H1); eauto.
+Qed. 
+
+Lemma In_dom_eq_dom_flip_sexp : forall X S, ~ In_dom_sexp X S <-> ~ set_In (sexp_var X) (dom_rec S).
+Proof.
+  intros.
+  destruct (In_dom_eq_dom_rec_sexp X S) as [H1 H2].
   assert (forall (P Q: Prop), (P -> Q) -> (~Q -> ~P)) as contrap. {
     eauto. }
   split.
@@ -192,17 +262,101 @@ Lemma not_In_dom_lookup_exp : forall X S, ~ In_dom_exp X S -> look_up_exp X S = 
   assumption. contradiction.
 Qed.
 
+Lemma not_In_dom_lookup_sexp : forall X S, ~ In_dom_sexp X S -> look_up_sexp X S = (VarSExp X).
+  intros.
+  unfold In_dom_sexp in H. simpl in H.
+  unfold not in H.
+  case (sexp_eqdec (look_up_sexp X S) (VarSExp X)); intros.
+  assumption. contradiction.
+Qed.
+
+
 Lemma not_In_dom_lookup_flip_exp : forall X S,  look_up_exp X S = (VarExp X) -> ~ In_dom_exp X S.
 Proof.
   now trivial. 
 Qed.
+
+Lemma not_In_dom_lookup_flip_sexp : forall X S,  look_up_sexp X S = (VarSExp X) -> ~ In_dom_sexp X S.
+Proof.
+  now trivial. 
+Qed.
+
 
 
 Lemma not_in_dom_lookup_same_exp : forall S X, ~set_In (exp_var X) (dom_rec S) -> look_up_exp X S = VarExp X.
 Proof.
   intros.
   apply not_In_dom_lookup_exp.
-  now apply In_dom_eq_dom_flip.
+  now apply In_dom_eq_dom_flip_exp.
+Qed.  
+
+
+Lemma not_in_dom_lookup_same_sexp : forall S X, ~set_In (sexp_var X) (dom_rec S) -> look_up_sexp X S = VarSExp X.
+Proof.
+  intros.
+  apply not_In_dom_lookup_sexp.
+  now apply In_dom_eq_dom_flip_sexp.
+Qed.  
+
+
+
+
+Lemma subst_comp_id_left : forall S, (sub_comp ([]) S) = S.
+Proof.
+  intros.  unfold sub_comp. simpl; trivial.
+Qed.
+
+
+(* look_up_ can be pushed inside a composition *)
+Lemma look_up_sub_comp_exp: forall S S' X, look_up_exp X (sub_comp S S') = sub (look_up_exp X S) S'.
+Proof.
+  intros. induction S; simpl.
+  rewrite subst_comp_id_left; trivial.
+  destruct a. simpl.
+  case (var_eqdec v X); intro H; trivial.
+  simpl. apply IHS.
+Qed.
+
+Lemma look_up_sub_comp_sexp: forall S S' X, look_up_sexp X (sub_comp S S') = sub_s (look_up_sexp X S) S'.
+Proof.
+  intros. induction S; simpl.
+  rewrite subst_comp_id_left; trivial.
+  destruct a. simpl. apply IHS.
+  simpl. case (var_eqdec v X); intro H; trivial.
+Qed.
+
+
+Lemma subst_comp_expand : (forall s S1 S2, sub s (sub_comp S1 S2) = sub (sub s S1) S2) /\
+                           (forall σ S1 S2, sub_s σ (sub_comp S1 S2) = sub_s (sub_s σ S1) S2 ).
+Proof.
+  apply sigma_ind2; intros; simpl in *.
+  - reflexivity.
+  - rewrite H. now rewrite H0.
+  - now rewrite H.
+  - rewrite H. now rewrite H0.
+  - now rewrite look_up_sub_comp_exp.
+  - now simpl.
+  - now simpl.
+  - rewrite H. now rewrite H0.
+  - rewrite H. now rewrite H0.
+  - now rewrite look_up_sub_comp_sexp.
+Qed.
+
+
+Lemma in_subcomp_second_arg_exp : forall X S S', ~set_In (exp_var X) (dom_rec S) ->
+                                        look_up_exp X (sub_comp S S') = look_up_exp X S'.
+Proof.
+  intros.
+  rewrite look_up_sub_comp_exp.
+  rewrite not_in_dom_lookup_same_exp; eauto.
+Qed.  
+
+Lemma in_subcomp_second_arg_sexp : forall X S S', ~set_In (sexp_var X) (dom_rec S) ->
+                                             look_up_sexp X (sub_comp S S') = look_up_sexp X S'.
+Proof.
+  intros.
+  rewrite look_up_sub_comp_sexp.
+  rewrite not_in_dom_lookup_same_sexp; eauto.
 Qed.  
 
 

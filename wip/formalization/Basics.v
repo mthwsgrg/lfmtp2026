@@ -4,8 +4,7 @@ Export ListNotations.
 
 Section SetPropertiesWithEqDec.
   
-  Parameter A: Type.
-  Parameter AEq_dec : forall (x y:A), {x=y} + {x <> y}.
+  Context {A: Type} {AEq_dec : forall (x y:A), {x=y} + {x <> y}}.
 
 
 Lemma set_nocommon_1_2 : forall S S', (forall (X: A), set_In X S -> ~set_In X S') <-> (forall (X: A), set_In X S' -> ~set_In X S) .
@@ -57,6 +56,21 @@ Proof.
   intros S S'.
   split; intros; apply set_nocommon_1_3; apply set_nocommon_1_2;    now apply set_nocommon_1_3.  
 Qed.
+
+Lemma set_nocommon_inter_forall : forall S S', set_inter AEq_dec S S' = [] -> (forall X, set_In X S -> ~set_In X S').  
+Admitted.
+
+Lemma set_nocommon_inter_forall_flip : forall S S', set_inter AEq_dec S S' = [] -> (forall X, set_In X S' ->
+                                                                                ~set_In X S).
+Admitted.
+
+Lemma set_nocommon_forall_inter : forall S S', (forall X, set_In X S -> ~set_In X S') ->
+                                          set_inter AEq_dec S S' = [].
+Admitted.
+
+Lemma set_nocommon_forall_inter_flip : forall S S', (forall X, set_In X S' -> ~set_In X S) ->
+                                               set_inter AEq_dec S S' = [].
+Admitted.
 
 End SetPropertiesWithEqDec.
       

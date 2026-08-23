@@ -14,7 +14,7 @@ Inductive σmin_equiv : exp -> exp -> Prop :=
 | σmin_equiv_trans (s t u : exp) :  σmin_equiv s t -> σmin_equiv t u -> σmin_equiv s u
 | σmin_equiv_app (s1 s2 t1 t2 : exp) :  σmin_equiv s1 s2 -> σmin_equiv t1 t2 -> σmin_equiv (App s1 t1) (App s2 t2)
 | σmin_equiv_lam (s1 s2 : exp) :  σmin_equiv s1 s2 -> σmin_equiv (Lam s1) (Lam s2)
-| σmin_equiv_asubst (s1 s2 : exp) (σ τ : sexp) :  σmin_equiv s1 s2 -> σmin_equivs σ τ -> σmin_equiv s1[σ] s2[τ]
+| σmin_equiv_subst (s1 s2 : exp) (σ τ : sexp) :  σmin_equiv s1 s2 -> σmin_equivs σ τ -> σmin_equiv s1[σ] s2[τ]
 with σmin_equivs : sexp -> sexp -> Prop :=
 | σmin_comp_cons (s : exp) (σ τ : sexp) :  σmin_equivs  ((s .: σ) >> τ) (s[τ] .: (σ >> τ)) 
 | σmin_comp_assoc (σ τ θ : sexp) :  σmin_equivs ((σ >> τ) >> θ) (σ >> (τ >> θ))
@@ -23,7 +23,7 @@ with σmin_equivs : sexp -> sexp -> Prop :=
 | σmin_equivs_sym (σ τ : sexp) :  σmin_equivs σ τ -> σmin_equivs τ σ
 | σmin_equivs_trans (σ τ θ : sexp) :  σmin_equivs σ τ -> σmin_equivs τ θ -> σmin_equivs σ θ
 | σmin_equivs_cons (s1 s2 : exp) (σ τ : sexp) :  σmin_equiv s1 s2 -> σmin_equivs σ τ -> σmin_equivs (s1 .: σ) (s2 .: τ)
-| σmin_μequivs_comp (σ1 σ2 τ1 τ2 : sexp) :  σmin_equivs σ1 σ2 -> σmin_equivs τ1 τ2 ->  σmin_equivs (σ1 >> τ1) (σ2 >> τ2).
+| σmin_equivs_comp (σ1 σ2 τ1 τ2 : sexp) :  σmin_equivs σ1 σ2 -> σmin_equivs τ1 τ2 ->  σmin_equivs (σ1 >> τ1) (σ2 >> τ2).
 Set Elimination Schemes.  
 Scheme σmin_equiv_ind := Induction for σmin_equiv Sort Prop
 with  σmin_equivs_ind := Induction for σmin_equivs Sort Prop.
@@ -74,15 +74,70 @@ Inductive smatch : Tuple -> Tuple -> Prop :=
 (* Properties about σmin *)
 
 
-
+Lemma not_in_dom_same_exp : (forall s S, (forall X, set_In (exp_var X) (vars_of_exp s) ->
+                                           σmin_equiv (look_up_exp X S) (VarExp X)) /\
+                                     (forall Y, set_In (sexp_var Y) (vars_of_exp s) ->
+                                            σmin_equivs (look_up_sexp Y S) (VarSExp Y))
+                                             -> σmin_equiv  s (sub s S)) /\
+                               (forall σ S, (forall X, set_In (exp_var X) (vars_of_sexp σ) ->
+                                             σmin_equiv (look_up_exp X S) (VarExp X)) /\
+                                       (forall Y, set_In (sexp_var Y) (vars_of_sexp σ) ->
+                                             σmin_equivs (look_up_sexp Y S) (VarSExp Y)) ->
+                                             σmin_equivs σ (sub_s σ S)).
+Proof.
+  apply sigma_ind2; intros; simpl in *; try now constructor.
+  - destruct H1. apply σmin_equiv_app. 
+    apply H; split; intros.
+    apply H1; intros; now apply set_union_intro1.
+    apply H2; intros; now apply set_union_intro1.
+    apply H0; split; intros.
+    apply H1; intros; now apply set_union_intro2.
+    apply H2; intros; now apply set_union_intro2.   
+  - destruct H0. apply σmin_equiv_lam.
+    apply H; split; intros. now apply H0. now apply H1. 
+  - destruct H1. apply σmin_equiv_subst.
+    apply H; split; intros.
+    apply H1; intros; now apply set_union_intro1.
+    apply H2; intros; now apply set_union_intro1.
+    apply H0; split; intros.
+    apply H1; intros; now apply set_union_intro2.
+    apply H2; intros; now apply set_union_intro2.   
+  - destruct H. apply σmin_equiv_sym. now apply H; left.
+  - destruct H1. apply σmin_equivs_cons. 
+    apply H; split; intros.
+    apply H1; intros; now apply set_union_intro1.
+    apply H2; intros; now apply set_union_intro1.
+    apply H0; split; intros.
+    apply H1; intros; now apply set_union_intro2.
+    apply H2; intros; now apply set_union_intro2.   
+  - destruct H1. apply σmin_equivs_comp. 
+    apply H; split; intros.
+    apply H1; intros; now apply set_union_intro1.
+    apply H2; intros; now apply set_union_intro1.
+    apply H0; split; intros.
+    apply H1; intros; now apply set_union_intro2.
+    apply H2; intros; now apply set_union_intro2.   
+  - destruct H. apply σmin_equivs_sym. now apply H0; left.
+Qed.
+    
 Lemma σmin_comp_prop_exp : forall X S S' Sl,  ~set_In (exp_var X) (dom_rec S)  ->
                                         ~set_In (exp_var X) (dom_rec Sl) ->
                                         (sub_comp S S') ~:c Sl ->
                                         σmin_equiv (look_up_exp X S') (VarExp X).
 Proof.
   intros.
-  unfold subs_equiv in H1; specialize (H1 X); simpl in H1.
-  rewrite <- (not_in_dom_lookup_same Sl _); eauto.
-  rewrite <- (in_subcomp_second_arg _ S S'); eauto.
+  unfold subs_equiv in H1; destruct H1 as [H1 H1'].
+  simpl in H1.
+  erewrite <- not_in_dom_lookup_same_exp; eauto.
+  erewrite <- in_subcomp_second_arg_exp; eauto.
 Qed.
 
+Lemma σmin_comp_prop_sexp : forall Y S S' Sl,  ~set_In (sexp_var Y) (dom_rec S)  ->
+                                          ~set_In (sexp_var Y) (dom_rec Sl) ->
+                                          (sub_comp S S') ~:c Sl ->
+                                          σmin_equivs (look_up_sexp Y S') (VarSExp Y).
+Proof.
+  intros.
+  unfold subs_equiv in H1; destruct H1 as [H1 H1'].
+  simpl in H1.
+Admitted.  
