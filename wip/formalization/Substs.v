@@ -342,6 +342,20 @@ Proof.
   - now rewrite look_up_sub_comp_sexp.
 Qed.
 
+Lemma subst_comp_assoc_exp: forall S1 S2 S3 t, sub t (sub_comp S1 (sub_comp S2 S3)) =
+                                       sub t  (sub_comp (sub_comp S1 S2) S3).
+
+Proof.
+  intros. rewrite 4 (proj1 subst_comp_expand); trivial.
+Qed.
+
+Lemma subst_comp_assoc_sexp: forall S1 S2 S3 σ, sub_s σ (sub_comp S1 (sub_comp S2 S3)) =
+                                           sub_s σ  (sub_comp (sub_comp S1 S2) S3).
+
+Proof.
+  intros. rewrite 4 (proj2 subst_comp_expand); trivial.
+Qed.
+
 
 Lemma in_subcomp_second_arg_exp : forall X S S', ~set_In (exp_var X) (dom_rec S) ->
                                         look_up_exp X (sub_comp S S') = look_up_exp X S'.
@@ -360,3 +374,37 @@ Proof.
 Qed.  
 
 
+Lemma vacous_subst_same : (forall s S, set_inter sortedvar_eqdec (dom_rec S) (vars_of_exp s) = [] ->
+                                  sub s S = s) /\
+                            (forall σ S, set_inter sortedvar_eqdec (dom_rec S) (vars_of_sexp σ) = [] ->
+                                  sub_s σ S = σ).
+Proof.
+  apply sigma_ind2; intros; simpl in *; trivial. 
+  - rewrite H. rewrite H0. trivial.
+    apply set_nocommon_forall_inter_flip; intros.
+    eapply set_nocommon_inter_forall_flip in H1 ; [ apply H1 | now apply set_union_intro2].
+    apply set_nocommon_forall_inter_flip; intros.
+    eapply set_nocommon_inter_forall_flip in H1 ; [ apply H1 | now apply set_union_intro1].
+  - now rewrite H.
+  - rewrite H. rewrite H0. trivial.
+    apply set_nocommon_forall_inter_flip; intros.
+    eapply set_nocommon_inter_forall_flip in H1 ; [ apply H1 | now apply set_union_intro2].
+    apply set_nocommon_forall_inter_flip; intros.
+    eapply set_nocommon_inter_forall_flip in H1 ; [ apply H1 | now apply set_union_intro1].
+  - eapply set_nocommon_inter_forall_flip in H.
+    eapply not_in_dom_lookup_same_exp in H. apply H.
+    now left.
+  - rewrite H. rewrite H0. trivial.
+    apply set_nocommon_forall_inter_flip; intros.
+    eapply set_nocommon_inter_forall_flip in H1 ; [ apply H1 | now apply set_union_intro2].
+    apply set_nocommon_forall_inter_flip; intros.
+    eapply set_nocommon_inter_forall_flip in H1 ; [ apply H1 | now apply set_union_intro1].
+  - rewrite H. rewrite H0. trivial.
+    apply set_nocommon_forall_inter_flip; intros.
+    eapply set_nocommon_inter_forall_flip in H1 ; [ apply H1 | now apply set_union_intro2].
+    apply set_nocommon_forall_inter_flip; intros.
+    eapply set_nocommon_inter_forall_flip in H1 ; [ apply H1 | now apply set_union_intro1].
+  - eapply set_nocommon_inter_forall_flip in H.
+    eapply not_in_dom_lookup_same_sexp in H. apply H.
+    now left.
+Qed.    

@@ -74,7 +74,7 @@ Inductive smatch : Tuple -> Tuple -> Prop :=
 (* Properties about σmin *)
 
 
-Lemma not_in_dom_same_exp : (forall s S, (forall X, set_In (exp_var X) (vars_of_exp s) ->
+Lemma not_in_dom_same : (forall s S, (forall X, set_In (exp_var X) (vars_of_exp s) ->
                                            σmin_equiv (look_up_exp X S) (VarExp X)) /\
                                      (forall Y, set_In (sexp_var Y) (vars_of_exp s) ->
                                             σmin_equivs (look_up_sexp Y S) (VarSExp Y))
@@ -140,4 +140,22 @@ Proof.
   intros.
   unfold subs_equiv in H1; destruct H1 as [H1 H1'].
   simpl in H1.
-Admitted.  
+Admitted.
+
+Lemma σmin_subst_ext : (forall s S S', S ~:c S' -> σmin_equiv (sub s S) (sub s S')) /\
+                         (forall σ S S', S ~:c S' -> σmin_equivs (sub_s σ S) (sub_s σ S')).
+Proof.
+  apply sigma_ind2; intros; simpl.
+  - apply σmin_equiv_refl.
+  - apply σmin_equiv_app; eauto.
+  - apply σmin_equiv_lam; eauto.
+  - apply σmin_equiv_subst; eauto.
+  - unfold subs_equiv in H. destruct H.
+    specialize (H X). now simpl in H.
+  - constructor.
+  - constructor.
+  - apply σmin_equivs_cons; eauto.
+  - apply σmin_equivs_comp; eauto.
+  - unfold subs_equiv in H. destruct H.
+    specialize (H0 Y). now simpl in H0.
+Qed.  
