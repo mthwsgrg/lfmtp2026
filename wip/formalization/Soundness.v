@@ -36,30 +36,199 @@ Proof.
   repeat split; try (exists S''; unfold subs_equiv; split; assumption).
 
   (* refl case start *)
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  (* refl case end *)  
+  - intros s0 t0 HinP.
+    destruct (Equation_eqdec (equ s0 t0) (equ s s)) as [Eq |nEq] ; intros.
+     + inversion Eq; subst.
+       rewrite (proj1 vacous_subst_same). apply σmin_equiv_refl.
+       apply set_nocommon_forall_inter_flip. intros.
+       eapply set_nocommon_inter_forall_flip in HLh.
+       apply HLh. eapply in_exp_then_in_left_problem. apply H0. apply H.
+     + apply HEq1. apply set_remove_3; eauto.
+  - intros σ τ HinP.
+    destruct (Equation_eqdec (equ_s σ τ) (equ s s)) as [Eq | nEq]; intros; try inversion Eq.
+    apply HEq2. apply set_remove_3; eauto.
+  - intros s t HinP.
+    destruct (Equation_eqdec (equ s t) (equ_s σ σ)) as [Eq | nEq]; intros; try inversion Eq.
+    apply HEq1. apply set_remove_3; eauto.
+  - intros σ0 τ0 HinP.
+    destruct (Equation_eqdec (equ_s σ0 τ0) (equ_s σ σ)) as [Eq |nEq] ; intros.
+     + inversion Eq; subst.
+       rewrite (proj2 vacous_subst_same). apply σmin_equivs_refl.
+       apply set_nocommon_forall_inter_flip. intros.
+       eapply set_nocommon_inter_forall_flip in HLh.
+       apply HLh. eapply in_sexp_then_in_left_problem. apply H0. apply H.
+     + apply HEq2. apply set_remove_3; eauto.
+ 
+  (* refl case end *)
+       
+  (* congruence cases start *)
+     (* App *)  
+  - intros s0 t0 HinP.
+    destruct (Equation_eqdec (equ s0 t0) (equ (App s t) (App s' t'))) as [Eq | nEq]; subst.
+    + inversion Eq; subst.
+      apply σmin_equiv_app; apply HEq1.
+      apply (set_remove_3 Equation_eqdec).
+      apply set_add_intro1. now apply set_add_intro2.
+      intro. inversion H0; subst.
+      eapply s_noteq_app. exact H2.
 
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
+      apply (set_remove_3 Equation_eqdec).
+      now apply set_add_intro2.
+      intro. inversion H0; subst.
+      eapply t_noteq_app. exact H2.
+    + apply HEq1.
+      apply (set_remove_3 Equation_eqdec); eauto.
+      now repeat apply set_add_intro1.
+
+    
+  - intros σ τ HinP.
+    destruct (Equation_eqdec (equ_s σ τ) (equ (App s t) (App s' t'))) as [Eq | nEq]; try inversion Eq.
+    apply HEq2. apply (set_remove_3 Equation_eqdec); eauto.
+    now repeat apply set_add_intro1.
+
+    (* Lam *)
+  - intros s0 t0 HinP.
+    destruct (Equation_eqdec (equ s0 t0) (equ (Lam s) (Lam s'))) as [Eq | nEq].
+      +  inversion Eq; subst.
+         apply σmin_equiv_lam; apply HEq1.
+         apply (set_remove_3 Equation_eqdec).  
+         now apply set_add_intro2.
+         intro. inversion H0; subst.
+         eapply s_noteq_lam. exact H3.              
+      +  apply HEq1.
+         apply (set_remove_3 Equation_eqdec); eauto.
+         now apply set_add_intro1.
+  -  intros σ τ HinP.
+     case (Equation_eqdec (equ_s σ τ) (equ (Lam s) (Lam s'))) as [Eq | nEq]; intros; try inversion Eq.
+     apply HEq2. apply (set_remove_3 Equation_eqdec); eauto.
+     now repeat apply set_add_intro1.
+    (* subst *) 
+  - intros s0 t0 HinP.
+    case (Equation_eqdec (equ s0 t0) (equ (s [σ]) (s' [σ']))) as [Eq | nEq]; intros.
+      + inversion Eq; subst.
+        simpl. apply σmin_equiv_subst. 
+        *   apply HEq1. apply (set_remove_3 Equation_eqdec).
+            apply set_add_intro1.
+            now apply set_add_intro2.
+            intro. inversion H0; subst.
+            eapply s_noteq_inst. exact H2.            
+        *  apply HEq2.
+           apply (set_remove_3 Equation_eqdec).
+            now apply set_add_intro2.
+            intro. inversion H0; subst.            
+      + apply HEq1. apply (set_remove_3 Equation_eqdec); eauto.
+        now repeat apply set_add_intro1.
+     
+  - intros σ0 τ0 HinP.
+    case (Equation_eqdec (equ_s σ0 τ0) (equ (s [σ]) (s' [σ']))) as [Eq | nEq]; intros; try inversion Eq.
+    apply HEq2. apply (set_remove_3 Equation_eqdec); eauto.
+    now repeat apply set_add_intro1.
+    (* cons *)
+  -  intros s0 t0 HinP.
+     case (Equation_eqdec (equ s0 t0) (equ_s (s .: σ) (s' .: σ'))) as [Eq | nEq]; intros; try inversion Eq.
+     apply HEq1. apply (set_remove_3 Equation_eqdec); eauto.
+     now repeat apply set_add_intro1.
+  -  intros σ0 τ0 HinP.
+      case (Equation_eqdec (equ_s σ0 τ0) (equ_s (s .: σ) (s' .: σ'))) as [Eq | nEq]; intros.
+       + inversion Eq; subst; simpl.
+         apply σmin_equivs_cons.
+         * apply HEq1. apply (set_remove_3 Equation_eqdec).
+            apply set_add_intro1.
+            now apply set_add_intro2.
+            intro. inversion H0; subst.
+         * apply HEq2. apply (set_remove_3 Equation_eqdec).
+            now apply set_add_intro2.
+            intro. inversion H0; subst.
+            eapply σ_noteq_cons. apply H3.
+       + apply HEq2.
+         apply (set_remove_3 Equation_eqdec).
+         now repeat apply set_add_intro1. apply nEq.
+   (* comp *)
+  -  intros s t HinP.
+      case (Equation_eqdec (equ s t) (equ_s (σ >> τ) ( σ'>> τ'))) as [Eq | nEq]; intros; try inversion Eq.
+       apply HEq1.  apply (set_remove_3 Equation_eqdec); eauto.
+       now repeat apply set_add_intro1.
+  -  intros σ0 τ0 HinP.
+     case (Equation_eqdec (equ_s σ0 τ0) (equ_s (σ >> τ) (σ' >> τ'))) as [Eq | nEq]; intros.
+     +  inversion Eq; subst.
+        simpl. apply σmin_equivs_comp; apply HEq2.
+        *  apply (set_remove_3 Equation_eqdec).
+            apply set_add_intro1.
+            now apply set_add_intro2.
+            intro. inversion H0; subst.
+            eapply σ_noteq_comp. exact H2.            
+        * apply (set_remove_3 Equation_eqdec).
+          now apply set_add_intro2.
+          intro. inversion H0; subst.
+          eapply τ_noteq_comp. exact H2.            
+      + apply HEq2. apply (set_remove_3 Equation_eqdec); eauto.
+        now repeat apply set_add_intro1.
+  (* congruence cases end *)
+        
+  (* σmin cases start *)      
+  - intros s0 t0 HinP.
+    case (Equation_eqdec (equ s0 t0) (equ (Lam s [Zero .: σ >> ↑]) s' [σ'])) as [Eq | nEq]; intros.
+      + inversion Eq; subst.
+        apply σmin_equiv_trans with (t := (Lam s)[σ]).
+        repeat constructor.
+        apply HEq1. apply (set_remove_3 Equation_eqdec).
+        now apply (set_add_intro2). 
+        intro. inversion H0.
+      + apply HEq1. apply (set_remove_3 Equation_eqdec).
+        now apply (set_add_intro1). assumption.
+  - intros σ0 τ0 HinP.
+    case (Equation_eqdec (equ_s σ0 τ0) (equ (Lam s [Zero .: σ >> ↑]) s' [σ'])) as [Eq | nEq]; intros; try inversion Eq.
+    apply HEq2.  apply (set_remove_3 Equation_eqdec).  now apply (set_add_intro1). assumption.
+  - intros s t HinP.
+    case (Equation_eqdec (equ s t) (equ_s (σ >> τ >> ρ) (σ' >> τ'))) as [Eq | nEq]; intros; try inversion Eq.  apply HEq1. apply (set_remove_3 Equation_eqdec).
+    now apply (set_add_intro1). assumption.
+  - intros σ0 τ0 HinP.
+     case (Equation_eqdec (equ_s σ0 τ0) (equ_s (σ >> τ >> ρ) (σ' >> τ'))) as [Eq | nEq]; intros.
+       + inversion Eq; subst.
+          apply σmin_equivs_trans with (τ := (σ >> τ) >> ρ).
+          repeat constructor.
+          apply HEq2.
+          apply (set_remove_3 Equation_eqdec).
+          now apply (set_add_intro2).
+          intro. inversion H0.
+          eapply (τ_noteq_comp). apply H3.
+      +   apply HEq2.apply (set_remove_3 Equation_eqdec).
+          now apply (set_add_intro1). assumption.
+  - intros s0 t0 HinP.
+    case (Equation_eqdec (equ s0 t0) (equ_s (s[τ] .: σ>>τ) (σ' >> τ'))) as [Eq | nEq]; intros; try inversion Eq.
+    apply HEq1. apply (set_remove_3 Equation_eqdec).
+    now apply (set_add_intro1). assumption.
+  - intros σ0 τ0 HinP.
+    case (Equation_eqdec (equ_s σ0 τ0) (equ_s (s[τ] .: σ >> τ) (σ' >> τ'))) as [Eq | nEq]; intros.
+       +  inversion Eq; subst.
+          apply σmin_equivs_trans with (τ := (s .: σ) >> τ).
+          repeat constructor. apply HEq2.
+          apply (set_remove_3 Equation_eqdec).
+          now apply (set_add_intro2).
+          intro. inversion H0.
+       + apply HEq2. apply (set_remove_3 Equation_eqdec).
+         now apply (set_add_intro1). assumption.
+   
+  - intros s0 t0 HinP.
+    case (Equation_eqdec (equ s0 t0) (equ s[σ>>τ] s'[ρ])) as [Eq | nEq]; intros.
+      +  inversion Eq; subst.
+         apply σmin_equiv_trans with (t := (s[σ])[τ]).
+         repeat constructor.  apply HEq1.
+         apply (set_remove_3 Equation_eqdec).
+         now apply (set_add_intro2).
+         intro. inversion H0.
+        eapply (τ_noteq_comp). apply H3.
+      + apply HEq1. apply (set_remove_3 Equation_eqdec).
+        now apply (set_add_intro1). assumption.
+  - intros σ0 τ0 HinP.
+    case (Equation_eqdec (equ_s σ0 τ0) (equ s[σ >> τ] s'[ρ])) as [Eq | nEq]; intros; try inversion Eq.
+    apply HEq2. apply (set_remove_3 Equation_eqdec).
+    now apply (set_add_intro1). assumption.
+   
+          
+ 
+  (* σmin cases end *)
+    
   (* Inst exp case start *)
   - intros s0 t0 HinP. (* unfold subs_equiv in HEq3; destruct HEq3 as [HEq3 HEq3']. *)  
     destruct (Equation_eqdec (equ s0 t0) (equ s (VarExp X))) as [Eq | Eq]; intros.
@@ -408,4 +577,4 @@ Proof.
     now rewrite <- subst_comp_assoc_exp in HEq3.
     specialize (HEq3' X).
     now rewrite <- subst_comp_assoc_sexp in HEq3'.     
-Admitted.      
+Qed.      

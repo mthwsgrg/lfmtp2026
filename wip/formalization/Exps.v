@@ -27,10 +27,12 @@ Notation "σ >> τ" := (Comp σ τ) (at level 56, right associativity).
 Notation "s .: σ" := (Cons s σ) (at level 58).
 Notation "↑" := Shift.
 
-
 Scheme exp_ind2 := Induction for exp Sort Prop
 with sexp_ind2 := Induction for sexp Sort Prop.
 Combined Scheme sigma_ind2 from exp_ind2, sexp_ind2.
+
+Scheme exp_ind3 := Induction for exp Sort Prop.
+Scheme sexp_ind3 := Induction for sexp Sort Prop.
 
 
 
@@ -127,4 +129,53 @@ with vars_of_sexp (σ: sexp) {struct σ} : set SortedVar :=
 end.
 
 
+
+
+Lemma s_noteq_app : forall s t, s = App s t -> False.
+  intro s.
+  induction s using exp_ind3; intros; try (discriminate H).
+  injection H as H_l H_r. eauto.
+Qed.
+
+Lemma t_noteq_app : forall t s, t = App s t -> False.
+  intro t.
+  induction t using exp_ind3; intros; try (discriminate H).
+  injection H as H_l H_r. eauto.
+Qed.
+
+Lemma s_noteq_lam : forall s, s = Lam s -> False.
+Proof.
+  intro s.
+  induction s using exp_ind3; intros; try (discriminate H).
+  injection H as H_'. eauto.
+Qed.
+  
+Lemma s_noteq_inst : forall s σ, s = Inst s σ -> False.
+Proof.
+  intro s.
+  induction s using exp_ind3; intros; try (discriminate H).
+  injection H as H_l H_r. eauto.
+Qed.  
+
+Lemma σ_noteq_cons : forall σ s, σ = Cons s σ -> False.
+Proof.
+  intro σ.
+  induction σ using sexp_ind3; intros; try (discriminate H).
+  injection H as H_l H_r. eauto.
+Qed.  
+
+
+Lemma σ_noteq_comp : forall σ τ, σ = σ >> τ -> False.
+Proof.
+  intro σ.
+  induction σ using sexp_ind3; intros; (try (discriminate H)).
+  injection H as H_l H_r. eauto.
+Qed.
+
+Lemma τ_noteq_comp : forall τ σ, τ = σ >> τ -> False.
+Proof.
+  intro τ.
+  induction τ using sexp_ind3; intros; (try (discriminate H)).
+  injection H as H_l H_r. eauto.
+Qed.
 
