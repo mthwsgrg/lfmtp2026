@@ -19,6 +19,7 @@ Definition match_sol (S' :Subst) (T : Tuple) :=
   ( exists S'', (sub_comp S S'') ~:c S' ).
 
 
+
 Lemma match_sol_preservation : forall Sl T T',
 
       valid_tuple T ->
@@ -192,7 +193,7 @@ Proof.
           now apply (set_add_intro2).
           intro. inversion H0.
           eapply (τ_noteq_comp). apply H3.
-      +   apply HEq2.apply (set_remove_3 Equation_eqdec).
+      +   apply HEq2. apply (set_remove_3 Equation_eqdec).
           now apply (set_add_intro1). assumption.
   - intros s0 t0 HinP.
     case (Equation_eqdec (equ s0 t0) (equ_s (s[τ] .: σ>>τ) (σ' >> τ'))) as [Eq | nEq]; intros; try inversion Eq.
@@ -578,3 +579,27 @@ Proof.
     specialize (HEq3' X).
     now rewrite <- subst_comp_assoc_sexp in HEq3'.     
 Qed.      
+
+
+Lemma match_step_validity : forall T T', smatch T T' -> valid_tuple T -> valid_tuple T'.
+Proof.
+  intros T T' H H'.
+  unfold valid_tuple in H'.  
+  destruct H; intros; simpl in H'; unfold valid_tuple; repeat split; simpl;apply set_nocommon_forall_inter; intros.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - destruct X0 as [X' | Y']; subst.
+    + destruct (var_eqdec X X') as [Eq | nEq]; intros; subst.
+      *  admit.
+      *  admit.
+    + apply <- In_dom_eq_dom_rec_sexp in H2. unfold In_dom_sexp in H2.
+      simpl in H2. rewrite  look_up_sub_comp_sexp in H2. simpl in H2.

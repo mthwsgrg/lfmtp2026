@@ -9,6 +9,12 @@ Inductive Assignment : Set :=
 Definition Subst := set Assignment.
 
 
+Definition assign_sort (A: Assignment) : SortedVar :=
+  match A with
+  | exp_assign X _ => exp_var X
+  | sexp_assign Y _ => sexp_var Y
+  end.
+
 Fixpoint look_up_exp (X: Var) (S: Subst) {struct S} : exp :=
  match S with
  | [] => VarExp X

@@ -164,3 +164,89 @@ Proof.
     + destruct a; simpl; right; now apply IHP.
 Qed.
 
+
+Lemma sub_comp_var_diff_left: forall S V A, set_In V (dom_rec (sub_comp S ([A])%list )) ->
+                                           V <> assign_sort A ->
+                                           set_In V (dom_rec S).
+
+Proof.
+  intro S.
+  induction S; intros; simpl in *;
+    destruct V as [X | Y];
+    destruct A as [X' | Y']; simpl in *.
+    
+  - apply In_dom_eq_dom_rec_exp in H.
+    unfold In_dom_exp in H. simpl in H.
+    destruct (var_eqdec X' X) as [Eq | nEq]; subst; contradiction. 
+  - apply In_dom_eq_dom_rec_exp in H. unfold In_dom_exp in H.
+    simpl in H. contradiction.
+  - apply In_dom_eq_dom_rec_sexp in H.  
+    unfold In_dom_sexp in H. simpl in H. contradiction.
+  - apply In_dom_eq_dom_rec_sexp in H.
+    unfold In_dom_sexp in H. simpl in H.
+    destruct (var_eqdec Y' Y) as [Eq | nEq]; subst; contradiction. 
+  - apply In_dom_eq_dom_rec_exp. unfold In_dom_exp. simpl.
+    destruct a as [X'' | Y''].
+    apply In_dom_eq_dom_rec_exp in H. unfold In_dom_exp in H. simpl in H.
+    destruct (var_eqdec X'' X) as [Eq | nEq]; subst.
+    assert (H0' : X <> X') by congruence. clear H0.
+    intro. apply H. rewrite H0. simpl.
+    destruct (var_eqdec X' X) as [Eq | nEq]; [symmetry in Eq; contradiction | reflexivity].
+    specialize (IHS (exp_var X) (exp_assign X' e)).
+    repeat rewrite <- In_dom_eq_dom_rec_exp in IHS.
+    repeat unfold In_dom_exp in IHS.
+    simpl in IHS. apply IHS; eauto.
+    apply In_dom_eq_dom_rec_exp in H. unfold In_dom_exp in H. simpl in H.
+    specialize (IHS (exp_var X) (exp_assign X' e)).
+    repeat rewrite <- In_dom_eq_dom_rec_exp in IHS.
+    repeat unfold In_dom_exp in IHS.
+    simpl in IHS. apply IHS; eauto.
+  - apply In_dom_eq_dom_rec_exp. unfold In_dom_exp. simpl.
+    destruct a as [X'' | Y''].
+    rewrite <-In_dom_eq_dom_rec_exp in H. unfold In_dom_exp in H. simpl in H.
+    destruct (var_eqdec X'' X); subst.
+    intro. apply H.  rewrite H1. now simpl.
+    specialize (IHS (exp_var X) (sexp_assign Y' s)).
+    repeat rewrite <- In_dom_eq_dom_rec_exp in IHS.
+    repeat unfold In_dom_exp in IHS. simpl in IHS.
+    apply IHS; eauto.
+    apply In_dom_eq_dom_rec_exp in H. unfold In_dom_exp in H. simpl in H. 
+    specialize (IHS (exp_var X) (sexp_assign Y' s)).
+    repeat rewrite <- In_dom_eq_dom_rec_exp in IHS.
+    repeat unfold In_dom_exp in IHS. simpl in IHS.
+    apply IHS; eauto.
+  - apply In_dom_eq_dom_rec_sexp. unfold In_dom_sexp. simpl.
+    destruct a as [X'' | Y''].
+    rewrite <-In_dom_eq_dom_rec_sexp in H. unfold In_dom_sexp in H. simpl in H.
+    specialize (IHS (sexp_var Y) (exp_assign X' e)).
+    repeat rewrite <- In_dom_eq_dom_rec_sexp in IHS.
+    repeat unfold In_dom_sexp in IHS. simpl in IHS.
+    apply IHS; eauto.
+    rewrite <-In_dom_eq_dom_rec_sexp in H. unfold In_dom_sexp in H. simpl in H.
+    destruct (var_eqdec Y'' Y); subst.
+    intro. apply H.  rewrite H1. now simpl.
+    specialize (IHS (sexp_var Y) (exp_assign X' e)).
+    repeat rewrite <- In_dom_eq_dom_rec_sexp in IHS.
+    repeat unfold In_dom_sexp in IHS. simpl in IHS.
+    apply IHS; eauto.
+  - apply In_dom_eq_dom_rec_sexp. unfold In_dom_sexp. simpl.
+    destruct a as [X'' | Y''].
+    apply In_dom_eq_dom_rec_sexp in H. unfold In_dom_sexp in H. simpl in H.
+    specialize (IHS (sexp_var Y) (sexp_assign Y' s)).
+    repeat rewrite <- In_dom_eq_dom_rec_sexp in IHS.
+    repeat unfold In_dom_sexp in IHS.
+    simpl in IHS. apply IHS; eauto.
+ 
+    apply In_dom_eq_dom_rec_sexp in H. unfold In_dom_sexp in H. simpl in H.
+    destruct (var_eqdec Y'' Y) as [Eq | nEq]; subst.
+    assert (H0' : Y <> Y') by congruence. clear H0.
+    intro. apply H. rewrite H0. simpl.
+    destruct (var_eqdec Y' Y) as [Eq | nEq]; [symmetry in Eq; contradiction | reflexivity].
+    specialize (IHS (sexp_var Y) (sexp_assign Y' s)).
+    repeat rewrite <- In_dom_eq_dom_rec_sexp in IHS.
+    repeat unfold In_dom_sexp in IHS.
+    simpl in IHS. apply IHS; eauto.
+Qed.  
+    
+    
+   
