@@ -140,7 +140,10 @@ Proof.
   intros.
   unfold subs_equiv in H1; destruct H1 as [H1 H1'].
   simpl in H1.
-Admitted.
+  erewrite <- not_in_dom_lookup_same_sexp; eauto.
+  erewrite <- in_subcomp_second_arg_sexp; eauto.
+Qed.
+
 
 Lemma σmin_subst_ext : (forall s S S', S ~:c S' -> σmin_equiv (sub s S) (sub s S')) /\
                          (forall σ S S', S ~:c S' -> σmin_equivs (sub_s σ S) (sub_s σ S')).

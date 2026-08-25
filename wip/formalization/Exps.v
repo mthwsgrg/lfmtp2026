@@ -79,11 +79,10 @@ Lemma expression_eqdec : (forall s t : exp, {s = t} + {s <> t}) *
     rewrite e. rewrite e0. now left.
     unfold not in *. right; intros. inversion H1; eauto.
     unfold not in *. right; intros. inversion H1; eauto.
-  -
-(*    
-Defined.
-*)
-Admitted.
+  - destruct τ; (try (right; discriminate)).
+    case (var_eqdec Y Y0); intros; eauto.
+    unfold not in *. right. intros. inversion H; eauto.
+Qed.
 
 Lemma exp_eqdec : forall s t: exp, {s=t} + {s <> t}.
   intros.
@@ -108,7 +107,10 @@ Inductive SortedExp : Type :=
 | SExp : sexp -> SortedExp.
 
 Lemma sortedvar_eqdec : forall (v1 v2: SortedVar), {v1=v2} + {v1<>v2}.
-Admitted.
+  decide equality.
+  - apply var_eqdec.
+  - apply var_eqdec.
+Qed.
 
 
 Fixpoint vars_of_exp (s : exp) {struct s} : set SortedVar := 
