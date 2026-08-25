@@ -58,19 +58,32 @@ Proof.
 Qed.
 
 Lemma set_nocommon_inter_forall : forall S S', set_inter AEq_dec S S' = [] -> (forall X, set_In X S -> ~set_In X S').  
-Admitted.
+Proof.
+  eapply set_nocommon_1_3.
+Qed.  
 
 Lemma set_nocommon_inter_forall_flip : forall S S', set_inter AEq_dec S S' = [] -> (forall X, set_In X S' ->
                                                                                 ~set_In X S).
-Admitted.
-
+Proof.
+  intros.
+  rewrite set_nocommon_3_4 in H.
+  eapply set_nocommon_inter_forall.
+  apply H.
+  apply H0.
+Qed.
 Lemma set_nocommon_forall_inter : forall S S', (forall X, set_In X S -> ~set_In X S') ->
                                           set_inter AEq_dec S S' = [].
-Admitted.
+Proof.
+  eapply set_nocommon_1_3.
+Qed.  
 
 Lemma set_nocommon_forall_inter_flip : forall S S', (forall X, set_In X S' -> ~set_In X S) ->
                                                set_inter AEq_dec S S' = [].
-Admitted.
+Proof.
+  intros.
+  rewrite set_nocommon_3_4.
+  now apply set_nocommon_forall_inter.
+Qed.
 
 Lemma set_list_app_neq :  forall P a b, a<> b -> set_add AEq_dec b (a :: P) = a :: (set_add AEq_dec b P).
 Proof.

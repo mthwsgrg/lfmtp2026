@@ -129,6 +129,16 @@ Proof.
             eapply IHP; eauto].
 Qed.
 
+Lemma in_exps_then_in_left_problem : forall P V e, set_In V (left_eqn_vars e) ->
+                                              set_In e P ->
+                                              set_In V (lhvars_Probl P).
+Proof.
+  intros.
+  destruct e as [s t | σ τ].
+  - simpl in H. eapply in_exp_then_in_left_problem. apply H. apply H0.
+  - simpl in H. eapply in_sexp_then_in_left_problem. apply H. apply H0.
+Qed.
+
 Lemma in_left_problem_then_in_problem : forall P V, set_In V (lhvars_Probl P) ->
                                                set_In V (Problem_vars P).
 Proof.
@@ -145,18 +155,60 @@ Qed.
 Lemma in_exp_then_in_right_problem : forall P s t V, set_In V (vars_of_exp t) ->
                                                set_In (equ s t) P -> 
                                                set_In V (rhvars_Probl P).
-Admitted.
+Proof.
+  intro P.
+  induction P; intros.
+  - now simpl in *.
+  - simpl in *.
+    destruct V as [X | Y]; destruct a as [s' t' | σ τ].
+     1,3 : destruct H0;
+           [inversion H0; subst;
+            now apply set_union_intro1 |
+            apply set_union_intro2;
+            eapply IHP; eauto].
+     1,2 : destruct H0;
+           [ inversion H0 |
+             apply set_union_intro2;
+             eapply IHP; eauto].
+Qed.
+
+
+  
 
 Lemma in_sexp_then_in_right_problem : forall P σ τ V, set_In V (vars_of_sexp τ) ->
                                                set_In (equ_s σ τ) P -> 
                                                set_In V (rhvars_Probl P).
-Admitted.
+Proof.
+  intro P.
+  induction P; intros.
+  - now simpl in *.
+  - simpl in *.
+    destruct V as [X | Y]; destruct a as [s t | σ' τ'].
+    1,3 : destruct H0;
+           [ inversion H0 |
+             apply set_union_intro2;
+             eapply IHP; eauto].
+    1,2 :  destruct H0;
+           [inversion H0; subst;
+            now apply set_union_intro1 |
+            apply set_union_intro2;
+            eapply IHP; eauto].
+Qed.
+
 
 
 
 Lemma in_right_problem_then_in_problem : forall P V, set_In V (rhvars_Probl P) ->
                                                set_In V (Problem_vars P).
-Admitted.
+Proof.
+  intros P.
+  induction P; intros; simpl in *; trivial.
+  destruct V as [X | Y]; destruct a as [s t | σ τ].
+   all :apply set_union_elim in H; destruct H;
+       [apply set_union_intro2; now apply set_union_intro1 |
+       apply set_union_intro2; apply set_union_intro2; now apply IHP].
+Qed.
+
 
 
 
@@ -260,6 +312,33 @@ Proof.
     eapply IHP. apply H. now simpl. now simpl.
 Qed.  
 
+
+Lemma lhvars_desubst : forall P V A, set_In V (lhvars_Probl (P |^^ ([A])%list))
+                                     ->    set_In V (lhvars_Probl P)
+.
+Proof.
+  intro P.
+  induction P; intros; destruct V as [X | Y]; try now simpl in *.
+  - destruct a as [s' t' | σ' τ'].
+    + simpl in *.
+      apply set_union_elim in H.
+      destruct H. now apply set_union_intro1.
+      apply set_union_intro2. eapply IHP; eauto.
+    + simpl in *.
+      apply set_union_elim in H.
+      destruct H. now apply set_union_intro1.
+      apply set_union_intro2. eapply IHP; eauto.
+   - destruct a as [s' t' | σ' τ'].
+    + simpl in *.
+      apply set_union_elim in H.
+      destruct H. now apply set_union_intro1.
+      apply set_union_intro2. eapply IHP; eauto.
+    + simpl in *.
+      apply set_union_elim in H.
+      destruct H. now apply set_union_intro1.
+      apply set_union_intro2. eapply IHP; eauto.
+Qed. 
+    
 
 Lemma problem_var_remove_one_mem : forall P e V, set_In V (Problem_vars (P \ e)) -> set_In V (Problem_vars P).
 Proof.
@@ -545,3 +624,108 @@ Qed.
     
     
    
+Lemma lhvar_vars_add : forall P e V, set_In V (lhvars_Probl (P |+ e)) ->
+                                set_In V (set_union sortedvar_eqdec (lhvars_Probl P) (lhvars_Probl ([e])%list)) .
+Proof.
+  intro P.
+  induction P; intros; destruct e as [s t | σ τ]; destruct V as [Xv | Yv];
+   try now simpl in *; now apply set_union_intro2.
+  - specialize (IHP (equ s t)). simpl in IHP.
+    destruct a as [s' t' | σ' τ'].
+    + destruct (Equation_eqdec (equ s t) (equ s' t')) as [HEq | HnEq].
+      simpl. rewrite HEq in H.
+      rewrite set_list_app_eq in H. simpl in H.
+      apply set_union_elim in H.
+      destruct H. now repeat apply set_union_intro1.
+      apply set_union_intro1. now apply set_union_intro2.
+      rewrite set_list_app_neq in H; eauto. simpl in H .
+      simpl. eapply set_union_assoc.
+      apply set_union_elim in H.
+      destruct H.
+      now apply set_union_intro1.
+      apply set_union_intro2. now apply IHP.
+    + destruct (Equation_eqdec (equ s t) (equ_s σ' τ')) as [HEq | HnEq]; subst.
+      inversion HEq.
+      rewrite set_list_app_neq in H; eauto. simpl in H.
+      simpl. eapply set_union_assoc.
+      apply set_union_elim in H.
+      destruct H. now apply set_union_intro1.
+      apply set_union_intro2. eapply IHP; eauto.
+
+  - specialize (IHP (equ s t)). simpl in IHP.
+    destruct a as [s' t' | σ' τ'].
+    + destruct (Equation_eqdec (equ s t) (equ s' t')) as [HEq | HnEq].
+      simpl. rewrite HEq in H.
+      rewrite set_list_app_eq in H. simpl in H.
+      apply set_union_elim in H.
+      destruct H. now repeat apply set_union_intro1.
+      apply set_union_intro1. now apply set_union_intro2.
+      rewrite set_list_app_neq in H; eauto. simpl in H .
+      simpl. eapply set_union_assoc.
+      apply set_union_elim in H.
+      destruct H.
+      now apply set_union_intro1.
+      apply set_union_intro2. now apply IHP.
+    + destruct (Equation_eqdec (equ s t) (equ_s σ' τ')) as [HEq | HnEq]; subst.
+      inversion HEq.
+      rewrite set_list_app_neq in H; eauto. simpl in H.
+      simpl. eapply set_union_assoc.
+      apply set_union_elim in H.
+      destruct H. now apply set_union_intro1.
+      apply set_union_intro2. eapply IHP; eauto.
+ 
+  - specialize (IHP (equ_s σ τ)). simpl in IHP.
+    destruct a as [s' t' | σ' τ'].
+    + destruct (Equation_eqdec (equ_s σ τ) (equ s' t')) as [HEq | HnEq].
+      inversion HEq.
+      rewrite set_list_app_neq in H; eauto. simpl in H.
+      simpl. eapply set_union_assoc.
+      apply set_union_elim in H.
+      destruct H. now apply set_union_intro1.
+      apply set_union_intro2. eapply IHP; eauto.
+    + destruct (Equation_eqdec (equ_s σ τ) (equ_s σ' τ')) as [HEq | HnEq]; subst.
+      simpl. rewrite HEq in H.
+      rewrite set_list_app_eq in H. simpl in H.
+      apply set_union_elim in H.
+      destruct H. now repeat apply set_union_intro1.
+      apply set_union_intro1. now apply set_union_intro2.
+      rewrite set_list_app_neq in H; eauto. simpl in H .
+      simpl. eapply set_union_assoc.
+      apply set_union_elim in H.
+      destruct H.
+      now apply set_union_intro1.
+      apply set_union_intro2. now apply IHP.
+
+   - specialize (IHP (equ_s σ τ)). simpl in IHP.
+    destruct a as [s' t' | σ' τ'].
+    + destruct (Equation_eqdec (equ_s σ τ) (equ s' t')) as [HEq | HnEq].
+      inversion HEq.
+      rewrite set_list_app_neq in H; eauto. simpl in H.
+      simpl. eapply set_union_assoc.
+      apply set_union_elim in H.
+      destruct H. now apply set_union_intro1.
+      apply set_union_intro2. eapply IHP; eauto.
+    + destruct (Equation_eqdec (equ_s σ τ) (equ_s σ' τ')) as [HEq | HnEq]; subst.
+      simpl. rewrite HEq in H.
+      rewrite set_list_app_eq in H. simpl in H.
+      apply set_union_elim in H.
+      destruct H. now repeat apply set_union_intro1.
+      apply set_union_intro1. now apply set_union_intro2.
+      rewrite set_list_app_neq in H; eauto. simpl in H .
+      simpl. eapply set_union_assoc.
+      apply set_union_elim in H.
+      destruct H.
+      now apply set_union_intro1.
+      apply set_union_intro2. now apply IHP.
+Qed.
+
+
+Lemma lhvar_ext_vars : forall P e V, set_In V (lhvars_Probl (P |+ e)) ->
+                                  (forall U, set_In U (left_eqn_vars e) -> set_In U (lhvars_Probl P)) ->
+                                  set_In V (lhvars_Probl P).
+Proof.
+  intros.
+  apply lhvar_vars_add in H.
+  destruct e as [s t | σ τ].
+  all: simpl in H; apply set_union_elim in H; destruct H; eauto.
+Qed.    

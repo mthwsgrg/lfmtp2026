@@ -1,4 +1,5 @@
 Require Export SigmaMatch.
+Require Import ARS.
 
 (* Temp lemmas in this file start*)
 
@@ -836,4 +837,152 @@ Proof.
         eapply in_sexp_then_in_left_problem. apply H3. apply H0.
  
 Qed.    
-      
+
+
+
+Lemma match_step_lhvar_dom_preservation : forall T T' Sl, smatch T T' ->
+                                                     set_inter sortedvar_eqdec  (lhvars_Probl (snd T)) (dom_rec Sl) = [] ->
+                                                     set_inter sortedvar_eqdec  (lhvars_Probl (snd T')) (dom_rec Sl) = [].
+
+Proof.
+  intros.
+  destruct H; simpl in H0; apply set_nocommon_forall_inter;  intros.
+  - simpl in H1.
+    eapply set_nocommon_inter_forall in H0. apply H0.
+    eapply problem_lhvar_remove_one_mem. apply H1.
+  - simpl in H1.
+    eapply set_nocommon_inter_forall in H0. apply H0.
+    eapply problem_lhvar_remove_one_mem. apply H1.
+  - simpl in H1.
+    apply problem_lhvar_remove_one_mem in H1.
+    apply lhvar_ext_vars in H1.
+    apply lhvar_ext_vars in H1.
+    eapply set_nocommon_inter_forall in H0. apply H0. apply H1.
+    simpl. intros. eapply in_exps_then_in_left_problem; swap 1 2.
+    apply H.  simpl. now apply set_union_intro1.
+    simpl. intros. eapply in_exps_then_in_left_problem with (e:= equ (App s t) (App s' t')); swap 1 2.
+    apply set_add_intro. now right.
+    simpl. now apply set_union_intro2.
+  -  simpl in H1.
+    apply problem_lhvar_remove_one_mem in H1.
+    apply lhvar_ext_vars in H1.
+    eapply set_nocommon_inter_forall in H0. apply H0. apply H1.
+    simpl. intros. eapply in_exps_then_in_left_problem; swap 1 2. 
+    apply H. now simpl. 
+  - simpl in H1.
+    apply problem_lhvar_remove_one_mem in H1.
+    apply lhvar_ext_vars in H1.
+    apply lhvar_ext_vars in H1.
+    eapply set_nocommon_inter_forall in H0. apply H0. apply H1.
+    simpl. intros. eapply in_exps_then_in_left_problem; swap 1 2.
+    apply H.  simpl. now apply set_union_intro1.
+    simpl. intros. eapply in_exps_then_in_left_problem with (e:= equ (s[σ]) (s'[σ'])); swap 1 2.
+    apply set_add_intro. now right.
+    simpl. now apply set_union_intro2.
+  - simpl in H1.
+    apply problem_lhvar_remove_one_mem in H1.
+    apply lhvar_ext_vars in H1.
+    apply lhvar_ext_vars in H1.
+    eapply set_nocommon_inter_forall in H0. apply H0. apply H1.
+    simpl. intros. eapply in_exps_then_in_left_problem; swap 1 2.
+    apply H.  simpl. now apply set_union_intro1.
+    simpl. intros. eapply in_exps_then_in_left_problem with (e:= equ_s (s .: σ) (s' .: σ')); swap 1 2.
+    apply set_add_intro. now right.
+    simpl. now apply set_union_intro2.
+ - simpl in H1.
+    apply problem_lhvar_remove_one_mem in H1.
+    apply lhvar_ext_vars in H1.
+    apply lhvar_ext_vars in H1.
+    eapply set_nocommon_inter_forall in H0. apply H0. apply H1.
+    simpl. intros. eapply in_exps_then_in_left_problem; swap 1 2.
+    apply H.  simpl. now apply set_union_intro1.
+    simpl. intros. eapply in_exps_then_in_left_problem with (e:= equ_s (σ >> τ) (σ' >> τ')); swap 1 2.
+    apply set_add_intro. now right.
+    simpl. now apply set_union_intro2.
+ -  simpl in H1.
+    apply problem_lhvar_remove_one_mem in H1.
+    apply lhvar_ext_vars in H1.
+    eapply set_nocommon_inter_forall in H0. apply H0. apply H1. 
+    intros. eapply in_exp_then_in_left_problem; swap 1 2. apply H. simpl.
+    simpl in H2. apply set_union_elim in H2. destruct H2.
+    now apply set_union_intro1.
+    now repeat apply set_union_intro2.
+    
+ -  simpl in H1.
+    apply problem_lhvar_remove_one_mem in H1.
+    apply lhvar_ext_vars in H1.
+    eapply set_nocommon_inter_forall in H0. apply H0. apply H1.
+    intros. eapply in_sexp_then_in_left_problem; swap 1 2. apply H. simpl.
+    simpl in H2. now rewrite set_union_assoc. 
+
+    
+
+ -  simpl in H1.
+    apply problem_lhvar_remove_one_mem in H1.
+    apply lhvar_ext_vars in H1.
+    eapply set_nocommon_inter_forall in H0. apply H0. apply H1.
+    intros. eapply in_sexp_then_in_left_problem; swap 1 2. apply H. simpl.
+    simpl in H2. apply set_union_elim in H2. destruct H2.
+    now apply set_union_intro1.
+    now repeat apply set_union_intro2.
+
+  -  simpl in H1.
+    apply problem_lhvar_remove_one_mem in H1.
+    apply lhvar_ext_vars in H1.
+    eapply set_nocommon_inter_forall in H0. apply H0. apply H1.
+    intros. eapply in_exp_then_in_left_problem; swap 1 2. apply H. simpl.
+    simpl in H2. now rewrite set_union_assoc. 
+
+   
+ -  simpl in H3.
+    destruct X0 as [X' | Y'].
+    + destruct (var_eqdec X X') as [ | HnEq]; subst.
+      intro. apply in_left_problem_then_in_problem in H3. revert H3.
+      eapply problem_X_clear; repeat split; eauto.
+      simpl. intro. apply H. eapply in_exps_then_in_left_problem; swap 1 2.
+      apply H1. simpl. apply H3.
+      intro.  apply problem_lhvar_remove_one_mem in H3.
+      contradiction.   
+     apply lhvars_desubst in H3; eauto.
+     apply problem_lhvar_remove_one_mem in H3.
+     eapply set_nocommon_inter_forall in H3; eauto.
+    +  apply lhvars_desubst in H3; eauto.
+     apply problem_lhvar_remove_one_mem in H3.
+     eapply set_nocommon_inter_forall in H3; eauto.
+ - simpl in H3.
+    destruct X as [X' | Y'].
+    + apply lhvars_desubst in H3; eauto.
+     apply problem_lhvar_remove_one_mem in H3.
+     eapply set_nocommon_inter_forall in H3; eauto.
+    +  destruct (var_eqdec Y Y') as [ | HnEq]; subst.
+      intro. apply in_left_problem_then_in_problem in H3. revert H3.
+      eapply problem_X_clear; repeat split; eauto.
+      simpl. intro. apply H. eapply in_exps_then_in_left_problem; swap 1 2.
+      apply H1. simpl. apply H3.
+      intro.  apply problem_lhvar_remove_one_mem in H3.
+      contradiction.   
+     apply lhvars_desubst in H3; eauto.
+     apply problem_lhvar_remove_one_mem in H3.
+     eapply set_nocommon_inter_forall in H3; eauto.
+Qed.
+
+
+Lemma soundness_match : forall Sl T T',
+
+      valid_tuple T ->
+
+       set_inter sortedvar_eqdec (dom_rec Sl)  (lhvars_Probl (snd T)) = [] -> 
+
+      star smatch T T' ->
+
+      match_sol Sl T' -> match_sol Sl T.
+Proof.
+  intros.
+  induction H1; intros.
+  - assumption.
+  - apply match_sol_preservation with (T' := y); eauto.
+    apply IHstar; eauto.
+    eapply match_step_validity; eauto.
+    rewrite set_nocommon_3_4. eapply match_step_lhvar_dom_preservation. apply H1.
+    now rewrite set_nocommon_3_4.   
+Qed.    
