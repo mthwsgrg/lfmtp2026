@@ -72,6 +72,44 @@ Lemma set_nocommon_forall_inter_flip : forall S S', (forall X, set_In X S' -> ~s
                                                set_inter AEq_dec S S' = [].
 Admitted.
 
+Lemma set_list_app_neq :  forall P a b, a<> b -> set_add AEq_dec b (a :: P) = a :: (set_add AEq_dec b P).
+Proof.
+  intros.
+  simpl.
+  destruct (AEq_dec b a) as [Heq | Hn].
+  congruence.
+  reflexivity.
+Qed.
+
+Lemma set_list_app_eq :  forall P a, set_add AEq_dec a (a :: P) =  a :: P.
+Proof.
+  intros.
+  simpl.
+  destruct (AEq_dec a a). 
+  reflexivity.
+  contradiction.
+Qed.
+
+
+Lemma set_union_assoc : forall a X Y Z,  set_In a (set_union AEq_dec X (set_union AEq_dec Y Z)) <->
+                                                                                   set_In a (set_union AEq_dec (set_union AEq_dec X Y) Z).
+Proof.
+  intros. split.
+  intros. apply set_union_elim in H.
+  destruct H. apply set_union_intro1. now apply set_union_intro1.
+  apply set_union_elim in H. destruct H.
+  apply set_union_intro1. now apply set_union_intro2.
+  now repeat apply set_union_intro2.
+
+  intros. apply set_union_elim in H.
+  destruct H.  apply set_union_elim in H.
+  destruct H. now apply set_union_intro1.
+  apply set_union_intro2. now apply set_union_intro1.
+  now repeat apply set_union_intro2.
+Qed. 
+
+
+
 End SetPropertiesWithEqDec.
       
 

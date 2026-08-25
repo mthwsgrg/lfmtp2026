@@ -586,20 +586,254 @@ Proof.
   intros T T' H H'.
   unfold valid_tuple in H'.  
   destruct H; intros; simpl in H'; unfold valid_tuple; repeat split; simpl;apply set_nocommon_forall_inter; intros.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
-  - admit.
+  1,2:  destruct X as [X | Y];
+    (eapply set_nocommon_inter_forall in H'; revgoals;
+    [apply H0 | intro; apply H'; eapply problem_var_remove_one_mem; eauto]).
+  -   eapply set_nocommon_inter_forall in H'. 2: apply H0.
+       intro. apply H'.
+       apply problem_var_remove_one_mem in H1.
+       apply problem_var_ext_vars in H1.
+       apply problem_var_ext_vars in H1.
+       apply H1.
+       simpl. intro.
+       apply H'. apply set_union_elim in H2.
+       destruct H2.
+       apply in_left_problem_then_in_problem.
+       eapply in_exp_then_in_left_problem. 2: apply H.
+       simpl. now apply set_union_intro1.
+       apply in_right_problem_then_in_problem.
+       eapply in_exp_then_in_right_problem; swap 1 2.
+       apply H. simpl. now apply set_union_intro1.
+
+       simpl. intro. apply H'. apply set_union_elim in H2. destruct H2.
+       apply in_left_problem_then_in_problem.
+       eapply in_exp_then_in_left_problem. 2: apply H.
+       simpl. now apply set_union_intro2.
+       apply in_right_problem_then_in_problem.
+       eapply in_exp_then_in_right_problem; swap 1 2.
+       apply H. simpl. now apply set_union_intro2.       
+  -  eapply set_nocommon_inter_forall in H'. 2: apply H0.
+     intro. apply H'.
+     apply problem_var_remove_one_mem in H1.
+     apply problem_var_ext_vars in H1.
+     contradiction.
+     intro. apply H'.
+     apply set_union_elim in H2. destruct H2.
+     apply in_left_problem_then_in_problem.     
+     eapply in_exp_then_in_left_problem. 2: apply H.
+     now simpl.
+     apply in_right_problem_then_in_problem.     
+     eapply in_exp_then_in_right_problem. 2: apply H.
+     now simpl.
+
+
+  -  eapply set_nocommon_inter_forall in H'. 2: apply H0.
+       intro. apply H'.
+       apply problem_var_remove_one_mem in H1.
+       apply problem_var_ext_vars in H1.
+       apply problem_var_ext_vars in H1.
+       apply H1.
+       simpl. intro.
+       apply H'. apply set_union_elim in H2.
+       destruct H2.
+       apply in_left_problem_then_in_problem.
+       eapply in_exp_then_in_left_problem. 2: apply H.
+       simpl. now apply set_union_intro1.
+       apply in_right_problem_then_in_problem.
+       eapply in_exp_then_in_right_problem; swap 1 2.
+       apply H. simpl. now apply set_union_intro1.
+
+       simpl. intro. apply H'. apply set_union_elim in H2. destruct H2.
+       apply in_left_problem_then_in_problem.
+       eapply in_exp_then_in_left_problem. 2: apply H.
+       simpl. now apply set_union_intro2.
+       apply in_right_problem_then_in_problem.
+       eapply in_exp_then_in_right_problem; swap 1 2.
+       apply H. simpl. now apply set_union_intro2.       
+   - eapply set_nocommon_inter_forall in H'. 2: apply H0.
+       intro. apply H'.
+       apply problem_var_remove_one_mem in H1.
+       apply problem_var_ext_vars in H1.
+       apply problem_var_ext_vars in H1.
+       apply H1.
+       simpl. intro.
+       apply H'. apply set_union_elim in H2.
+       destruct H2.
+       apply in_left_problem_then_in_problem.
+       eapply in_sexp_then_in_left_problem. 2: apply H.
+       simpl. now apply set_union_intro1.
+       apply in_right_problem_then_in_problem.
+       eapply in_sexp_then_in_right_problem; swap 1 2.
+       apply H. simpl. now apply set_union_intro1.
+
+       simpl. intro. apply H'. apply set_union_elim in H2. destruct H2.
+       apply in_left_problem_then_in_problem.
+       eapply in_sexp_then_in_left_problem. 2: apply H.
+       simpl. now apply set_union_intro2.
+       apply in_right_problem_then_in_problem.
+       eapply in_sexp_then_in_right_problem; swap 1 2.
+       apply H. simpl. now apply set_union_intro2.       
+
+   -   eapply set_nocommon_inter_forall in H'. 2: apply H0.
+       intro. apply H'.
+       apply problem_var_remove_one_mem in H1.
+       apply problem_var_ext_vars in H1.
+       apply problem_var_ext_vars in H1.
+       apply H1.
+       simpl. intro.
+       apply H'. apply set_union_elim in H2.
+       destruct H2.
+       apply in_left_problem_then_in_problem.
+       eapply in_sexp_then_in_left_problem. 2: apply H.
+       simpl. now apply set_union_intro1.
+       apply in_right_problem_then_in_problem.
+       eapply in_sexp_then_in_right_problem; swap 1 2.
+       apply H. simpl. now apply set_union_intro1.
+
+       simpl. intro. apply H'. apply set_union_elim in H2. destruct H2.
+       apply in_left_problem_then_in_problem.
+       eapply in_sexp_then_in_left_problem. 2: apply H.
+       simpl. now apply set_union_intro2.
+       apply in_right_problem_then_in_problem.
+       eapply in_sexp_then_in_right_problem; swap 1 2.
+       apply H. simpl. now apply set_union_intro2.       
+      
+   
+      
+   -    eapply set_nocommon_inter_forall in H'. 2: apply H0.
+         intro. apply H'.
+         apply problem_var_remove_one_mem in H1.
+         apply problem_var_ext_vars in H1. contradiction.
+         simpl. intro. apply H'.
+         apply set_union_elim in H2. destruct H2.
+
+         apply in_left_problem_then_in_problem.
+         eapply in_exp_then_in_left_problem; swap 1 2.
+         apply H. simpl.
+         apply set_union_elim in H2. destruct H2.
+         now apply set_union_intro1.
+         now repeat apply set_union_intro2.
+
+         apply in_right_problem_then_in_problem.
+         eapply in_exp_then_in_right_problem; swap 1 2.
+         apply H. simpl.
+         apply set_union_elim in H2. destruct H2.
+         now apply set_union_intro1.
+         now repeat apply set_union_intro2.
+
+     
+  -     eapply set_nocommon_inter_forall in H'. 2: apply H0.
+         intro. apply H'.
+         apply problem_var_remove_one_mem in H1.
+         apply problem_var_ext_vars in H1. contradiction.
+         simpl. intro. apply H'.
+         apply set_union_elim in H2. destruct H2.
+
+         apply in_left_problem_then_in_problem.
+         eapply in_sexp_then_in_left_problem; swap 1 2.
+         apply H. simpl.
+         apply set_union_elim in H2. destruct H2.
+         apply set_union_elim in H2. destruct H2.
+         now apply set_union_intro1.
+         apply set_union_intro2. apply set_union_intro1.
+         now repeat apply set_union_intro2.
+         now repeat apply set_union_intro2.
+
+         apply in_right_problem_then_in_problem.
+         eapply in_sexp_then_in_right_problem; swap 1 2.
+         apply H. simpl.
+         apply set_union_elim in H2. destruct H2.
+         now apply set_union_intro1.
+         now repeat apply set_union_intro2.
+  
+
+         
+  -     eapply set_nocommon_inter_forall in H'. 2: apply H0.
+         intro. apply H'.
+         apply problem_var_remove_one_mem in H1.
+         apply problem_var_ext_vars in H1. contradiction.
+         simpl. intro. apply H'.
+         apply set_union_elim in H2. destruct H2.
+
+         apply in_left_problem_then_in_problem.
+         eapply in_sexp_then_in_left_problem; swap 1 2.
+         apply H. simpl. apply set_union_elim in H2.
+         destruct H2. now apply set_union_intro1.
+         now repeat apply set_union_intro2.
+
+         apply in_right_problem_then_in_problem.
+         eapply in_sexp_then_in_right_problem; swap 1 2.
+         apply H. simpl.
+         apply set_union_elim in H2. destruct H2.
+         now apply set_union_intro1.
+         now repeat apply set_union_intro2.
+
+    
+  -  eapply set_nocommon_inter_forall in H'. 2: apply H0.
+         intro. apply H'.
+         apply problem_var_remove_one_mem in H1.
+         apply problem_var_ext_vars in H1. contradiction.
+         simpl. intro. apply H'.
+         apply set_union_elim in H2. destruct H2.
+
+         apply in_left_problem_then_in_problem.
+         eapply in_exp_then_in_left_problem; swap 1 2.
+         apply H. simpl. apply set_union_elim in H2.
+         destruct H2. rewrite set_union_assoc. now apply set_union_intro1.
+         now repeat apply set_union_intro2.
+
+         apply in_right_problem_then_in_problem.
+         eapply in_exp_then_in_right_problem; swap 1 2.
+         apply H. simpl.
+         apply set_union_elim in H2. destruct H2.
+         now apply set_union_intro1.
+         now repeat apply set_union_intro2.
+
+       
+   
+    
   - destruct X0 as [X' | Y']; subst.
     + destruct (var_eqdec X X') as [Eq | nEq]; intros; subst.
-      *  admit.
-      *  admit.
-    + apply <- In_dom_eq_dom_rec_sexp in H2. unfold In_dom_sexp in H2.
-      simpl in H2. rewrite  look_up_sub_comp_sexp in H2. simpl in H2.
+      *  apply problem_X_clear; trivial.
+         split; intro.
+         simpl in H1. apply H. eapply in_exp_then_in_left_problem. apply H1. apply H0.
+         apply H. eapply problem_lhvar_remove_one_mem. apply H1.         
+         
+      * apply sub_comp_var_diff_left in H2; simpl; try congruence.
+        intro. apply problem_vars_desubst in H1; simpl; try congruence.
+        apply problem_var_remove_one_mem in H1.
+        apply set_nocommon_inter_forall with (X:= exp_var X') in H'; eauto.
+        apply set_nocommon_inter_forall with (X:= exp_var X') in H'; eauto.
+        intro. apply H'. apply in_left_problem_then_in_problem.
+        eapply in_exp_then_in_left_problem. apply H3. apply H0.
+ 
+    + apply sub_comp_var_diff_left in H2; simpl; try congruence.
+      intro. apply problem_vars_desubst in H1; simpl; try congruence.
+      apply problem_var_remove_one_mem in H1.
+      apply set_nocommon_inter_forall with (X:= sexp_var Y') in H'; eauto.
+      apply set_nocommon_inter_forall with (X:= sexp_var Y') in H'; eauto.
+      intro. apply H'. apply in_left_problem_then_in_problem.
+      eapply in_exp_then_in_left_problem. apply H3. apply H0.
+  - destruct X as [X' | Y']; subst.
+    + apply sub_comp_var_diff_left in H2; simpl; try congruence.
+      intro. apply problem_vars_desubst in H1; simpl; try congruence.
+      apply problem_var_remove_one_mem in H1.
+      apply set_nocommon_inter_forall with (X:= exp_var X') in H'; eauto.
+      apply set_nocommon_inter_forall with (X:= exp_var X') in H'; eauto.
+      intro. apply H'. apply in_left_problem_then_in_problem.
+      eapply in_sexp_then_in_left_problem. apply H3. apply H0.
+    + destruct (var_eqdec Y Y') as [Eq | nEq]; intros; subst.
+      *  apply problem_X_clear; trivial.
+         split; intro.
+         simpl in H1. apply H. eapply in_sexp_then_in_left_problem. apply H1. apply H0.
+         apply H. eapply problem_lhvar_remove_one_mem. apply H1.         
+      * apply sub_comp_var_diff_left in H2; simpl; try congruence.
+        intro. apply problem_vars_desubst in H1; simpl; try congruence.
+        apply problem_var_remove_one_mem in H1.
+        apply set_nocommon_inter_forall with (X:= sexp_var Y') in H'; eauto.
+        apply set_nocommon_inter_forall with (X:= sexp_var Y') in H'; eauto.
+        intro. apply H'. apply in_left_problem_then_in_problem.
+        eapply in_sexp_then_in_left_problem. apply H3. apply H0.
+ 
+Qed.    
+      

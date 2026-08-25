@@ -9,11 +9,18 @@ Inductive Assignment : Set :=
 Definition Subst := set Assignment.
 
 
-Definition assign_sort (A: Assignment) : SortedVar :=
+Definition assign_sort_var (A: Assignment) : SortedVar :=
   match A with
   | exp_assign X _ => exp_var X
   | sexp_assign Y _ => sexp_var Y
   end.
+
+Definition assign_sort_exp (A: Assignment) : SortedExp :=
+  match A with
+  | exp_assign _ s => Exp s
+  | sexp_assign _ σ => SExp σ
+  end.
+
 
 Fixpoint look_up_exp (X: Var) (S: Subst) {struct S} : exp :=
  match S with
@@ -102,8 +109,15 @@ Fixpoint im_rec_aux (S : Subst) (St : set SortedVar) : set SortedExp :=
               end
   end.
 
+
 Definition im_rec (S : Subst) := im_rec_aux S (dom_rec S).
 
+Definition any_exp_vars (e: SortedExp) : set SortedVar :=
+  match e with
+  | Exp s => vars_of_exp s
+  | SExp σ => vars_of_sexp σ
+  end.
+    
 Fixpoint exps_set_vars (E: set SortedExp) : set SortedVar :=
   match E with
     | [] => []
@@ -414,3 +428,142 @@ Proof.
     eapply not_in_dom_lookup_same_sexp in H. apply H.
     now left.
 Qed.    
+
+
+Lemma sub_comp_var_diff_left: forall S V A, set_In V (dom_rec (sub_comp S ([A])%list )) ->
+                                           V <> assign_sort_var A ->
+                                           set_In V (dom_rec S).
+
+Proof.
+  intro S.
+  induction S; intros; simpl in *;
+    destruct V as [X | Y];
+    destruct A as [X' | Y']; simpl in *.
+    
+  - apply In_dom_eq_dom_rec_exp in H.
+    unfold In_dom_exp in H. simpl in H.
+    destruct (var_eqdec X' X) as [Eq | nEq]; subst; contradiction. 
+  - apply In_dom_eq_dom_rec_exp in H. unfold In_dom_exp in H.
+    simpl in H. contradiction.
+  - apply In_dom_eq_dom_rec_sexp in H.  
+    unfold In_dom_sexp in H. simpl in H. contradiction.
+  - apply In_dom_eq_dom_rec_sexp in H.
+    unfold In_dom_sexp in H. simpl in H.
+    destruct (var_eqdec Y' Y) as [Eq | nEq]; subst; contradiction. 
+  - apply In_dom_eq_dom_rec_exp. unfold In_dom_exp. simpl.
+    destruct a as [X'' | Y''].
+    apply In_dom_eq_dom_rec_exp in H. unfold In_dom_exp in H. simpl in H.
+    destruct (var_eqdec X'' X) as [Eq | nEq]; subst.
+    assert (H0' : X <> X') by congruence. clear H0.
+    intro. apply H. rewrite H0. simpl.
+    destruct (var_eqdec X' X) as [Eq | nEq]; [symmetry in Eq; contradiction | reflexivity].
+    specialize (IHS (exp_var X) (exp_assign X' e)).
+    repeat rewrite <- In_dom_eq_dom_rec_exp in IHS.
+    repeat unfold In_dom_exp in IHS.
+    simpl in IHS. apply IHS; eauto.
+    apply In_dom_eq_dom_rec_exp in H. unfold In_dom_exp in H. simpl in H.
+    specialize (IHS (exp_var X) (exp_assign X' e)).
+    repeat rewrite <- In_dom_eq_dom_rec_exp in IHS.
+    repeat unfold In_dom_exp in IHS.
+    simpl in IHS. apply IHS; eauto.
+  - apply In_dom_eq_dom_rec_exp. unfold In_dom_exp. simpl.
+    destruct a as [X'' | Y''].
+    rewrite <-In_dom_eq_dom_rec_exp in H. unfold In_dom_exp in H. simpl in H.
+    destruct (var_eqdec X'' X); subst.
+    intro. apply H.  rewrite H1. now simpl.
+    specialize (IHS (exp_var X) (sexp_assign Y' s)).
+    repeat rewrite <- In_dom_eq_dom_rec_exp in IHS.
+    repeat unfold In_dom_exp in IHS. simpl in IHS.
+    apply IHS; eauto.
+    apply In_dom_eq_dom_rec_exp in H. unfold In_dom_exp in H. simpl in H. 
+    specialize (IHS (exp_var X) (sexp_assign Y' s)).
+    repeat rewrite <- In_dom_eq_dom_rec_exp in IHS.
+    repeat unfold In_dom_exp in IHS. simpl in IHS.
+    apply IHS; eauto.
+  - apply In_dom_eq_dom_rec_sexp. unfold In_dom_sexp. simpl.
+    destruct a as [X'' | Y''].
+    rewrite <-In_dom_eq_dom_rec_sexp in H. unfold In_dom_sexp in H. simpl in H.
+    specialize (IHS (sexp_var Y) (exp_assign X' e)).
+    repeat rewrite <- In_dom_eq_dom_rec_sexp in IHS.
+    repeat unfold In_dom_sexp in IHS. simpl in IHS.
+    apply IHS; eauto.
+    rewrite <-In_dom_eq_dom_rec_sexp in H. unfold In_dom_sexp in H. simpl in H.
+    destruct (var_eqdec Y'' Y); subst.
+    intro. apply H.  rewrite H1. now simpl.
+    specialize (IHS (sexp_var Y) (exp_assign X' e)).
+    repeat rewrite <- In_dom_eq_dom_rec_sexp in IHS.
+    repeat unfold In_dom_sexp in IHS. simpl in IHS.
+    apply IHS; eauto.
+  - apply In_dom_eq_dom_rec_sexp. unfold In_dom_sexp. simpl.
+    destruct a as [X'' | Y''].
+    apply In_dom_eq_dom_rec_sexp in H. unfold In_dom_sexp in H. simpl in H.
+    specialize (IHS (sexp_var Y) (sexp_assign Y' s)).
+    repeat rewrite <- In_dom_eq_dom_rec_sexp in IHS.
+    repeat unfold In_dom_sexp in IHS.
+    simpl in IHS. apply IHS; eauto.
+ 
+    apply In_dom_eq_dom_rec_sexp in H. unfold In_dom_sexp in H. simpl in H.
+    destruct (var_eqdec Y'' Y) as [Eq | nEq]; subst.
+    assert (H0' : Y <> Y') by congruence. clear H0.
+    intro. apply H. rewrite H0. simpl.
+    destruct (var_eqdec Y' Y) as [Eq | nEq]; [symmetry in Eq; contradiction | reflexivity].
+    specialize (IHS (sexp_var Y) (sexp_assign Y' s)).
+    repeat rewrite <- In_dom_eq_dom_rec_sexp in IHS.
+    repeat unfold In_dom_sexp in IHS.
+    simpl in IHS. apply IHS; eauto.
+Qed.  
+
+
+
+Lemma exp_sexp_desubst : (forall t V A, set_In V (vars_of_exp (sub t ([A])%list)) ->
+                                   V <> assign_sort_var A ->
+                                   ~set_In V (any_exp_vars (assign_sort_exp A)) ->
+                                   set_In V (vars_of_exp t)) /\
+                             (forall σ  V A, set_In V (vars_of_sexp (sub_s σ ([A])%list)) ->
+                                        V <> assign_sort_var A ->
+                                        ~set_In V (any_exp_vars (assign_sort_exp A)) ->
+                                         set_In V (vars_of_sexp σ)).
+Proof.
+  apply sigma_ind2; intros; simpl in *;
+  destruct V as [X' | Y']; destruct A as [X'' | Y'']; simpl in *; trivial;
+  try first [(apply set_union_elim in H1;
+    destruct H1; [
+    apply set_union_intro1;  eapply H;
+    [apply H1 | now simpl| now simpl] | 
+    apply set_union_intro2; eapply H0;
+    [apply H1 | now simpl | now simpl]]) |
+    eapply H ; [apply H0 | now simpl | now simpl] |
+    destruct (var_eqdec X'' X); subst; try contradiction;
+    simpl in H; assumption |
+    destruct (var_eqdec Y'' Y); subst; try contradiction;
+    simpl in H; assumption].          
+Qed.
+
+
+Lemma exps_X_clear : (forall t V A, ~set_In V (any_exp_vars (assign_sort_exp A)) ->
+                                    V= assign_sort_var A ->  
+                                   ~set_In V (vars_of_exp (sub t ([A])%list)))
+
+                         /\ (forall σ V A, ~set_In V (any_exp_vars (assign_sort_exp A)) ->
+                                     V= assign_sort_var A -> 
+                                     ~set_In V (vars_of_sexp (sub_s σ ([A])%list))).
+Proof.
+    apply sigma_ind2; intros; simpl in *; 
+    destruct V as [X' | Y']; destruct A as [X'' | Y'']; simpl in *;intro; trivial;
+      
+    try now first [apply set_union_elim in H3; destruct H3;
+    [ eapply H; revgoals;  [apply H3 | now simpl | now simpl] |
+      eapply H0; revgoals; [apply H3 | now simpl | now simpl]] |
+     congruence |
+     eapply H; revgoals; [apply H2 | now simpl | now simpl]].
+
+    - injection H0; intro HEq;
+      destruct (var_eqdec X'' X); [contradiction |
+      simpl in H1; destruct H1 ;[congruence | trivial]].
+    - destruct H1; [congruence | trivial].
+    - destruct H1; [congruence | trivial].
+    - injection H0; intro HEq;
+      destruct (var_eqdec Y'' Y); [contradiction |
+      simpl in H1; destruct H1 ;[congruence | trivial]].
+Qed.
+    
