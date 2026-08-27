@@ -163,20 +163,30 @@ Proof.
     specialize (H0 Y). now simpl in H0.
 Qed.  
 
+(* count comp right associatively *)
+Fixpoint count_comp (σ: sexp) : nat :=
+  match σ with
+  | σ >> τ => 1 + count_comp τ
+  | _ => 0
+  end.     
+
+
 Definition σmin_rhs_form_exp (s: exp) : nat :=
   match s with
-  | Lam s[Zero .: σ >> ↑] => 1
-  | App s[σ] t[τ] => if sexp_eqdec σ τ then 1 else 0
-  | s[σ >> τ] => 1
+  | Lam s[Zero .: σ >> ↑] => 1 + count_comp σ
+  | App s[σ] t[τ] => if sexp_eqdec σ τ then 1 + count_comp σ else 0
+  | s[σ >> τ] => 1 + count_comp τ
   | _ => 0
   end.
 
 Definition σmin_rhs_form_sexp (σ: sexp) : nat :=
   match σ with
-  | σ >> τ >> ρ => 1
-  | (s .: σ)>> τ => 1
+  | σ >> τ >> ρ => 1 + count_comp ρ
+  | s[τ] .: σ >> ρ => if sexp_eqdec τ ρ then  1 + count_comp τ else 0
   | _ => 0
   end.        
+
+
 
 Fixpoint σmin_steps_possible (P: Problem) : nat :=
   match P with
@@ -184,3 +194,61 @@ Fixpoint σmin_steps_possible (P: Problem) : nat :=
   | (equ_s σ τ) :: P0 => σmin_rhs_form_sexp σ + σmin_steps_possible P0
   | (equ s t) :: P0 => σmin_rhs_form_exp s + σmin_steps_possible P0
   end.
+
+
+Lemma σmin_rhs_form_app_case : forall s t σ, σmin_rhs_form_exp (App s[σ] t[σ]) = S (count_comp σ).
+Proof.
+  intros. simpl.
+  destruct (sexp_eqdec σ σ) as [HEq | nHeq]; try congruence.
+Qed.
+
+
+Lemma σmin_rhs_form_cons_case : forall s σ τ, σmin_rhs_form_sexp (s[τ] .: σ >> τ) = S (count_comp τ).
+Proof.
+  intros. simpl.
+  destruct (sexp_eqdec τ τ) as [HEq | nHeq]; try congruence.
+Qed.
+
+Lemma σmin_lam_step_less : forall s σ, σmin_rhs_form_exp (Lam s[Zero .: σ >> ↑]) > σmin_rhs_form_exp  (Lam s)[σ].
+Proof.
+  intros.
+  simpl.
+  destruct σ; try lia.
+  simpl. lia.
+Qed.
+
+Lemma σmin_monad_step_less : forall s σ τ, σmin_rhs_form_exp (s[σ >> τ]) > σmin_rhs_form_exp (s[σ])[τ].
+Proof.
+  intros.
+  simpl.
+  destruct τ; try lia.
+  simpl. lia.
+Qed.
+
+Lemma σmin_app_step_less : forall s t σ, σmin_rhs_form_exp (App s[σ] t[σ]) > σmin_rhs_form_exp (App s t)[σ].
+Proof.
+  intros.
+  simpl. destruct (sexp_eqdec σ σ); try contradiction.
+  destruct σ; try lia.
+  simpl. lia.
+Qed.
+
+Lemma σmin_cons_step_less : forall s σ τ, σmin_rhs_form_sexp (s[τ] .: σ >> τ) > σmin_rhs_form_sexp ( (s .: σ) >> τ).
+Proof.
+  intros.
+  simpl.  simpl. destruct (sexp_eqdec τ τ); try contradiction.
+  destruct τ; try lia.
+  simpl. lia.
+Qed.
+
+
+Lemma σmin_assoc_step_less : forall σ τ ρ, σmin_rhs_form_sexp (σ >> τ >> ρ) > σmin_rhs_form_sexp ( (σ >> τ) >> ρ).
+Proof.
+  intros.
+  simpl. 
+  destruct ρ; try lia.
+  simpl. lia.
+Qed.
+
+
+

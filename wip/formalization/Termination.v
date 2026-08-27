@@ -41,7 +41,38 @@ Proof.
   - right. left. split.
     apply nat_leq_inv. eapply subset_list; intros.
     apply NoDup_Problem_vars. eapply problem_var_remove_one_mem.
-    apply H0. 
+    apply H0.
+    rewrite Problem_size_remove; trivial.
+    simpl. admit. (* obvious reasoning with arithmetic 
+    assert (Q : Problem_size P >= Problem_size ([(equ s s)])).
+    apply Problem_size_neq_nil; trivial.
+    assert (Q' : Problem_size P > 0).
+    apply Problem_size_gt_0 with (s:=s) (t:=s); trivial. 
+    assert (Q'' : exp_size s > 0).
+    apply exp_size_gt_0.
+    simpl in Q. lia. *)
+  - (* same as above *) admit.
+  - right. left. split.
+    apply nat_leq_inv. apply subset_list; intros.
+    apply NoDup_Problem_vars. 
+    admit. (* same reasoning as earlier *)
+    admit. (* arithmetic reasoning *)
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  (* σmin case start *)  
+  - right. right. repeat split.
+    admit. (* set related reasoning *)
+    rewrite Problem_size_remove; trivial.
+    assert ( Problem_size P + Problem_size ([equ (Lam s)[σ]  s'[σ']]) >= Problem_size (P |+ equ (Lam s) [σ] s' [σ'])) by apply Problem_size_add.
+    assert (Equation_size (equ (Lam s [Zero .: σ >> ↑]) s' [σ']) > Equation_size (equ (Lam s)[σ]  s'[σ'])) by admit.
+
+    simpl. simpl in H0. lia.
+    apply set_add_intro1; trivial.
+
+    
+    
     
     
 Admitted.

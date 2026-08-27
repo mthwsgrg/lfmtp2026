@@ -161,7 +161,32 @@ Qed.
 
 
 
+Lemma exp_size_σmin_lam : forall s σ, exp_size (Lam s[Zero .: σ >> ↑]) > exp_size (Lam s)[σ].
+Proof.
+  intros. simpl. lia.
+Qed.
 
+Lemma exp_size_σmin_app : forall s t σ,  exp_size (App s[σ] t[σ]) > exp_size ( (App s t)[σ]).
+Proof.
+  intros. simpl. lia.
+Qed.
+
+Lemma exp_size_σmin_monad : forall s σ τ, exp_size (s[σ >> τ]) >= exp_size (s[σ][τ]).
+Proof.
+  intros. simpl. lia.
+Qed.
+
+Lemma sexp_size_σmin_comp : forall σ τ ρ, sexp_size (σ >> τ >> ρ) >= sexp_size ((σ>> τ) >> ρ).
+Proof.
+  intros. simpl. lia.
+Qed.
+
+Lemma sexp_size_σmin_cons : forall s σ τ, sexp_size (s[τ] .: σ >> τ) >= sexp_size ( (s .: σ) >> τ).
+Proof.
+  intros. simpl. lia.
+Qed.
+
+                                                 
 Lemma s_noteq_app : forall s t, s = App s t -> False.
   intro s.
   induction s using exp_ind3; intros; try (discriminate H).

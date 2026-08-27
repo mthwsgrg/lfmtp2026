@@ -89,6 +89,12 @@ Notation "P |+ u" := (set_add Equation_eqdec u P) (at level 67).
 Notation "P |^^ S" := (subs_Problem_right P S) (at level 67).
 
 
+Definition Equation_size (E: Equation) : nat :=
+  match E with
+  | equ_s σ τ => (sexp_size σ) + (sexp_size τ)
+  | equ s t => (exp_size s) + (exp_size t)
+  end.
+
 Fixpoint Problem_size (P : Problem) : nat :=
   match P with
   | [] => 0
@@ -96,6 +102,13 @@ Fixpoint Problem_size (P : Problem) : nat :=
   | (equ s t) :: P0 => (exp_size s) + (exp_size t) + (Problem_size P0)
   end.
 
+
+Lemma Problem_size_remove : forall P e, set_In e P ->
+                                Problem_size (P\e) =  Problem_size P - Equation_size e. 
+Admitted.
+
+Lemma Problem_size_add : forall P e,  Problem_size P + Problem_size ([e]) >= Problem_size (P |+ e).
+Admitted.  
 
 Lemma in_exp_then_in_left_problem : forall P s t V, set_In V (vars_of_exp s) ->
                                                set_In (equ s t) P -> 
