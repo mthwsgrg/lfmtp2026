@@ -70,7 +70,17 @@ Proof.
 
     simpl. simpl in H0. lia.
     apply set_add_intro1; trivial.
+    rewrite σmin_steps_remove; trivial.
+    unfold lEqn_σmin_steps.
+    assert (Q' : σmin_steps_possible P > 0) by ( admit).
+    
+    assert (σmin_steps_possible P + σmin_steps_possible ([equ (Lam s)[σ] s'[σ']]) >= σmin_steps_possible (P |+ equ (Lam s) [σ] s' [σ'])) by (apply σmin_steps_add).
+    assert (σmin_steps_possible ([equ (Lam s) [σ] s' [σ']]) = σmin_rhs_form_exp (Lam s) [σ]) by
+    (simpl; lia). rewrite H1 in H0.
 
+    assert (σmin_rhs_form_exp (Lam s[Zero .: σ >> ↑]) > (σmin_rhs_form_exp  (Lam s)[σ])) by (apply σmin_lam_step_less). 
+    lia. 
+   
     
     
     

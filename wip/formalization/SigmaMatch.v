@@ -195,6 +195,19 @@ Fixpoint σmin_steps_possible (P: Problem) : nat :=
   | (equ s t) :: P0 => σmin_rhs_form_exp s + σmin_steps_possible P0
   end.
 
+Definition lEqn_σmin_steps (E: Equation) : nat :=
+  match E with
+  | equ_s σ τ => σmin_rhs_form_sexp σ
+  | equ s t => σmin_rhs_form_exp s
+  end.
+Lemma σmin_steps_remove : forall P e, set_In e P ->
+                                σmin_steps_possible (P\e) =  σmin_steps_possible P - lEqn_σmin_steps e. 
+Admitted.
+
+Lemma σmin_steps_add : forall P e,  σmin_steps_possible P + σmin_steps_possible ([e]) >= σmin_steps_possible (P |+ e).
+Admitted.  
+
+
 
 Lemma σmin_rhs_form_app_case : forall s t σ, σmin_rhs_form_exp (App s[σ] t[σ]) = S (count_comp σ).
 Proof.
@@ -216,6 +229,14 @@ Proof.
   destruct σ; try lia.
   simpl. lia.
 Qed.
+
+Lemma σmin_lam_step_one_less : forall s σ, σmin_rhs_form_exp (Lam s[Zero .: σ >> ↑]) = S (σmin_rhs_form_exp  (Lam s)[σ]).
+Proof.
+  intros.
+  simpl.
+  destruct σ; try now simpl.
+Qed.
+
 
 Lemma σmin_monad_step_less : forall s σ τ, σmin_rhs_form_exp (s[σ >> τ]) > σmin_rhs_form_exp (s[σ])[τ].
 Proof.
@@ -249,6 +270,5 @@ Proof.
   destruct ρ; try lia.
   simpl. lia.
 Qed.
-
 
 
