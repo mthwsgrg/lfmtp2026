@@ -80,8 +80,38 @@ Proof.
 
     assert (σmin_rhs_form_exp (Lam s[Zero .: σ >> ↑]) > (σmin_rhs_form_exp  (Lam s)[σ])) by (apply σmin_lam_step_less). 
     lia. 
-   
-    
+   admit.
+  - admit.
+  - admit.
+  - admit.
+  - left.
+    apply nat_lt_inv.
+    eapply subset_list'.
+    apply NoDup_Problem_vars.
+    intros.
+    destruct (sortedvar_eqdec (exp_var X) b) as [HEq | HnEq].
+      destruct b as [X' | Y']; try inversion HEq.
+       subst. 
+       assert (~In (exp_var X') (Problem_vars ((P \ equ s (VarExp X')) |^^ [exp_assign X' s]))).
+       { apply problem_X_clear. simpl.
+         split. intro. apply H. eapply in_exp_then_in_left_problem. apply H1. apply H0.
+         intro. apply H. eapply problem_lhvar_remove_one_mem. apply H1. now simpl.
+       }.
+       contradiction.
+     destruct (set_In_dec sortedvar_eqdec b (vars_of_exp s)).
+        apply in_left_problem_then_in_problem.
+         eapply in_exp_then_in_left_problem.
+         apply s0. apply H0.
+       eapply problem_var_remove_one_mem.
+        eapply problem_vars_desubst. apply H2.
+        simpl. congruence. simpl. apply n.     
+        exists (exp_var X). split. apply in_right_problem_then_in_problem.
+        eapply in_exp_then_in_right_problem; swap 1 2. apply H0.  now left.
+    apply problem_X_clear. simpl.
+    split. intro. apply H. eapply in_exp_then_in_left_problem. apply H2. apply H0.
+    intro. apply H. eapply problem_lhvar_remove_one_mem. apply H2.
+    now simpl.
+  -
     
     
     

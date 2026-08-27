@@ -132,7 +132,12 @@ Proof.
   - exact H_incl.
 Qed.
 
-
+Lemma subset_list' : forall (l l' : list A),
+     NoDup l ->                     
+     (forall b, In b l -> In b l') ->
+     (exists a', In a' l' /\ ~ In a' l) ->
+     length l < length l' .
+Admitted.
 
 End SetPropertiesWithEqDec.
       
@@ -140,4 +145,8 @@ End SetPropertiesWithEqDec.
 (* Lemmas for natural numbers *)
 
 Lemma nat_leq_inv : forall m n, n <= m -> m >= n.
+Proof. intros; lia. Qed.
+
+
+Lemma nat_lt_inv : forall m n, n < m -> m > n.
 Proof. intros; lia. Qed.

@@ -260,7 +260,8 @@ Qed.
 
 
     
-    
+
+
    
 Lemma problem_vars_desubst : forall P V A,  set_In V (Problem_vars (P |^^ ([A])%list)) ->
                                          V <> assign_sort_var A ->
