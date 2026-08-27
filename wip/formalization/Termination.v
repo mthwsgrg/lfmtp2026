@@ -107,10 +107,168 @@ Proof.
       simpl in * |- *. lia.
       now repeat apply set_add_intro1. 
 
-  - admit.
-  - admit.
-  - admit.
-  - admit.
+  - right. left. split.
+    apply nat_leq_inv. apply subset_list; intros.
+    apply NoDup_Problem_vars.
+    case (set_In_dec sortedvar_eqdec b
+            (set_union sortedvar_eqdec (vars_of_exp (Lam s)) (vars_of_exp (Lam s')))).
+
+      intro HIn.
+      apply set_union_elim in HIn. destruct HIn.
+      apply in_left_problem_then_in_problem.
+      eapply in_exp_then_in_left_problem; swap 1 2. apply H. now apply H1.
+      apply in_right_problem_then_in_problem.
+      eapply in_exp_then_in_right_problem; swap 1 2. apply H. now apply H1.
+
+      intro HIn.
+      apply problem_var_remove_one_mem in H0.
+      apply problem_var_ext_vars in H0.
+      apply H0.
+      intro. apply HIn. simpl in H1.
+      now simpl.
+
+      rewrite Problem_size_remove.
+       assert (Q' : Problem_size P  + Problem_size ([equ s s']) >=
+                 Problem_size (P |+ (equ s s'))).
+      apply Problem_size_add.
+      assert (Q'': Problem_size P > 0).
+      apply Problem_size_gt_0 with (e:= equ (Lam s) (Lam s')); trivial.
+      assert (Q''' : exp_size s > 0).
+      apply (proj1 exps_size_gt_0).
+      simpl in * |- *. lia.
+      now repeat apply set_add_intro1. 
+
+    
+  - right. left. split.
+    apply nat_leq_inv. apply subset_list; intros.
+    apply NoDup_Problem_vars.
+    case (set_In_dec sortedvar_eqdec b
+            (set_union sortedvar_eqdec (vars_of_exp (s [σ])) (vars_of_exp (s' [σ'])))).
+
+      intro HIn.
+      apply set_union_elim in HIn. destruct HIn.
+      apply in_left_problem_then_in_problem.
+      eapply in_exp_then_in_left_problem; swap 1 2. apply H. now apply H1.
+      apply in_right_problem_then_in_problem.
+      eapply in_exp_then_in_right_problem; swap 1 2. apply H. now apply H1.
+
+      intro HIn.
+      apply problem_var_remove_one_mem in H0.
+      apply problem_var_ext_vars in H0.
+      apply problem_var_ext_vars in H0.
+      apply H0.
+      intro. apply HIn. simpl in H1.
+      simpl. apply set_union_elim in H1.
+      destruct H1. now repeat apply set_union_intro1.
+      apply set_union_intro2. now apply set_union_intro1.
+      intro. apply HIn. simpl in H1.
+      simpl. apply set_union_elim in H1.
+      destruct H1. 
+      apply set_union_intro1. now apply set_union_intro2.
+      now repeat apply set_union_intro2.
+
+      rewrite Problem_size_remove.
+      assert (Q : Problem_size (P |+ (equ s s')) + Problem_size ([equ_s σ σ']) >=
+                 Problem_size ((P |+ (equ s s')) |+ (equ_s σ σ'))).
+      apply Problem_size_add.
+      assert (Q' : Problem_size P  + Problem_size ([equ s s']) >=
+                 Problem_size (P |+ (equ s s'))).
+      apply Problem_size_add.
+      assert (Q'': Problem_size P > 0).
+      apply Problem_size_gt_0 with (e:= equ (s [σ]) (s' [σ'])); trivial.
+      assert (Q''' : exp_size s > 0).
+      apply (proj1 exps_size_gt_0).
+      simpl in * |- *. lia.
+      now repeat apply set_add_intro1. 
+
+
+    
+  - right. left. split.
+    apply nat_leq_inv. apply subset_list; intros.
+    apply NoDup_Problem_vars.
+    case (set_In_dec sortedvar_eqdec b
+            (set_union sortedvar_eqdec (vars_of_sexp (s .: σ)) (vars_of_sexp (s'.: σ')))).
+
+      intro HIn.
+      apply set_union_elim in HIn. destruct HIn.
+      apply in_left_problem_then_in_problem.
+      eapply in_sexp_then_in_left_problem; swap 1 2. apply H. now apply H1.
+      apply in_right_problem_then_in_problem.
+      eapply in_sexp_then_in_right_problem; swap 1 2. apply H. now apply H1.
+
+      intro HIn.
+      apply problem_var_remove_one_mem in H0.
+      apply problem_var_ext_vars in H0.
+      apply problem_var_ext_vars in H0.
+      apply H0.
+      intro. apply HIn. simpl in H1.
+      simpl. apply set_union_elim in H1.
+      destruct H1. now repeat apply set_union_intro1.
+      apply set_union_intro2. now apply set_union_intro1.
+      intro. apply HIn. simpl in H1.
+      simpl. apply set_union_elim in H1.
+      destruct H1. 
+      apply set_union_intro1. now apply set_union_intro2.
+      now repeat apply set_union_intro2.
+
+      rewrite Problem_size_remove.
+      assert (Q : Problem_size (P |+ (equ s s')) + Problem_size ([equ_s σ σ']) >=
+                 Problem_size ((P |+ (equ s s')) |+ (equ_s σ σ'))).
+      apply Problem_size_add.
+      assert (Q' : Problem_size P  + Problem_size ([equ s s']) >=
+                 Problem_size (P |+ (equ s s'))).
+      apply Problem_size_add.
+      assert (Q'': Problem_size P > 0).
+      apply Problem_size_gt_0 with (e:= equ_s (s .: σ) (s' .: σ')); trivial.
+      assert (Q''' : exp_size s > 0).
+      apply (proj1 exps_size_gt_0).
+      simpl in * |- *. lia.
+      now repeat apply set_add_intro1. 
+
+
+    
+  - right. left. split.
+    apply nat_leq_inv. apply subset_list; intros.
+    apply NoDup_Problem_vars.
+    case (set_In_dec sortedvar_eqdec b
+            (set_union sortedvar_eqdec (vars_of_sexp (σ >> τ)) (vars_of_sexp (σ'>> τ')))).
+
+      intro HIn.
+      apply set_union_elim in HIn. destruct HIn.
+      apply in_left_problem_then_in_problem.
+      eapply in_sexp_then_in_left_problem; swap 1 2. apply H. now apply H1.
+      apply in_right_problem_then_in_problem.
+      eapply in_sexp_then_in_right_problem; swap 1 2. apply H. now apply H1.
+
+      intro HIn.
+      apply problem_var_remove_one_mem in H0.
+      apply problem_var_ext_vars in H0.
+      apply problem_var_ext_vars in H0.
+      apply H0.
+      intro. apply HIn. simpl in H1.
+      simpl. apply set_union_elim in H1.
+      destruct H1. now repeat apply set_union_intro1.
+      apply set_union_intro2. now apply set_union_intro1.
+      intro. apply HIn. simpl in H1.
+      simpl. apply set_union_elim in H1.
+      destruct H1. 
+      apply set_union_intro1. now apply set_union_intro2.
+      now repeat apply set_union_intro2.
+
+      rewrite Problem_size_remove.
+      assert (Q : Problem_size (P |+ (equ_s σ σ')) + Problem_size ([equ_s τ τ']) >=
+                 Problem_size ((P |+ (equ_s σ σ')) |+ (equ_s τ τ'))).
+      apply Problem_size_add.
+      assert (Q' : Problem_size P  + Problem_size ([equ_s σ σ']) >=
+                 Problem_size (P |+ (equ_s σ σ'))).
+      apply Problem_size_add.
+      assert (Q'': Problem_size P > 0).
+      apply Problem_size_gt_0 with (e:= equ_s (σ >> τ) (σ' >> τ')); trivial.
+      assert (Q''' : sexp_size σ > 0).
+      apply (proj2 exps_size_gt_0).
+      simpl in * |- *. lia.
+      now repeat apply set_add_intro1. 
+
   (* σmin case start *)
     (* lam *)
   - right. right. repeat split.
@@ -439,7 +597,6 @@ Proof.
     intro. apply H. eapply problem_lhvar_remove_one_mem. apply H2.
     now simpl.
  
-    
     
     
 Admitted.
