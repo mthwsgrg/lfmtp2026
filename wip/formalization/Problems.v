@@ -103,12 +103,60 @@ Fixpoint Problem_size (P : Problem) : nat :=
   end.
 
 
-Lemma Problem_size_remove : forall P e, set_In e P ->
-                                Problem_size (P\e) =  Problem_size P - Equation_size e. 
+Lemma Problem_size_gt_0 : forall e P, set_In e P -> Problem_size P > 0.
 Admitted.
 
+Lemma Problem_size_neq_nil : forall e P, set_In e P -> Problem_size P >= Problem_size ([e]).
+Admitted.
+  
+Lemma Problem_size_remove : forall P e, set_In e P ->
+                                Problem_size (P\e) =  Problem_size P - Equation_size e. 
+Proof.
+  intros. induction P. simpl in H. contradiction.
+  simpl in H. destruct H.
+   +  rewrite H. clear H.
+      simpl. case (Equation_eqdec e e); intro H. clear H.
+      destruct e. unfold Equation_size. lia.
+      unfold Equation_size. lia.
+      contradiction.
+   + simpl. destruct a as [s t | σ τ].
+    *  destruct e as [s' t' | σ' τ'].
+       case (Equation_eqdec (equ s' t') (equ s t)); intro H0.
+       inversion H0; subst. unfold Equation_size. lia.  
+       simpl. unfold Equation_size in IHP. rewrite IHP; trivial.
+       assert (Q : Problem_size P >= Problem_size ([equ s' t'])).
+       apply Problem_size_neq_nil; trivial.
+       simpl in Q. lia.
+       case (Equation_eqdec (equ_s σ' τ') (equ s t)); intro H0.
+       inversion H0; subst.
+       simpl. unfold Equation_size in IHP. rewrite IHP; trivial.
+       assert (Q : Problem_size P >= Problem_size ([equ_s σ' τ'])).
+       apply Problem_size_neq_nil; trivial.
+       simpl in Q. lia.
+    * destruct e as [s' t' | σ' τ'].
+       case (Equation_eqdec (equ s' t') (equ_s σ τ)); intro H0.
+       inversion H0; subst.
+       simpl. unfold Equation_size in IHP. rewrite IHP; trivial.
+       assert (Q : Problem_size P >= Problem_size ([equ s' t'])).
+       apply Problem_size_neq_nil; trivial.
+       simpl in Q. lia.
+       case (Equation_eqdec (equ_s σ' τ') (equ_s σ τ)); intro H0.
+       inversion H0; subst. unfold Equation_size. lia.  
+       simpl. unfold Equation_size in IHP. rewrite IHP; trivial.
+       assert (Q : Problem_size P >= Problem_size ([equ_s σ' τ'])).
+       apply Problem_size_neq_nil; trivial.
+       simpl in Q. lia.
+Qed.
+    
 Lemma Problem_size_add : forall P e,  Problem_size P + Problem_size ([e]) >= Problem_size (P |+ e).
-Admitted.  
+Proof.
+  intros. induction P. simpl; lia.
+  simpl in *|-*. destruct e; destruct a.
+  case (Equation_eqdec (equ e e0) (equ e1 e2)); intro H; simpl; try lia.
+  case (Equation_eqdec (equ e e0) (equ_s s s0)); intro H; simpl; try lia.
+  case (Equation_eqdec (equ_s s s0) (equ e e0)); intro H; simpl; try lia.
+  case (Equation_eqdec (equ_s s s0) (equ_s s1 s2)); intro H; simpl; try lia.
+Qed.  
 
 Lemma in_exp_then_in_left_problem : forall P s t V, set_In V (vars_of_exp s) ->
                                                set_In (equ s t) P -> 

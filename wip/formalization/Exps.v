@@ -160,7 +160,9 @@ Proof.
 Qed.
 
 
-
+Lemma exps_size_gt_0 : (forall s, exp_size s > 0) /\ (forall σ, sexp_size σ> 0).
+Admitted.
+  
 Lemma exp_size_σmin_lam : forall s σ, exp_size (Lam s[Zero .: σ >> ↑]) > exp_size (Lam s)[σ].
 Proof.
   intros. simpl. lia.

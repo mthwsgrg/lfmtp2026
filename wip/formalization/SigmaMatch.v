@@ -200,14 +200,71 @@ Definition lEqn_σmin_steps (E: Equation) : nat :=
   | equ_s σ τ => σmin_rhs_form_sexp σ
   | equ s t => σmin_rhs_form_exp s
   end.
+
+Lemma σmin_steps_neq_nil : forall e P, set_In e P -> σmin_steps_possible P >= σmin_steps_possible ([e]).
+Proof.
+  intros. induction P; intros. simpl in H. contradiction.
+  simpl in H. destruct H.
+  + rewrite H. destruct e.
+    simpl. lia.
+    simpl. lia.
+  + destruct e.
+    destruct a.
+    simpl. simpl in IHP.
+    specialize (IHP H). lia.
+    simpl. simpl in IHP. specialize (IHP H). lia.
+    simpl. destruct a; simpl in IHP; specialize (IHP H); lia.  
+Qed.  
+
+
 Lemma σmin_steps_remove : forall P e, set_In e P ->
-                                σmin_steps_possible (P\e) =  σmin_steps_possible P - lEqn_σmin_steps e. 
-Admitted.
+                                 σmin_steps_possible (P\e) =  σmin_steps_possible P - lEqn_σmin_steps e.
+Proof.
+   intros. induction P. simpl in H. contradiction.
+  simpl in H. destruct H.
+   +  rewrite H. clear H.
+      simpl. case (Equation_eqdec e e); intro H. clear H.
+      destruct e. unfold lEqn_σmin_steps. lia.
+      unfold lEqn_σmin_steps. lia.
+      contradiction.
+   + simpl. destruct a as [s t | σ τ].
+     destruct e as [s' t' | σ' τ'].
+     * case (Equation_eqdec (equ s' t') (equ s t)); intro H0.
+       inversion H0; subst. unfold lEqn_σmin_steps. lia.  
+       simpl. unfold lEqn_σmin_steps in IHP. rewrite IHP; trivial.
+       assert (Q : σmin_steps_possible P >= σmin_steps_possible ([equ s' t'])).
+       apply σmin_steps_neq_nil; trivial.
+       simpl in Q. lia.
+    * case (Equation_eqdec (equ_s σ' τ') (equ s t)); intro H0.
+       inversion H0; subst.
+       simpl. unfold lEqn_σmin_steps in IHP. rewrite IHP; trivial.
+       assert (Q : σmin_steps_possible P >= σmin_steps_possible ([equ_s σ' τ'])).
+       apply σmin_steps_neq_nil; trivial.
+       simpl in Q. lia.
+    * destruct e as [s' t' | σ' τ'].
+       case (Equation_eqdec (equ s' t') (equ_s σ τ)); intro H0.
+       inversion H0; subst.
+       simpl. unfold lEqn_σmin_steps in IHP. rewrite IHP; trivial.
+       assert (Q : σmin_steps_possible P >= σmin_steps_possible ([equ s' t'])).
+       apply σmin_steps_neq_nil; trivial.
+       simpl in Q. lia.
+       case (Equation_eqdec (equ_s σ' τ') (equ_s σ τ)); intro H0.
+       inversion H0; subst. unfold lEqn_σmin_steps. lia.  
+       simpl. unfold lEqn_σmin_steps in IHP. rewrite IHP; trivial.
+       assert (Q : σmin_steps_possible P >= σmin_steps_possible ([equ_s σ' τ'])).
+       apply σmin_steps_neq_nil; trivial.
+       simpl in Q. lia.
+Qed.   
 
 Lemma σmin_steps_add : forall P e,  σmin_steps_possible P + σmin_steps_possible ([e]) >= σmin_steps_possible (P |+ e).
-Admitted.  
-
-
+Proof.
+  intros. induction P. simpl; lia.
+  simpl in *|-*. destruct e; destruct a.
+  case (Equation_eqdec (equ e e0) (equ e1 e2)); intro H; simpl; try lia.
+  case (Equation_eqdec (equ e e0) (equ_s s s0)); intro H; simpl; try lia.
+  case (Equation_eqdec (equ_s s s0) (equ e e0)); intro H; simpl; try lia.
+  case (Equation_eqdec (equ_s s s0) (equ_s s1 s2)); intro H; simpl; try lia.
+Qed.
 
 Lemma σmin_rhs_form_app_case : forall s t σ, σmin_rhs_form_exp (App s[σ] t[σ]) = S (count_comp σ).
 Proof.
@@ -272,3 +329,19 @@ Proof.
 Qed.
 
 
+Lemma σmin_step_lam_gt_0 : forall P s σ t, set_In (equ (Lam s [Zero .: σ >> ↑]) t) P -> σmin_steps_possible P > 0.
+Proof.
+  intro.
+  induction P.
+  - intros. simpl in H. contradiction.
+  - intros. simpl in H.
+    destruct H.
+    rewrite H. simpl. lia.
+
+    destruct a.
+    simpl. specialize (IHP _ _ _ H).
+    lia.
+
+    simpl. specialize (IHP _ _ _ H).
+    lia.
+Qed.
