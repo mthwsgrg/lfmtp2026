@@ -51,10 +51,13 @@ Inductive smatch : Tuple -> Tuple -> Prop :=
 
 | smatch_Assoc : forall S P σ τ ρ σ' τ', set_In (equ_s (σ >> τ >> ρ)  (σ' >> τ')) P  ->
                                     smatch (S,P) (S, P |+ (equ_s ((σ >> τ) >> ρ) (σ' >> τ')) \ (equ_s (σ >> τ >> ρ)  (σ' >> τ')))
-| smatch_Conslaw : forall S P s σ τ σ' τ', set_In (equ_s (s[σ] .: (σ >> τ)) (σ' >> τ')) P ->
+| smatch_Conslaw : forall S P s σ τ σ' τ', set_In (equ_s (s[τ] .: (σ >> τ)) (σ' >> τ')) P ->
                                       smatch (S,P) (S, P |+ (equ_s ((s .: σ) >> τ) (σ' >> τ')) \ (equ_s (s[τ] .: (σ >> τ)) (σ' >> τ') ))
 | smatch_Complaw : forall S P s s' σ τ ρ, set_In (equ s[σ >> τ] s'[ρ]) P ->
                                      smatch (S, P) (S, (P |+ (equ s[σ][τ] s'[ρ])) \ (equ s[σ >> τ] s'[ρ]))
+
+| smatch_Appdist : forall S P s t s' σ σ', set_In (equ (App s[σ] t[σ]) s'[σ']) P ->
+                                      smatch (S, P) (S, (P |+ (equ (App s t)[σ] s'[σ'])) \ (equ (App s[σ] t[σ]) s'[σ']))
                                         
 | smatch_inst_exp : forall S S' P X s, (~ set_In (exp_var X) (lhvars_Probl P)) ->
                            (set_In (equ s (VarExp X)) P) ->
@@ -381,5 +384,45 @@ Proof.
     lia.
 
     simpl. specialize (IHP _ _ _  _ H).
+    lia.
+Qed.
+
+Lemma σmin_step_cons_gt_0 : forall P s σ τ ρ, set_In (equ_s (s[τ] .: σ >> τ) ρ)  P ->
+                                          σmin_steps_possible P > 0.
+ 
+Proof.
+  intro.
+  induction P.
+  - intros. simpl in H. contradiction.
+  - intros. simpl in H.
+    destruct H.
+    rewrite H. simpl.
+    destruct (sexp_eqdec τ τ); try contradiction.
+    lia.
+
+    destruct a.
+    simpl. specialize (IHP _ _ _ _ H).
+    lia.
+
+    simpl. specialize (IHP _ _ _  _ H).
+    lia.
+Qed.
+
+Lemma σmin_step_app_gt_0 : forall P s s' t σ, set_In (equ  (App s[σ] t[σ]) s' ) P-> σmin_steps_possible P > 0.
+Proof.
+  intro.
+  induction P.
+  - intros. simpl in H. contradiction.
+  - intros. simpl in H.
+    destruct H.
+    rewrite H. simpl.
+    destruct (sexp_eqdec σ σ); try contradiction.
+    lia.
+
+    destruct a.
+    simpl. specialize (IHP _ _ _ _ H).
+    lia.
+
+    simpl. specialize (IHP _ _ _ _ H).
     lia.
 Qed.

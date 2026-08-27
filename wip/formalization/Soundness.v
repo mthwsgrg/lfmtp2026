@@ -227,7 +227,21 @@ Proof.
     apply HEq2. apply (set_remove_3 Equation_eqdec).
     now apply (set_add_intro1). assumption.
    
-          
+  - intros s0 t0 HinP.
+     case (Equation_eqdec (equ s0 t0) (equ (App s[σ] t[σ]) s'[σ'])) as [Eq | nEq]; intros.
+       +  inversion Eq; subst.
+          apply σmin_equiv_trans with (t := (App s t)[σ]).
+          repeat constructor. apply HEq1.
+          apply (set_remove_3 Equation_eqdec).
+          now apply (set_add_intro2).
+          intro. inversion H0.
+       + apply HEq1. apply (set_remove_3 Equation_eqdec).
+         now apply (set_add_intro1). assumption.
+  - intros σ0 τ0 HinP.
+     case (Equation_eqdec (equ_s σ0 τ0) (equ (App s[σ] t[σ]) s'[σ'])) as [Eq | nEq]; intros; try inversion Eq.
+    apply HEq2. apply (set_remove_3 Equation_eqdec).
+    now apply (set_add_intro1). assumption.
+
  
   (* σmin cases end *)
     
@@ -759,9 +773,11 @@ Proof.
          apply in_left_problem_then_in_problem.
          eapply in_sexp_then_in_left_problem; swap 1 2.
          apply H. simpl. apply set_union_elim in H2.
-         destruct H2. now apply set_union_intro1.
+         destruct H2. apply set_union_elim in H2.
+         destruct H2. now repeat apply set_union_intro1.
+         apply set_union_intro2. now apply set_union_intro1.
          now repeat apply set_union_intro2.
-
+       
          apply in_right_problem_then_in_problem.
          eapply in_sexp_then_in_right_problem; swap 1 2.
          apply H. simpl.
@@ -790,8 +806,26 @@ Proof.
          now apply set_union_intro1.
          now repeat apply set_union_intro2.
 
-       
-   
+
+   -     eapply set_nocommon_inter_forall in H'. 2: apply H0.
+         intro. apply H'.
+         apply problem_var_remove_one_mem in H1.
+         apply problem_var_ext_vars in H1. contradiction.
+         simpl. intro. apply H'.
+         apply set_union_elim in H2. destruct H2.
+
+         apply in_left_problem_then_in_problem.
+         eapply in_exp_then_in_left_problem; swap 1 2.
+         apply H. simpl. apply set_union_elim in H2.
+         destruct H2. apply set_union_elim in H2.
+         destruct H2.  now repeat apply set_union_intro1.
+         apply set_union_intro2. now apply set_union_intro1.
+         now repeat apply set_union_intro2.
+
+         apply in_right_problem_then_in_problem.
+         eapply in_exp_then_in_right_problem; swap 1 2.
+         apply H. now simpl. 
+        
     
   - destruct X0 as [X' | Y']; subst.
     + destruct (var_eqdec X X') as [Eq | nEq]; intros; subst.
@@ -923,7 +957,9 @@ Proof.
     eapply set_nocommon_inter_forall in H0. apply H0. apply H1.
     intros. eapply in_sexp_then_in_left_problem; swap 1 2. apply H. simpl.
     simpl in H2. apply set_union_elim in H2. destruct H2.
-    now apply set_union_intro1.
+    apply set_union_elim in H2. destruct H2.
+    now repeat apply set_union_intro1.
+    apply set_union_intro2. now apply set_union_intro1.
     now repeat apply set_union_intro2.
 
   -  simpl in H1.
@@ -931,7 +967,19 @@ Proof.
     apply lhvar_ext_vars in H1.
     eapply set_nocommon_inter_forall in H0. apply H0. apply H1.
     intros. eapply in_exp_then_in_left_problem; swap 1 2. apply H. simpl.
-    simpl in H2. now rewrite set_union_assoc. 
+    simpl in H2. now rewrite set_union_assoc.
+
+   - simpl in H1.
+    apply problem_lhvar_remove_one_mem in H1.
+    apply lhvar_ext_vars in H1.
+    eapply set_nocommon_inter_forall in H0. apply H0. apply H1.
+    intros. eapply in_exp_then_in_left_problem; swap 1 2. apply H. simpl.
+    simpl in H2. apply set_union_elim in H2. destruct H2.
+    apply set_union_elim in H2. destruct H2.
+    now repeat apply set_union_intro1.
+    apply set_union_intro2. now apply set_union_intro1.
+    now repeat apply set_union_intro2.
+
 
    
  -  simpl in H3.

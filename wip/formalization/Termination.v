@@ -154,6 +154,7 @@ Proof.
 
     simpl. simpl in H0. lia.
     apply set_add_intro1; trivial.
+
     rewrite σmin_steps_remove; trivial.
     unfold lEqn_σmin_steps.
     assert (Q' : σmin_steps_possible P > 0)
@@ -210,20 +211,181 @@ Proof.
     
     assert (σmin_steps_possible P + σmin_steps_possible ([equ_s ((σ >> τ)>>ρ)  (σ' >> τ')]) >= σmin_steps_possible (P |+ equ_s ((σ >> τ)>>ρ)  (σ' >> τ'))) by (apply σmin_steps_add).
 
-    (** to edit from here *)
-    assert (σmin_steps_possible ([equ (Lam s) [σ] s' [σ']]) = σmin_rhs_form_exp (Lam s) [σ]) by
+    assert (σmin_steps_possible ([equ_s ((σ >> τ) >> ρ) (σ' >> τ')]) = σmin_rhs_form_sexp ((σ>>τ) >> ρ)) by
     (simpl; lia). rewrite H1 in H0.
 
-    assert (σmin_rhs_form_exp (Lam s[Zero .: σ >> ↑]) > (σmin_rhs_form_exp  (Lam s)[σ])) by (apply σmin_lam_step_less). 
-    lia. 
+    assert (σmin_rhs_form_sexp (σ >> τ >> ρ) > σmin_rhs_form_sexp ( (σ >> τ) >> ρ)) by (apply σmin_assoc_step_less). lia. 
+    apply set_add_intro1. apply H.
+
+
+
+    
+  - right. right. repeat split.
+    apply nat_leq_inv. apply subset_list; intros.
+    apply NoDup_Problem_vars.
+    case (set_In_dec sortedvar_eqdec b (set_union sortedvar_eqdec
+                                          (vars_of_sexp (s [τ] .: σ >> τ))
+                                          (vars_of_sexp (σ' >> τ')))).
+
+    intro Hin.
+    apply set_union_elim in Hin. destruct Hin.
+    apply in_left_problem_then_in_problem.
+    eapply in_sexp_then_in_left_problem; swap 1 2.
+    apply H. apply H1.
+    apply in_right_problem_then_in_problem.
+    eapply in_sexp_then_in_right_problem; swap 1 2.
+    apply H. apply H1.
+
+    intro Hn. apply problem_var_remove_one_mem in H0.
+    apply problem_var_ext_vars in H0.
+    apply H0.
+    intro. apply Hn.
+    simpl in H1. simpl. 
+    apply set_union_elim in H1. destruct H1.
+    apply set_union_intro1. apply set_union_elim in H1.
+    destruct H1. apply set_union_elim in H1.
+    destruct H1. now repeat apply set_union_intro1.
+    apply set_union_intro2. now apply set_union_intro1.
+    now repeat apply set_union_intro2.
+    now apply set_union_intro2.
+    
+
+     rewrite Problem_size_remove; trivial.
+    assert ( Problem_size P + Problem_size ([equ_s ((s .: σ)>>τ)  (σ' >> τ')]) >= Problem_size (P |+ equ_s ((s .: σ)>>τ)  (σ' >> τ'))) by apply Problem_size_add.
+    assert (Equation_size (equ_s (s[τ] .: σ >> τ) (σ' >> τ')) >= Equation_size (equ_s ((s .: σ)>>τ)  (σ' >> τ') )).
+    { unfold Equation_size.
+      assert (sexp_size (s[τ] .: σ >> τ) >= sexp_size ((s  .: σ)>>τ)) by (simpl; lia).
+      lia.
+    }
+    simpl. simpl in H0. lia.
+    apply set_add_intro1; trivial.
+
+    
+    rewrite σmin_steps_remove; trivial.
+    unfold lEqn_σmin_steps.
+    assert (Q' : σmin_steps_possible P > 0)
+     by ( eapply σmin_step_cons_gt_0; apply H). 
+
+    
+    assert (σmin_steps_possible P + σmin_steps_possible ([equ_s ((s .: σ) >> τ)  (σ' >> τ')]) >= σmin_steps_possible (P |+ equ_s ((s .: σ)>>τ)  (σ' >> τ'))) by (apply σmin_steps_add).
+
+    assert (σmin_steps_possible ([equ_s ((s .: σ) >> τ) (σ' >> τ')]) = σmin_rhs_form_sexp ((s .: σ) >> τ)) by
+    (simpl; lia). rewrite H1 in H0.
+
+    assert (σmin_rhs_form_sexp (s[τ] .: σ>> τ) > σmin_rhs_form_sexp ( (s .: σ) >> τ )) by (apply σmin_cons_step_less). lia. 
+    apply set_add_intro1. apply H.
+
+
+    
+  - right. right. repeat split.
+    apply nat_leq_inv. apply subset_list; intros.
+    apply NoDup_Problem_vars.
+    case (set_In_dec sortedvar_eqdec b (set_union sortedvar_eqdec
+                                          (vars_of_exp (s[σ >> τ]))
+                                          (vars_of_exp (s'[ρ])))).
+
+    intro Hin.
+    apply set_union_elim in Hin. destruct Hin.
+    apply in_left_problem_then_in_problem.
+    eapply in_exp_then_in_left_problem; swap 1 2.
+    apply H. apply H1.
+    apply in_right_problem_then_in_problem.
+    eapply in_exp_then_in_right_problem; swap 1 2.
+    apply H. apply H1.
+
+   intro Hn. apply problem_var_remove_one_mem in H0.
+    apply problem_var_ext_vars in H0.
+    apply H0.
+    intro. apply Hn.
+    simpl in H1. simpl. 
+    apply set_union_elim in H1. destruct H1.
+    apply set_union_intro1. now rewrite set_union_assoc.
+    now apply set_union_intro2.
+
+    rewrite Problem_size_remove; trivial.
+    assert ( Problem_size P + Problem_size ([equ (s[σ])[τ]  s'[ρ]]) >= Problem_size (P |+ equ (s[σ])[τ]  (s'[ρ]))) by apply Problem_size_add.
+    assert (Equation_size (equ (s[σ >> τ]) (s'[ρ])) >= Equation_size (equ (s[σ])[τ]  (s'[ρ]) )).
+    { unfold Equation_size.
+      assert (exp_size (s[σ >> τ]) >= exp_size (s[σ])[τ]) by (simpl; lia).
+      lia.
+    }
+    simpl. simpl in H0. lia.
+    apply set_add_intro1; trivial.
+
+
+    
+    rewrite σmin_steps_remove; trivial.
+    unfold lEqn_σmin_steps.
+    assert (Q' : σmin_steps_possible P > 0)
+     by ( eapply σmin_step_monad_gt_0; apply H). 
+
+    
+    assert (σmin_steps_possible P + σmin_steps_possible ([equ (s[σ])[τ]  (s'[ρ])]) >= σmin_steps_possible (P |+ equ (s[σ])[τ]  (s'[ρ]))) by (apply σmin_steps_add).
+
+    assert (σmin_steps_possible ([equ (s[σ])[τ] (s'[ρ])]) = σmin_rhs_form_exp (s[σ])[τ]) by
+    (simpl; lia). rewrite H1 in H0.
+
+    assert (σmin_rhs_form_exp (s[σ>>τ]) > σmin_rhs_form_exp ( (s[σ])[τ] )) by (apply σmin_monad_step_less). lia. 
     apply set_add_intro1. apply H.
 
     
+  - right. right. repeat split.
+    apply nat_leq_inv. apply subset_list; intros.
+    apply NoDup_Problem_vars.
+    case (set_In_dec sortedvar_eqdec b (set_union sortedvar_eqdec
+                                          (vars_of_exp (App s[σ] t[σ]))
+                                          (vars_of_exp s'[σ']))).
 
+    intro Hin.
+    apply set_union_elim in Hin. destruct Hin.
+    apply in_left_problem_then_in_problem.
+    eapply in_exp_then_in_left_problem; swap 1 2.
+    apply H. apply H1.
+    apply in_right_problem_then_in_problem.
+    eapply in_exp_then_in_right_problem; swap 1 2.
+    apply H. apply H1.
+
+    intro Hn. apply problem_var_remove_one_mem in H0.
+    apply problem_var_ext_vars in H0.
+    apply H0.
+    intro. apply Hn.
+    simpl in H1. simpl. 
+    apply set_union_elim in H1. destruct H1.
+    apply set_union_intro1. apply set_union_elim in H1.
+    destruct H1. apply set_union_elim in H1.
+    destruct H1. now repeat apply set_union_intro1.
+    apply set_union_intro2. now apply set_union_intro1.
+    now repeat apply set_union_intro2.
+    now apply set_union_intro2.
+
+    rewrite Problem_size_remove; trivial.
+    assert ( Problem_size P + Problem_size ([equ (App s t)[σ]  s'[σ']]) >= Problem_size (P |+ equ (App s t)[σ]  (s'[σ']))) by apply Problem_size_add.
+    assert (Equation_size (equ (App s[σ] t[σ]) (s'[σ'])) >= Equation_size (equ (App s t)[σ]  (s'[σ']) )).
+    { unfold Equation_size.
+      assert (exp_size (App s[σ] t[σ]) >= exp_size (App s t)[σ]) by (simpl; lia).
+      lia.
+    }
+    simpl. simpl in H0. lia.
+    apply set_add_intro1; trivial.
+
+    rewrite σmin_steps_remove; trivial.
+    unfold lEqn_σmin_steps.
+    assert (Q' : σmin_steps_possible P > 0)
+     by ( eapply σmin_step_app_gt_0; apply H). 
 
     
-  - admit.
-  - admit.
+    assert (σmin_steps_possible P + σmin_steps_possible ([equ (App s t)[σ]  (s'[σ'])]) >= σmin_steps_possible (P |+ equ (App s t)[σ]  (s'[σ']))) by (apply σmin_steps_add).
+
+    assert (σmin_steps_possible ([equ (App s t)[σ] (s'[σ'])]) = σmin_rhs_form_exp (App s t)[σ]) by
+    (simpl; lia). rewrite H1 in H0.
+
+    assert (σmin_rhs_form_exp (App s[σ] t[σ]) > σmin_rhs_form_exp ( (App s t)[σ] )) by (apply σmin_app_step_less). lia. 
+    apply set_add_intro1. apply H.
+
+
+
+    (* σmin steps end *)
+    
   - left.
     apply nat_lt_inv.
     eapply subset_list'.
