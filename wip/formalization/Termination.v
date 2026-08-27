@@ -111,7 +111,8 @@ Proof.
   - admit.
   - admit.
   - admit.
-  (* σmin case start *)  
+  (* σmin case start *)
+    (* lam *)
   - right. right. repeat split.
     apply nat_leq_inv. apply subset_list; intros.
     apply NoDup_Problem_vars.
@@ -165,7 +166,62 @@ Proof.
     assert (σmin_rhs_form_exp (Lam s[Zero .: σ >> ↑]) > (σmin_rhs_form_exp  (Lam s)[σ])) by (apply σmin_lam_step_less). 
     lia. 
     apply set_add_intro1. apply H.
-  - admit.
+     
+  - right. right. repeat split.
+    apply nat_leq_inv. apply subset_list; intros.
+    apply NoDup_Problem_vars.
+    case (set_In_dec sortedvar_eqdec b (set_union sortedvar_eqdec
+                                          (vars_of_sexp (σ >> τ >> ρ))
+                                          (vars_of_sexp (σ' >> τ')))).
+
+    intro Hin.
+    apply set_union_elim in Hin. destruct Hin.
+    apply in_left_problem_then_in_problem.
+    eapply in_sexp_then_in_left_problem; swap 1 2.
+    apply H. apply H1.
+    apply in_right_problem_then_in_problem.
+    eapply in_sexp_then_in_right_problem; swap 1 2.
+    apply H. apply H1.
+
+    intro Hn. apply problem_var_remove_one_mem in H0.
+    apply problem_var_ext_vars in H0.
+    apply H0.
+    intro. apply Hn.
+    simpl in H1. simpl. 
+    apply set_union_elim in H1. destruct H1.
+    apply set_union_intro1. now rewrite set_union_assoc.
+    now apply set_union_intro2. 
+
+    rewrite Problem_size_remove; trivial.
+    assert ( Problem_size P + Problem_size ([equ_s ((σ >> τ)>>ρ)  (σ' >> τ')]) >= Problem_size (P |+ equ_s ((σ >> τ)>>ρ)  (σ' >> τ'))) by apply Problem_size_add.
+    assert (Equation_size (equ_s (σ >> τ >> ρ) (σ' >> τ')) >= Equation_size (equ_s ((σ >> τ)>>ρ)  (σ' >> τ') )).
+    { unfold Equation_size.
+      assert (sexp_size (σ >> τ >> ρ) >= sexp_size ((σ >> τ)>>ρ)) by (simpl; lia).
+      lia.
+    }
+    simpl. simpl in H0. lia.
+    apply set_add_intro1; trivial.
+
+    rewrite σmin_steps_remove; trivial.
+    unfold lEqn_σmin_steps.
+    assert (Q' : σmin_steps_possible P > 0)
+     by ( eapply σmin_step_assoc_gt_0; apply H). 
+
+    
+    assert (σmin_steps_possible P + σmin_steps_possible ([equ_s ((σ >> τ)>>ρ)  (σ' >> τ')]) >= σmin_steps_possible (P |+ equ_s ((σ >> τ)>>ρ)  (σ' >> τ'))) by (apply σmin_steps_add).
+
+    (** to edit from here *)
+    assert (σmin_steps_possible ([equ (Lam s) [σ] s' [σ']]) = σmin_rhs_form_exp (Lam s) [σ]) by
+    (simpl; lia). rewrite H1 in H0.
+
+    assert (σmin_rhs_form_exp (Lam s[Zero .: σ >> ↑]) > (σmin_rhs_form_exp  (Lam s)[σ])) by (apply σmin_lam_step_less). 
+    lia. 
+    apply set_add_intro1. apply H.
+
+    
+
+
+    
   - admit.
   - admit.
   - left.
@@ -194,7 +250,33 @@ Proof.
     split. intro. apply H. eapply in_exp_then_in_left_problem. apply H2. apply H0.
     intro. apply H. eapply problem_lhvar_remove_one_mem. apply H2.
     now simpl.
-  -
+ -  left.
+    apply nat_lt_inv.
+    eapply subset_list'.
+    apply NoDup_Problem_vars.
+    intros.
+    destruct (sortedvar_eqdec (sexp_var Y) b) as [HEq | HnEq].
+      destruct b as [X' | Y']; try inversion HEq.
+       subst. 
+       assert (~In (sexp_var Y') (Problem_vars ((P \ equ_s σ (VarSExp Y')) |^^ [sexp_assign Y' σ]))).
+       { apply problem_X_clear. simpl.
+         split. intro. apply H. eapply in_sexp_then_in_left_problem. apply H1. apply H0.
+         intro. apply H. eapply problem_lhvar_remove_one_mem. apply H1. now simpl. }
+       contradiction.
+     destruct (set_In_dec sortedvar_eqdec b (vars_of_sexp σ)).
+        apply in_left_problem_then_in_problem.
+         eapply in_sexp_then_in_left_problem.
+         apply s. apply H0.
+       eapply problem_var_remove_one_mem.
+        eapply problem_vars_desubst. apply H2.
+        simpl. congruence. simpl. apply n.     
+        exists (sexp_var Y). split. apply in_right_problem_then_in_problem.
+        eapply in_sexp_then_in_right_problem; swap 1 2. apply H0.  now left.
+    apply problem_X_clear. simpl.
+    split. intro. apply H. eapply in_sexp_then_in_left_problem. apply H2. apply H0.
+    intro. apply H. eapply problem_lhvar_remove_one_mem. apply H2.
+    now simpl.
+ 
     
     
     

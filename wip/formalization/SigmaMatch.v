@@ -345,3 +345,41 @@ Proof.
     simpl. specialize (IHP _ _ _ H).
     lia.
 Qed.
+
+
+Lemma σmin_step_assoc_gt_0 : forall P σ τ ρ ρ', set_In (equ_s (σ >> τ >> ρ) ρ') P ->
+                                        σmin_steps_possible P > 0.
+Proof.
+  intro.
+  induction P.
+  - intros. simpl in H. contradiction.
+  - intros. simpl in H.
+    destruct H.
+    rewrite H. simpl. lia.
+
+    destruct a.
+    simpl. specialize (IHP _ _ _ _ H).
+    lia.
+
+    simpl. specialize (IHP _ _ _ _ H).
+    lia.
+Qed.
+
+Lemma σmin_step_monad_gt_0 : forall P s σ τ t, set_In (equ s[σ >> τ] t)  P ->
+                                          σmin_steps_possible P > 0.
+ 
+Proof.
+  intro.
+  induction P.
+  - intros. simpl in H. contradiction.
+  - intros. simpl in H.
+    destruct H.
+    rewrite H. simpl. lia.
+
+    destruct a.
+    simpl. specialize (IHP _ _ _ _ H).
+    lia.
+
+    simpl. specialize (IHP _ _ _  _ H).
+    lia.
+Qed.
