@@ -137,7 +137,13 @@ Lemma subset_list' : forall (l l' : list A),
      (forall b, In b l -> In b l') ->
      (exists a', In a' l' /\ ~ In a' l) ->
      length l < length l' .
-Admitted.
+ Proof.
+  intros. case H1; clear H1; intros a' H1. destruct H1.
+  assert (Q : length (a'::l) <= length l').
+  apply subset_list. apply NoDup_cons; trivial.
+  intros. simpl in H3. destruct H3. rewrite <- H3; trivial.
+  apply H0; trivial. simpl in Q. lia.
+Qed.
 
 End SetPropertiesWithEqDec.
       

@@ -104,10 +104,51 @@ Fixpoint Problem_size (P : Problem) : nat :=
 
 
 Lemma Problem_size_gt_0 : forall e P, set_In e P -> Problem_size P > 0.
-Admitted.
+Proof.
+   intros. induction P. simpl in H. contradiction.
+   destruct a.
+     simpl in *|-*. destruct H.
+     destruct e.
+     assert (exp_size e0 > 0).
+     apply (proj1 exps_size_gt_0).
+     lia.
+     assert (exp_size e0 > 0).
+     apply (proj1 exps_size_gt_0).
+     lia.
+     destruct e.
+     apply IHP in H. lia.
+     apply IHP in H. lia.
 
+     simpl in *|-*. destruct H.
+     destruct e.
+     assert (sexp_size s > 0).
+     apply (proj2 exps_size_gt_0).
+     lia.
+     assert (sexp_size s > 0).
+     apply (proj2 exps_size_gt_0).
+     lia.
+     destruct e.
+     apply IHP in H. lia.
+     apply IHP in H. lia.
+Qed.
+     
+ 
 Lemma Problem_size_neq_nil : forall e P, set_In e P -> Problem_size P >= Problem_size ([e]).
-Admitted.
+Proof.
+  intros. induction P; intros. simpl in H. contradiction.
+  simpl in H. destruct H. rewrite H.
+
+  destruct e.
+  simpl. lia.
+  simpl. lia.
+
+  destruct a.
+  destruct e.
+  simpl. apply IHP in H. simpl in H. simpl in *. lia.
+  simpl. apply IHP in H. simpl in H. simpl in *. lia.
+  simpl. apply IHP in H. simpl in H. simpl in *. lia.
+Qed.  
+  
   
 Lemma Problem_size_remove : forall P e, set_In e P ->
                                 Problem_size (P\e) =  Problem_size P - Equation_size e. 

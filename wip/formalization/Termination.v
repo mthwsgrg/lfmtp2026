@@ -596,10 +596,7 @@ Proof.
     split. intro. apply H. eapply in_sexp_then_in_left_problem. apply H2. apply H0.
     intro. apply H. eapply problem_lhvar_remove_one_mem. apply H2.
     now simpl.
- 
-    
-    
-Admitted.
+Qed. 
 
 Lemma Triple_order_wf : well_founded (fun q q' => Triple_order q' q).
 Proof.
