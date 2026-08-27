@@ -162,3 +162,25 @@ Proof.
   - unfold subs_equiv in H. destruct H.
     specialize (H0 Y). now simpl in H0.
 Qed.  
+
+Definition σmin_rhs_form_exp (s: exp) : nat :=
+  match s with
+  | Lam s[Zero .: σ >> ↑] => 1
+  | App s[σ] t[τ] => if sexp_eqdec σ τ then 1 else 0
+  | s[σ >> τ] => 1
+  | _ => 0
+  end.
+
+Definition σmin_rhs_form_sexp (σ: sexp) : nat :=
+  match σ with
+  | σ >> τ >> ρ => 1
+  | (s .: σ)>> τ => 1
+  | _ => 0
+  end.        
+
+Fixpoint σmin_steps_possible (P: Problem) : nat :=
+  match P with
+  | [] => 0
+  | (equ_s σ τ) :: P0 => σmin_rhs_form_sexp σ + σmin_steps_possible P0
+  | (equ s t) :: P0 => σmin_rhs_form_exp s + σmin_steps_possible P0
+  end.

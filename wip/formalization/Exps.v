@@ -35,6 +35,21 @@ Scheme exp_ind3 := Induction for exp Sort Prop.
 Scheme sexp_ind3 := Induction for sexp Sort Prop.
 
 
+Fixpoint exp_size (s: exp) : nat :=
+  match s with
+  | App s t => 1 + exp_size s + exp_size t
+  | Lam s => 1 + exp_size s
+  | s[σ] => 1 + exp_size s + sexp_size σ
+  | _ => 1
+  end
+with sexp_size (σ: sexp) : nat :=
+  match σ with
+  | s .: σ => 1 + exp_size s + sexp_size σ
+  | σ >> τ => 1 + sexp_size σ + sexp_size τ
+  | _ => 1
+  end.
+
+
 
 Lemma expression_eqdec : (forall s t : exp, {s = t} + {s <> t}) *
                            (forall σ τ : sexp, {σ = τ} + {σ <> τ}).

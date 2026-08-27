@@ -7,3 +7,4 @@ Substs.v
 Problems.v
 SigmaMatch.v
 Soundness.v
+Termination.v

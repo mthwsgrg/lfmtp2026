@@ -729,3 +729,11 @@ Proof.
   destruct e as [s t | σ τ].
   all: simpl in H; apply set_union_elim in H; destruct H; eauto.
 Qed.    
+
+
+Fixpoint Problem_size (P : Problem) : nat :=
+  match P with
+  | [] => 0
+  | (equ_s σ τ) :: P0 => (sexp_size σ) + (sexp_size τ) + (Problem_size P0)
+  | (equ s t) :: P0 => (exp_size s) + (exp_size t) + (Problem_size P0)
+  end.
