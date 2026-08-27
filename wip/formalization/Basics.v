@@ -1,6 +1,6 @@
 Require Export List ListSet.
 Export ListNotations.
-
+Require Export Lia.
 
 Section SetPropertiesWithEqDec.
   
@@ -121,8 +121,23 @@ Proof.
   now repeat apply set_union_intro2.
 Qed. 
 
+Lemma subset_list : forall (l l' : list A),
+  NoDup l  ->
+  (forall b, In b l -> In b l') ->
+  length l <= length l'.
+Proof.
+  intros l l' H_nodup H_incl.
+  apply NoDup_incl_length.
+  - exact H_nodup.
+  - exact H_incl.
+Qed.
+
 
 
 End SetPropertiesWithEqDec.
       
 
+(* Lemmas for natural numbers *)
+
+Lemma nat_leq_inv : forall m n, n <= m -> m >= n.
+Proof. intros; lia. Qed.

@@ -89,6 +89,14 @@ Notation "P |+ u" := (set_add Equation_eqdec u P) (at level 67).
 Notation "P |^^ S" := (subs_Problem_right P S) (at level 67).
 
 
+Fixpoint Problem_size (P : Problem) : nat :=
+  match P with
+  | [] => 0
+  | (equ_s σ τ) :: P0 => (sexp_size σ) + (sexp_size τ) + (Problem_size P0)
+  | (equ s t) :: P0 => (exp_size s) + (exp_size t) + (Problem_size P0)
+  end.
+
+
 Lemma in_exp_then_in_left_problem : forall P s t V, set_In V (vars_of_exp s) ->
                                                set_In (equ s t) P -> 
                                                set_In V (lhvars_Probl P).
@@ -731,9 +739,20 @@ Proof.
 Qed.    
 
 
-Fixpoint Problem_size (P : Problem) : nat :=
-  match P with
-  | [] => 0
-  | (equ_s σ τ) :: P0 => (sexp_size σ) + (sexp_size τ) + (Problem_size P0)
-  | (equ s t) :: P0 => (exp_size s) + (exp_size t) + (Problem_size P0)
-  end.
+
+Lemma NoDup_Problem_vars : forall P, NoDup (Problem_vars P).
+Proof.
+  intros. induction P; intros.
+  apply NoDup_nil.
+  destruct a as [s t | σ τ]; simpl.
+  apply set_union_nodup; trivial.
+  apply (proj1 NoDup_exps_vars).
+  apply set_union_nodup.
+  apply (proj1 NoDup_exps_vars). trivial.
+  apply set_union_nodup; trivial.
+  apply (proj2 NoDup_exps_vars).
+  apply set_union_nodup.
+  apply (proj2 NoDup_exps_vars). trivial.
+Qed.
+
+

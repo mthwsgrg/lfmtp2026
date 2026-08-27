@@ -1,5 +1,6 @@
 Require Export Basics.
 
+
 Definition Var := nat.
 
 Lemma var_eqdec : forall (m n: Var), {m = n} + {m <> n}.
@@ -144,6 +145,19 @@ with vars_of_sexp (σ: sexp) {struct σ} : set SortedVar :=
  | Cons s σ => set_union sortedvar_eqdec (vars_of_exp s) (vars_of_sexp σ)
  | VarSExp X => set_add sortedvar_eqdec (sexp_var X) (empty_set _)
 end.
+
+
+
+Lemma NoDup_exps_vars : (forall t, NoDup (vars_of_exp t)) /\ (forall σ, NoDup (vars_of_sexp σ)).
+Proof.
+  apply sigma_ind2; intros; simpl; trivial; try now apply NoDup_nil.
+  - apply set_union_nodup; trivial.
+  - apply set_union_nodup; trivial.
+  - apply NoDup_cons. intro. trivial. apply NoDup_nil.
+  - apply set_union_nodup; trivial.
+  - apply set_union_nodup; trivial.
+  - apply NoDup_cons. intro. trivial. apply NoDup_nil.
+Qed.
 
 
 
