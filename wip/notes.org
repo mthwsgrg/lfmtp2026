@@ -1,0 +1,6 @@
+* Formalization to Implementation correspondence
+- The formalization is about smatch relation that describes matching steps.
+- The implemenatation is an Ltac function sigma_min an algorithm that enforces an order on applying these matching steps.
+- The implementation takes on equations from left to right (same goes with congruence cases)
+- The termination and soundness is about smatch relation. Basically, irrespective the order of applying smatch steps, or what equation I take first, it terminates and the steps are sound (won't mess up the problem). Hence, the implementation terminates and also sound.
+- A difference with the implementation is that for the congruence cases, in the smatch relation won't add duplicates. For example, " App s s = App t t" only add "s=t" in the problem set after disintegrating. This can be adapted as an optimization into the implementation by having an extra case in the match clause of sigma_min tactic: App ?s ?s = App ?s ?s => sigma_min s s 
