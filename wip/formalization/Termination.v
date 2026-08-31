@@ -596,7 +596,51 @@ Proof.
     split. intro. apply H. eapply in_sexp_then_in_left_problem. apply H2. apply H0.
     intro. apply H. eapply problem_lhvar_remove_one_mem. apply H2.
     now simpl.
-Qed. 
+
+-  left.
+    apply nat_lt_inv.
+    eapply subset_list'.
+    apply NoDup_Problem_vars.
+    intros. destruct H as [H H'].
+    destruct b as [X' | Y'].
+    + destruct (var_eqdec X X') as [HEq | HnEq]. 
+      * subst. apply in_right_problem_then_in_problem.
+        eapply in_exp_then_in_right_problem. 2: apply H0.
+        simpl. destruct (sortedvar_eqdec (sexp_var Y) (exp_var X')); try congruence.
+        simpl. now left.
+      *  case (set_In_dec sortedvar_eqdec (exp_var X') (vars_of_exp s)). 
+         **  intro Hs. apply in_left_problem_then_in_problem.
+             eapply in_exp_then_in_left_problem.
+             2: apply H0. apply Hs.
+         ** intro Hns. apply problem_vars_desubst in H2; simpl; eauto; try congruence.
+            eapply problem_var_remove_one_mem.
+            eapply problem_vars_desubst. apply H2.
+            simpl. congruence. trivial.
+    + destruct (var_eqdec Y Y') as [HEq | HnEq].
+      * subst.  apply in_right_problem_then_in_problem.
+        eapply in_exp_then_in_right_problem. 2: apply H0.
+        simpl. destruct (sortedvar_eqdec (sexp_var Y') (exp_var X)); try congruence.
+        simpl. right. now left.
+      * case (set_In_dec sortedvar_eqdec (sexp_var Y') (vars_of_exp s)).
+        ** intro Hs. apply in_left_problem_then_in_problem.
+             eapply in_exp_then_in_left_problem.
+             2: apply H0. apply Hs.
+        ** intro Hns. apply problem_vars_desubst in H2; simpl; eauto; try congruence.
+           apply problem_vars_desubst in H2; simpl; eauto; try congruence.
+           now apply problem_var_remove_one_mem in H2.
+    + destruct H as [H H'].  exists (sexp_var Y).
+      split. apply in_right_problem_then_in_problem.
+      eapply in_exp_then_in_right_problem. 2: apply H0.
+      simpl. destruct (sortedvar_eqdec (sexp_var Y) (exp_var X)); try congruence.
+      simpl. right. now left.
+      
+      apply problem_X_clear; eauto.
+      simpl. split; eauto.
+      intro. apply lhvars_desubst in H2. eapply problem_lhvar_remove_one_mem in H2. contradiction.
+
+
+- admit.
+Admitted.  
 
 Lemma Triple_order_wf : well_founded (fun q q' => Triple_order q' q).
 Proof.

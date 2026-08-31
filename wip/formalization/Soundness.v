@@ -905,12 +905,6 @@ Proof.
    - admit.
    - admit.
    - admit.
-   - admit.
-   - admit.
-   - admit.
-   - admit.
-   - admit.
-   - admit.
 Admitted.
 
 Lemma match_step_validity : forall T T', smatch T T' -> valid_tuple T -> valid_tuple T'.
@@ -1220,11 +1214,7 @@ Proof.
         intro. apply H'. apply in_left_problem_then_in_problem.
         eapply in_exp_then_in_left_problem. apply H3. apply H0. 
         
-  - admit.
-  - admit.
-  - admit.
 Admitted.
-
 
 
 Lemma match_step_lhvar_dom_preservation : forall T T' Sl, smatch T T' ->
