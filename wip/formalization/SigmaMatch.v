@@ -1,6 +1,8 @@
 Require Export Problems.
 
 
+Definition lift (σ: sexp) :=  Zero .: σ >> ↑.
+
 (** Equivalence with respect to σmin-rules *)
 
 Unset Elimination Schemes.
@@ -8,7 +10,9 @@ Inductive σmin_equiv : exp -> exp -> Prop :=
 | σmin_subst_app (s t : exp) (σ : sexp) :  σmin_equiv ((App s t)[σ]) (App s[σ] t[σ])
 | σmin_subst_lam (s : exp) (σ : sexp) :  σmin_equiv  ((Lam s)[σ])  (Lam (s[Zero .: (σ >> ↑)]))
 | σmin_subst_comp (s: exp) (σ τ: sexp) : σmin_equiv (s[σ])[τ] s[σ >> τ]
-                                               
+| σmin_id_exp (s: exp) : σmin_equiv s[I] s 
+
+                                
 | σmin_equiv_refl (s : exp) :  σmin_equiv s s
 | σmin_equiv_sym (s t : exp) :  σmin_equiv s t -> σmin_equiv t s
 | σmin_equiv_trans (s t u : exp) :  σmin_equiv s t -> σmin_equiv t u -> σmin_equiv s u
@@ -18,6 +22,7 @@ Inductive σmin_equiv : exp -> exp -> Prop :=
 with σmin_equivs : sexp -> sexp -> Prop :=
 | σmin_comp_cons (s : exp) (σ τ : sexp) :  σmin_equivs  ((s .: σ) >> τ) (s[τ] .: (σ >> τ)) 
 | σmin_comp_assoc (σ τ θ : sexp) :  σmin_equivs ((σ >> τ) >> θ) (σ >> (τ >> θ))
+| σmin_lift (σ τ : sexp) (s: exp) : σmin_equivs (lift σ >> (s .: τ)) (s .: (σ >> τ))              
 
 | σmin_equivs_refl (σ : sexp) :  σmin_equivs σ σ
 | σmin_equivs_sym (σ τ : sexp) :  σmin_equivs σ τ -> σmin_equivs τ σ
@@ -68,7 +73,22 @@ Inductive smatch : Tuple -> Tuple -> Prop :=
                                    set_In (equ_s σ (VarSExp Y)) P ->
                                    S' = sub_comp S ([sexp_assign Y σ]) ->
                                    smatch (S,P)
-                                        (S', (P\(equ_s σ (VarSExp Y)))|^^[sexp_assign Y σ]).
+                                     (S', (P\(equ_s σ (VarSExp Y)))|^^[sexp_assign Y σ])
+| smatch_inst_id_exp : forall S S' P s X, (~ set_In (exp_var X) (lhvars_Probl P)) ->
+                                   (set_In (equ s (VarExp X)[I])) P ->
+                                   S' = sub_comp S ([exp_assign X s]) ->
+                                   smatch (S,P)
+                                   (S',(P\(equ s (VarExp X)[I]))|^^[exp_assign X s])
+| smatch_inst_id_exp2 : forall S S' P s X Y, (~ set_In (exp_var X) (lhvars_Probl P)) /\
+                                        (~ set_In (sexp_var Y) (lhvars_Probl P)) ->
+                                   (set_In (equ s (VarExp X)[VarSExp Y])) P ->
+                                   S' = sub_comp (sub_comp S ([exp_assign X s])) ([sexp_assign Y I]) ->
+                                   smatch (S,P)
+                                   (S',((P\(equ s (VarExp X)[VarSExp Y]))|^^[exp_assign X s]) |^^ [sexp_assign Y I])
+                                   
+                                                   
+
+.
                             
 
 

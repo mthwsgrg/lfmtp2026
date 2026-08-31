@@ -327,6 +327,8 @@ Proof.
 Qed.
 
 
+
+
 (* look_up_ can be pushed inside a composition *)
 Lemma look_up_sub_comp_exp: forall S S' X, look_up_exp X (sub_comp S S') = sub (look_up_exp X S) S'.
 Proof.
@@ -392,6 +394,15 @@ Proof.
   rewrite look_up_sub_comp_sexp.
   rewrite not_in_dom_lookup_same_sexp; eauto.
 Qed.  
+
+
+Lemma in_subcomp_first_arg_exp : forall X S S', ~set_In (exp_var X) (dom_rec S') ->
+                                        look_up_exp X (sub_comp S S') = look_up_exp X S.
+Admitted.
+Lemma in_subcomp_first_arg_sexp : forall X S S', ~set_In (sexp_var X) (dom_rec S') ->
+                                             look_up_sexp X (sub_comp S S') = look_up_sexp X S.
+Admitted.
+
 
 
 Lemma vacous_subst_same : (forall s S, set_inter sortedvar_eqdec (dom_rec S) (vars_of_exp s) = [] ->
@@ -567,3 +578,4 @@ Proof.
       simpl in H1; destruct H1 ;[congruence | trivial]].
 Qed.
     
+
