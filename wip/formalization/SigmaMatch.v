@@ -99,7 +99,7 @@ Inductive smatch : Tuple -> Tuple -> Prop :=
                                    set_In (equ s[t .: σ] (VarExp X)[t .: I]) P ->
                                    S' = sub_comp S ([exp_assign X s[lift σ]]) ->
                                    smatch (S,P)
-                                   (S',(P\(equ s (VarExp X)[t .: I]))|^^[exp_assign X s[lift σ]]).                                                    
+                                   (S',(P\(equ s[t .: σ] (VarExp X)[t .: I]))|^^[exp_assign X s[lift σ]]).                                                    
 
 
                             
