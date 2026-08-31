@@ -593,9 +593,6 @@ Proof.
     now rewrite <- subst_comp_assoc_exp in HEq3.
     specialize (HEq3' X).
     now rewrite <- subst_comp_assoc_sexp in HEq3'.
-   - admit.
-   - admit.
-   - admit.
    - intros s0 t0 HinP. destruct H as [H H'].
      destruct (Equation_eqdec (equ s0 t0) (equ s (VarExp X)[(VarSExp Y)])) as [HEq | HnEq].
      + inversion HEq; subst.
@@ -904,9 +901,17 @@ Proof.
 
      specialize (HEq3' X0).
      rewrite <- subst_comp_assoc_sexp in HEq3'.
-     now rewrite <-  subst_comp_assoc_sexp in HEq3'.     
-Qed.      
-
+     now rewrite <-  subst_comp_assoc_sexp in HEq3'.
+   - admit.
+   - admit.
+   - admit.
+   - admit.
+   - admit.
+   - admit.
+   - admit.
+   - admit.
+   - admit.
+Admitted.
 
 Lemma match_step_validity : forall T T', smatch T T' -> valid_tuple T -> valid_tuple T'.
 Proof.
@@ -1181,8 +1186,44 @@ Proof.
         apply set_nocommon_inter_forall with (X:= sexp_var Y') in H'; eauto.
         intro. apply H'. apply in_left_problem_then_in_problem.
         eapply in_sexp_then_in_left_problem. apply H3. apply H0.
- 
-Qed.    
+  - destruct H as [H H_]. destruct X0 as [X' | Y']; subst.
+    + destruct (var_eqdec X X') as [HEq | HnEq]. intros. subst.
+      * apply sub_comp_var_diff_left in H2; simpl; try congruence.
+        intro. apply problem_vars_desubst in H1; simpl; try congruence.
+        revert H1.
+        apply problem_X_clear; trivial.
+        split; intro.
+        simpl in H1. apply H. eapply in_exp_then_in_left_problem. apply H1. apply H0.
+        apply H. eapply problem_lhvar_remove_one_mem. apply H1.        
+      * apply sub_comp_var_diff_left in H2; simpl; try congruence.
+        apply sub_comp_var_diff_left in H2; simpl; try congruence.
+        intro. apply problem_vars_desubst in H1; simpl; try congruence.
+        apply problem_vars_desubst in H1; simpl; try congruence.
+        apply problem_var_remove_one_mem in H1.
+        apply set_nocommon_inter_forall with (X:= exp_var X') in H'; eauto.
+        apply set_nocommon_inter_forall with (X:= exp_var X') in H'; eauto.
+        intro. apply H'. apply in_left_problem_then_in_problem.
+        eapply in_exp_then_in_left_problem. apply H3. apply H0. 
+    + destruct (var_eqdec Y Y') as [HEq | HnEq]. intros. subst.
+      * apply problem_X_clear; trivial.
+        split; intro.
+        now simpl in H1.
+        apply lhvars_desubst in H1; simpl; try congruence.
+        apply problem_lhvar_remove_one_mem in H1. contradiction.
+      * apply sub_comp_var_diff_left in H2; simpl; try congruence.
+        apply sub_comp_var_diff_left in H2; simpl; try congruence.
+        intro. apply problem_vars_desubst in H1; simpl; try congruence.
+        apply problem_vars_desubst in H1; simpl; try congruence.
+        apply problem_var_remove_one_mem in H1.
+        apply set_nocommon_inter_forall with (X:= sexp_var Y') in H'; eauto.
+        apply set_nocommon_inter_forall with (X:= sexp_var Y') in H'; eauto.
+        intro. apply H'. apply in_left_problem_then_in_problem.
+        eapply in_exp_then_in_left_problem. apply H3. apply H0. 
+        
+  - admit.
+  - admit.
+  - admit.
+Admitted.
 
 
 
@@ -1324,7 +1365,31 @@ Proof.
      apply lhvars_desubst in H3; eauto.
      apply problem_lhvar_remove_one_mem in H3.
      eapply set_nocommon_inter_forall in H3; eauto.
-Qed.
+ -  destruct H as [H H_]. simpl in H3.
+    destruct X0 as [X' | Y'].
+    + destruct (var_eqdec X X') as [HEq | HnEq].
+      * subst. apply lhvars_desubst in H3; eauto.
+        intro. apply in_left_problem_then_in_problem in H3. revert H3.
+      eapply problem_X_clear; repeat split; eauto.
+      simpl. intro. apply H. eapply in_exps_then_in_left_problem; swap 1 2.
+      apply H1. simpl. apply H3.
+      intro.  apply problem_lhvar_remove_one_mem in H3.
+      contradiction.
+      * apply lhvars_desubst in H3; eauto.
+        apply lhvars_desubst in H3; eauto.
+     apply problem_lhvar_remove_one_mem in H3.
+     eapply set_nocommon_inter_forall in H3; eauto.
+   + destruct (var_eqdec Y Y') as [HEq | HnEq].
+     * subst. intro. apply in_left_problem_then_in_problem in H3. revert H3.
+       eapply problem_X_clear; repeat split; eauto.
+       intro. apply lhvars_desubst in H3; eauto.
+       apply problem_lhvar_remove_one_mem in H3.
+       contradiction.
+     * apply lhvars_desubst in H3; eauto.
+        apply lhvars_desubst in H3; eauto.
+     apply problem_lhvar_remove_one_mem in H3.
+     eapply set_nocommon_inter_forall in H3; eauto.
+Admitted.
 
 
 Lemma soundness_match : forall Sl T T',
