@@ -85,7 +85,13 @@ Inductive smatch : Tuple -> Tuple -> Prop :=
                                    (S',((P\(equ s (VarExp X)[VarSExp Y]))|^^[exp_assign X s]) |^^ [sexp_assign Y I])
 
 
-(*  this is straight forward to add not including now to keep it simple                                  
+                                   
+| smatch_inst_lift : forall S S' P s t σ X , (~ set_In (exp_var X) (lhvars_Probl P)) ->
+                                   set_In (equ s[t .: σ] (VarExp X)[t .: I]) P ->
+                                   S' = sub_comp S ([exp_assign X s[lift σ]]) ->
+                                   smatch (S,P)
+                                   (S',(P\(equ s[t .: σ] (VarExp X)[t .: I]))|^^[exp_assign X s[lift σ]])                                                    
+                                  
 | smatch_inst_id_exp_left : forall S S' P s X, (~ set_In (exp_var X) (lhvars_Probl P)) ->
                                    set_In (equ s (VarExp X)[I]) P ->
                                    S' = sub_comp S ([exp_assign X s]) ->
@@ -95,14 +101,7 @@ Inductive smatch : Tuple -> Tuple -> Prop :=
                                    set_In (equ s s[VarSExp Y]) P ->
                                    S' = sub_comp S ([sexp_assign Y I]) ->
                                    smatch (S,P)
-                                   (S',(P\(equ s s[VarSExp Y]))|^^[sexp_assign Y I]) *)
-                                   
-| smatch_inst_lift : forall S S' P s t σ X , (~ set_In (exp_var X) (lhvars_Probl P)) ->
-                                   set_In (equ s[t .: σ] (VarExp X)[t .: I]) P ->
-                                   S' = sub_comp S ([exp_assign X s[lift σ]]) ->
-                                   smatch (S,P)
-                                   (S',(P\(equ s[t .: σ] (VarExp X)[t .: I]))|^^[exp_assign X s[lift σ]]).                                                    
-
+                                   (S',(P\(equ s s[VarSExp Y]))|^^[sexp_assign Y I]).
 
                             
 
