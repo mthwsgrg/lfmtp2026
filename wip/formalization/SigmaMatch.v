@@ -22,7 +22,9 @@ Inductive σmin_equiv : exp -> exp -> Prop :=
 with σmin_equivs : sexp -> sexp -> Prop :=
 | σmin_comp_cons (s : exp) (σ τ : sexp) :  σmin_equivs  ((s .: σ) >> τ) (s[τ] .: (σ >> τ)) 
 | σmin_comp_assoc (σ τ θ : sexp) :  σmin_equivs ((σ >> τ) >> θ) (σ >> (τ >> θ))
-| σmin_lift (σ τ : sexp) (s: exp) : σmin_equivs (lift σ >> (s .: τ)) (s .: (σ >> τ))              
+| σmin_lift (σ τ : sexp) (s: exp) : σmin_equivs (lift σ >> (s .: τ)) (s .: (σ >> τ))
+| σmin_id_sexp_r (σ: sexp) : σmin_equivs (σ >> I) σ
+| σmin_id_sexp_l (σ: sexp) : σmin_equivs (I >> σ) σ
 
 | σmin_equivs_refl (σ : sexp) :  σmin_equivs σ σ
 | σmin_equivs_sym (σ τ : sexp) :  σmin_equivs σ τ -> σmin_equivs τ σ

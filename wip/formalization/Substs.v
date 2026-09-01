@@ -396,12 +396,6 @@ Proof.
 Qed.  
 
 
-Lemma in_subcomp_first_arg_exp : forall X S S', ~set_In (exp_var X) (dom_rec S') ->
-                                        look_up_exp X (sub_comp S S') = look_up_exp X S.
-Admitted.
-Lemma in_subcomp_first_arg_sexp : forall X S S', ~set_In (sexp_var X) (dom_rec S') ->
-                                             look_up_sexp X (sub_comp S S') = look_up_sexp X S.
-Admitted.
 
 
 

@@ -639,7 +639,46 @@ Proof.
       intro. apply lhvars_desubst in H2. eapply problem_lhvar_remove_one_mem in H2. contradiction.
 
 
-- admit.
+- left.
+    apply nat_lt_inv.
+    eapply subset_list'.
+    apply NoDup_Problem_vars.
+    intros.
+    destruct (sortedvar_eqdec (exp_var X) b) as [HEq | HnEq].
+      destruct b as [X' | Y']; try inversion HEq.
+       subst. 
+       assert (~In (exp_var X') (Problem_vars ((P \ equ s[t .: σ] (VarExp X')[t .: I]) |^^ [exp_assign X' s[lift σ]]))).
+       { apply problem_X_clear. simpl.
+         split. intro. apply H. eapply in_exp_then_in_left_problem.
+         2: apply H0. simpl.
+         apply set_union_elim in H1. destruct H1.
+         now apply set_union_intro1.
+         apply set_union_elim in H1. destruct H1.
+         now simpl in H1. now repeat apply set_union_intro2.
+         
+         intro. apply H. eapply problem_lhvar_remove_one_mem. apply H1. now simpl. }
+     contradiction.
+     destruct (set_In_dec sortedvar_eqdec b (vars_of_exp s[t .: σ])).
+        apply in_left_problem_then_in_problem.
+         eapply in_exp_then_in_left_problem.
+         apply s0. apply H0.
+       eapply problem_var_remove_one_mem.
+        eapply problem_vars_desubst. apply H2.
+        simpl. congruence. simpl. simpl in n. intro.
+        apply n. apply set_union_elim in H3. destruct H3.
+        now apply set_union_intro1.
+        apply set_union_elim in H3.  destruct H3. now simpl in H3.
+        now repeat apply set_union_intro2.
+        exists (exp_var X). split. apply in_right_problem_then_in_problem.
+        eapply in_exp_then_in_right_problem; swap 1 2. apply H0. simpl. apply set_union_intro1.
+        now left.
+    apply problem_X_clear. simpl.
+    split. intro. apply H. eapply in_exp_then_in_left_problem. 2: apply H0.
+    simpl.  apply  set_union_elim in H2.  destruct H2.
+    now apply set_union_intro1. apply set_union_elim in H2.
+    destruct H2. now simpl in H2. now repeat apply set_union_intro2.
+    intro. apply H. eapply problem_lhvar_remove_one_mem. apply H2.
+    now simpl.
 Admitted.  
 
 Lemma Triple_order_wf : well_founded (fun q q' => Triple_order q' q).

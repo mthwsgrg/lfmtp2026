@@ -1128,99 +1128,174 @@ Proof.
      (* lift instcase *)
    -  intros s0 t0 HinP. (* unfold subs_equiv in HEq3; destruct HEq3 as [HEq3 HEq3']. *)  
     destruct (Equation_eqdec (equ s0 t0) (equ s[t .: σ] (VarExp X)[t .: I])) as [Eq | nEq]; intros.
-    + rewrite Eq in *. simpl in *.
-      inversion Eq; subst. clear Eq. 
-      simpl. apply σmin_equiv_trans with (t := sub s[t .: σ] S'').
-      apply (proj1 not_in_dom_same); split; intros.      
-      eapply σmin_comp_prop_exp with (S:= sub_comp S ([exp_assign X s[lift σ]])%list).
-      eapply set_nocommon_inter_forall_flip with (X:= exp_var X0) in HVl.
-      apply In_dom_eq_dom_flip_exp. apply not_In_dom_lookup_flip_exp.
-      apply not_in_dom_lookup_same_exp in HVl.
-      rewrite look_up_sub_comp_exp. rewrite HVl. simpl.
-       destruct (var_eqdec X X0); subst.
-      eapply in_exp_then_in_left_problem with (P := P) in H1. contradiction. apply HinP. trivial.
-      eapply in_exp_then_in_left_problem with (P := P) in H1.
-      now apply in_left_problem_then_in_problem. apply HinP.
-      eapply set_nocommon_inter_forall_flip in HLh.
-      apply HLh. eapply in_exp_then_in_left_problem. apply H1. apply H0.
-      unfold subs_equiv; split; eauto. 
+      + rewrite Eq in *. simpl in *. 
+        inversion Eq; subst. clear Eq. 
+        simpl. apply σmin_equiv_trans with (t := (s[lift σ])[t .: I]).
 
-      eapply σmin_comp_prop_sexp with (S:= sub_comp S ([exp_assign X s[lift σ]])%list).
-      eapply set_nocommon_inter_forall_flip with (X := sexp_var Y) in HVl.
-      apply In_dom_eq_dom_flip_sexp. apply not_In_dom_lookup_flip_sexp.
-      apply not_in_dom_lookup_same_sexp in HVl.
-      rewrite look_up_sub_comp_sexp.  rewrite HVl. now simpl.
-      eapply in_exp_then_in_left_problem with (P := P) in H1. 
-      now apply in_left_problem_then_in_problem. apply HinP. 
-      eapply set_nocommon_inter_forall_flip in HLh.
-      apply HLh. eapply in_exp_then_in_left_problem. apply H1. apply H0.
-      unfold subs_equiv; split; eauto.
+        (* lift reasoning *)
+        apply σmin_equiv_trans with (t := s[(lift σ) >> (t .: I)]).
+        2: apply σmin_equiv_sym; apply σmin_subst_comp.
+        apply σmin_equiv_subst. apply σmin_equiv_refl.
+        apply σmin_equivs_trans with (τ := t .: (σ >> I)).
+        2: apply σmin_equivs_sym; apply σmin_lift.
+        apply σmin_equivs_cons. apply σmin_equiv_refl.
+        apply σmin_equivs_sym. apply σmin_id_sexp_r.
+                                    
 
-      specialize (HEq3 X).
-      rewrite look_up_sub_comp_exp in HEq3. rewrite in_subcomp_second_arg_exp in HEq3.
-      simpl in HEq3.  destruct (var_eqdec X X). (*from hefre *) [assumption | contradiction].
-      eapply set_nocommon_inter_forall_flip with (X:= exp_var X) in HVl.
-      apply HVl. eapply in_right_problem_then_in_problem.
-      eapply in_exp_then_in_right_problem.
-      2: apply H0. now left.
-
-
-      
-    + destruct (set_In_dec sortedvar_eqdec (exp_var X) (vars_of_exp t0)) as [Ht0 | Hnt0].
-      * (* when t0 does have (exp_var x) *)
-        apply σmin_equiv_trans with (t  := sub t0 (sub_comp ([exp_assign X s]) Sl)).
-        rewrite (proj1 subst_comp_expand).
-        apply HEq1. apply push_subst_problem_exp.
-        now apply set_remove_3.
-        apply (proj1 σmin_subst_ext).
-        unfold subs_equiv; split; simpl; intros; try apply σmin_equivs_refl.
-        destruct (var_eqdec X X0); subst; try apply σmin_equiv_refl.
-        apply σmin_equiv_trans with (t:= s).
-        rewrite (proj1 vacous_subst_same). apply σmin_equiv_refl.
-        apply (set_nocommon_forall_inter_flip); intros.
-        eapply set_nocommon_inter_forall_flip in HLh.
-        apply HLh. eapply in_exp_then_in_left_problem. apply H1. apply H0.
-
-        (* rest in this * is similar to first + case *)
-        apply σmin_equiv_trans with (t := sub s S'').
-        apply (proj1 not_in_dom_same); split; intros.      
-        eapply σmin_comp_prop_exp with (S:= sub_comp S ([exp_assign X0 s])%list).
-        eapply set_nocommon_inter_forall_flip with (X:= exp_var X) in HVl.
-        apply In_dom_eq_dom_flip_exp. apply not_In_dom_lookup_flip_exp.
+        apply σmin_equiv_subst.     
+        apply σmin_equiv_trans with (t := sub s[lift σ] S'').         
+        apply (proj1 not_in_dom_same); split; intros.
+        simpl in H1.
+        
+        eapply σmin_comp_prop_exp with (S:= sub_comp S ([exp_assign X s[lift σ]])%list).
+        eapply set_nocommon_inter_forall_flip with (X:= exp_var X0) in HVl.
+        destruct (var_eqdec X X0) as [xeq | xneq].
+        subst. intro. apply H. eapply in_exp_then_in_left_problem.
+        2: apply HinP. simpl. apply set_union_elim in H1.
+        destruct H1. now apply set_union_intro1.
+        apply set_union_elim in H1. destruct H1. now simpl in H1. 
+        now repeat apply set_union_intro2.    
+        apply In_dom_eq_dom_flip_exp. apply not_In_dom_lookup_flip_exp.        
         apply not_in_dom_lookup_same_exp in HVl.
         rewrite look_up_sub_comp_exp. rewrite HVl. simpl.
-        destruct (var_eqdec X0 X); subst.
-        eapply in_exp_then_in_left_problem with (P := P) in H1. contradiction. apply H0. trivial.
-        eapply in_exp_then_in_left_problem with (P := P) in H1.
-        now apply in_left_problem_then_in_problem. apply H0.
+        destruct (var_eqdec X X0); try congruence.
+        apply in_left_problem_then_in_problem.
+        eapply in_exp_then_in_left_problem. 2: apply HinP.
+        simpl. apply set_union_elim in H1. destruct H1.
+        now apply set_union_intro1. apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
         eapply set_nocommon_inter_forall_flip in HLh.
-        apply HLh. eapply in_exp_then_in_left_problem. apply H1. apply H0.
+        apply HLh. eapply in_exp_then_in_left_problem.
+        2: apply HinP.
+        simpl. apply set_union_elim in H1. destruct H1.
+        now apply set_union_intro1. apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
         unfold subs_equiv; split; eauto. 
-
-        eapply σmin_comp_prop_sexp with (S:= sub_comp S ([exp_assign X0 s])%list).
+  
+        eapply σmin_comp_prop_sexp with (S:= sub_comp S ([exp_assign X s[lift σ]])%list).
         eapply set_nocommon_inter_forall_flip with (X := sexp_var Y) in HVl.
         apply In_dom_eq_dom_flip_sexp. apply not_In_dom_lookup_flip_sexp.
         apply not_in_dom_lookup_same_sexp in HVl.
         rewrite look_up_sub_comp_sexp.  rewrite HVl. now simpl.
-        eapply in_exp_then_in_left_problem with (P := P) in H1. 
-        now apply in_left_problem_then_in_problem. apply H0. 
+        apply in_left_problem_then_in_problem.
+        eapply in_exp_then_in_left_problem. 2: apply HinP.
+        simpl. simpl in H1. apply set_union_elim in H1. destruct H1.
+        now apply set_union_intro1. apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
         eapply set_nocommon_inter_forall_flip in HLh.
-        apply HLh. eapply in_exp_then_in_left_problem. apply H1. apply H0.
+        apply HLh. eapply in_exp_then_in_left_problem.
+        2: apply HinP.
+        simpl. apply set_union_elim in H1. destruct H1.
+        now apply set_union_intro1. apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
         unfold subs_equiv; split; eauto.
 
+        
+        specialize (HEq3 X).
+        rewrite look_up_sub_comp_exp in HEq3. rewrite in_subcomp_second_arg_exp in HEq3.
+        simpl in HEq3.  destruct (var_eqdec X X); [assumption | contradiction].
+        eapply set_nocommon_inter_forall_flip with (X:= exp_var X) in HVl.
+        apply HVl. eapply in_right_problem_then_in_problem.
+        eapply in_exp_then_in_right_problem.
+        2: apply H0. simpl. apply set_union_intro1. simpl. now left.
+
+        apply σmin_equivs_cons; try apply σmin_equivs_refl.
+        apply (proj1 not_in_dom_same); split; intros.
+        apply (set_nocommon_inter_forall_flip) with (X := exp_var X0) in HLh.
+        apply (not_in_dom_lookup_same_exp) in HLh. rewrite HLh.
+        apply σmin_equiv_refl. eapply in_exp_then_in_left_problem.
+        2: apply HinP. simpl. apply set_union_intro2. now apply set_union_intro1.
+        apply (set_nocommon_inter_forall_flip) with (X := sexp_var Y) in HLh.
+        apply (not_in_dom_lookup_same_sexp) in HLh. rewrite HLh.
+        apply σmin_equivs_refl. eapply in_exp_then_in_left_problem.
+        2: apply HinP. simpl. apply set_union_intro2. now apply set_union_intro1.
+  +   destruct (set_In_dec sortedvar_eqdec (exp_var X) (vars_of_exp t0)) as [Ht0 | Hnt0].
+   (* X in t0 *)
+    *   apply σmin_equiv_trans with (t  := sub t0 (sub_comp ([exp_assign X s[lift σ]]) Sl)).
+        rewrite (proj1 subst_comp_expand).
+        apply HEq1. apply push_subst_problem_exp.
+        now apply set_remove_3.
+        apply (proj1 σmin_subst_ext).
+        unfold subs_equiv; split; intros; try apply σmin_equivs_refl. simpl.
+        destruct (var_eqdec X X0); subst; try apply σmin_equiv_refl.
+        assert (HflEq: sub s[lift σ] Sl = (sub s Sl) [Zero .: sub_s σ Sl >> ↑]) by reflexivity.
+        rewrite <- HflEq.
+        apply σmin_equiv_trans with (t:= s[lift σ]).
+        apply σmin_equiv_sym.
+        apply (proj1 not_in_dom_same); split; intros.
+        apply (set_nocommon_inter_forall_flip) with (X:= exp_var X) in HLh.
+        apply (not_in_dom_lookup_same_exp) in HLh. rewrite HLh. apply σmin_equiv_refl.
+        eapply (in_exp_then_in_left_problem). 2: apply H0. simpl. simpl in H1.
+        apply set_union_elim in H1. destruct H1. now apply set_union_intro1.
+        apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
+        apply (set_nocommon_inter_forall_flip) with (X:= sexp_var Y) in HLh.
+        apply (not_in_dom_lookup_same_sexp) in HLh. rewrite HLh. apply σmin_equivs_refl.
+        eapply (in_exp_then_in_left_problem). 2: apply H0. simpl. simpl in H1.
+        apply set_union_elim in H1. destruct H1. now apply set_union_intro1.
+        apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
+
+        apply σmin_equiv_trans with (t := sub s[lift σ] S'').         
+        apply (proj1 not_in_dom_same); split; intros.
+        simpl in H1.
+        
+        eapply σmin_comp_prop_exp with (S:= sub_comp S ([exp_assign X0 s[lift σ]])%list).
+        eapply set_nocommon_inter_forall_flip with (X:= exp_var X) in HVl.
+        destruct (var_eqdec X0 X) as [xeq | xneq].
+        subst. intro. apply H. eapply in_exp_then_in_left_problem.
+        2: apply H0. simpl. apply set_union_elim in H1.
+        destruct H1. now apply set_union_intro1.
+        apply set_union_elim in H1. destruct H1. now simpl in H1. 
+        now repeat apply set_union_intro2.    
+        apply In_dom_eq_dom_flip_exp. apply not_In_dom_lookup_flip_exp.        
+        apply not_in_dom_lookup_same_exp in HVl.
+        rewrite look_up_sub_comp_exp. rewrite HVl. simpl.
+        destruct (var_eqdec X0 X); try congruence.
+        apply in_left_problem_then_in_problem.
+        eapply in_exp_then_in_left_problem. 2: apply H0.
+        simpl. apply set_union_elim in H1. destruct H1.
+        now apply set_union_intro1. apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
+        eapply set_nocommon_inter_forall_flip in HLh.
+        apply HLh. eapply in_exp_then_in_left_problem.
+        2: apply H0.
+        simpl. apply set_union_elim in H1. destruct H1.
+        now apply set_union_intro1. apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
+        unfold subs_equiv; split; eauto. 
+  
+        eapply σmin_comp_prop_sexp with (S:= sub_comp S ([exp_assign X0 s[lift σ]])%list).
+        eapply set_nocommon_inter_forall_flip with (X := sexp_var Y) in HVl.
+        apply In_dom_eq_dom_flip_sexp. apply not_In_dom_lookup_flip_sexp.
+        apply not_in_dom_lookup_same_sexp in HVl.
+        rewrite look_up_sub_comp_sexp.  rewrite HVl. now simpl.
+        apply in_left_problem_then_in_problem.
+        eapply in_exp_then_in_left_problem. 2: apply H0.
+        simpl. simpl in H1. apply set_union_elim in H1. destruct H1.
+        now apply set_union_intro1. apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
+        eapply set_nocommon_inter_forall_flip in HLh.
+        apply HLh. eapply in_exp_then_in_left_problem.
+        2: apply H0.
+        simpl. apply set_union_elim in H1. destruct H1.
+        now apply set_union_intro1. apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
+        unfold subs_equiv; split; eauto.
+
+        
         specialize (HEq3 X0). simpl in HEq3.
         rewrite look_up_sub_comp_exp in HEq3. rewrite in_subcomp_second_arg_exp in HEq3.
-        simpl in HEq3. destruct (var_eqdec X0 X0); [assumption | contradiction].
+        simpl in HEq3.  destruct (var_eqdec X0 X0); [assumption | contradiction].
         eapply set_nocommon_inter_forall_flip with (X:= exp_var X0) in HVl.
         apply HVl. eapply in_right_problem_then_in_problem.
         eapply in_exp_then_in_right_problem.
-        2: apply H0. now left.
-       
-      * (* when t0 doesn't have (exp_var X) *) 
-        apply HEq1.
-        eapply (set_remove_3 Equation_eqdec) in  HinP.
-        2: apply Eq.
-        eapply push_subst_problem_exp in HinP.
+        2: apply H0. simpl. apply set_union_intro1. simpl. now left.
+
+   *  apply HEq1.
+      eapply (set_remove_3 Equation_eqdec) in  HinP.
+      2: apply nEq.
+      eapply push_subst_problem_exp in HinP.
         rewrite (proj1 vacous_subst_same) in HinP.
         apply HinP. eapply set_nocommon_forall_inter; intros.
         destruct X0 as [X'| Y'].
@@ -1228,10 +1303,115 @@ Proof.
         destruct (var_eqdec X X'); subst.
         now apply Hnt0. contradiction. 
         apply <- In_dom_eq_dom_rec_sexp in H2. unfold In_dom_sexp in H2. simpl in H2. contradiction.
-
+  
        
-   - admit.
-   - admit.
+   -   intros σ0 τ0 HinP. (* unfold subs_equiv in HEq3; destruct HEq3 as [HEq3 HEq3']. *)  
+       destruct (Equation_eqdec (equ_s σ0 τ0) (equ s[t .: σ] (VarExp X)[t .: I])) as [Eq | nEq]; intros.
+       + inversion Eq.
+       +   destruct (set_In_dec sortedvar_eqdec (exp_var X) (vars_of_sexp τ0)) as [Hτ0 | Hnτ0].
+   (* X in t0 *)
+    *   apply σmin_equivs_trans with (τ := sub_s τ0 (sub_comp ([exp_assign X s[lift σ]]) Sl)).
+        rewrite (proj2 subst_comp_expand).
+        apply HEq2. apply push_subst_problem_sexp.
+        now apply set_remove_3.
+        apply (proj2 σmin_subst_ext).
+        unfold subs_equiv; split; intros; try apply σmin_equivs_refl. simpl.
+        destruct (var_eqdec X X0); subst; try apply σmin_equiv_refl.
+        assert (HflEq: sub s[lift σ] Sl = (sub s Sl) [Zero .: sub_s σ Sl >> ↑]) by reflexivity.
+        rewrite <- HflEq.
+        apply σmin_equiv_trans with (t:= s[lift σ]).
+        apply σmin_equiv_sym.
+        apply (proj1 not_in_dom_same); split; intros.
+        apply (set_nocommon_inter_forall_flip) with (X:= exp_var X) in HLh.
+        apply (not_in_dom_lookup_same_exp) in HLh. rewrite HLh. apply σmin_equiv_refl.
+        eapply (in_exp_then_in_left_problem). 2: apply H0. simpl. simpl in H1.
+        apply set_union_elim in H1. destruct H1. now apply set_union_intro1.
+        apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
+        apply (set_nocommon_inter_forall_flip) with (X:= sexp_var Y) in HLh.
+        apply (not_in_dom_lookup_same_sexp) in HLh. rewrite HLh. apply σmin_equivs_refl.
+        eapply (in_exp_then_in_left_problem). 2: apply H0. simpl. simpl in H1.
+        apply set_union_elim in H1. destruct H1. now apply set_union_intro1.
+        apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
+
+        apply σmin_equiv_trans with (t := sub s[lift σ] S'').         
+        apply (proj1 not_in_dom_same); split; intros.
+        simpl in H1.
+        
+        eapply σmin_comp_prop_exp with (S:= sub_comp S ([exp_assign X0 s[lift σ]])%list).
+        eapply set_nocommon_inter_forall_flip with (X:= exp_var X) in HVl.
+        destruct (var_eqdec X0 X) as [xeq | xneq].
+        subst. intro. apply H. eapply in_exp_then_in_left_problem.
+        2: apply H0. simpl. apply set_union_elim in H1.
+        destruct H1. now apply set_union_intro1.
+        apply set_union_elim in H1. destruct H1. now simpl in H1. 
+        now repeat apply set_union_intro2.    
+        apply In_dom_eq_dom_flip_exp. apply not_In_dom_lookup_flip_exp.        
+        apply not_in_dom_lookup_same_exp in HVl.
+        rewrite look_up_sub_comp_exp. rewrite HVl. simpl.
+        destruct (var_eqdec X0 X); try congruence.
+        apply in_left_problem_then_in_problem.
+        eapply in_exp_then_in_left_problem. 2: apply H0.
+        simpl. apply set_union_elim in H1. destruct H1.
+        now apply set_union_intro1. apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
+        eapply set_nocommon_inter_forall_flip in HLh.
+        apply HLh. eapply in_exp_then_in_left_problem.
+        2: apply H0.
+        simpl. apply set_union_elim in H1. destruct H1.
+        now apply set_union_intro1. apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
+        unfold subs_equiv; split; eauto. 
+  
+        eapply σmin_comp_prop_sexp with (S:= sub_comp S ([exp_assign X0 s[lift σ]])%list).
+        eapply set_nocommon_inter_forall_flip with (X := sexp_var Y) in HVl.
+        apply In_dom_eq_dom_flip_sexp. apply not_In_dom_lookup_flip_sexp.
+        apply not_in_dom_lookup_same_sexp in HVl.
+        rewrite look_up_sub_comp_sexp.  rewrite HVl. now simpl.
+        apply in_left_problem_then_in_problem.
+        eapply in_exp_then_in_left_problem. 2: apply H0.
+        simpl. simpl in H1. apply set_union_elim in H1. destruct H1.
+        now apply set_union_intro1. apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
+        eapply set_nocommon_inter_forall_flip in HLh.
+        apply HLh. eapply in_exp_then_in_left_problem.
+        2: apply H0.
+        simpl. apply set_union_elim in H1. destruct H1.
+        now apply set_union_intro1. apply set_union_elim in H1. destruct H1. now simpl in H1.
+        now repeat apply set_union_intro2.
+        unfold subs_equiv; split; eauto.
+
+        
+        specialize (HEq3 X0). simpl in HEq3.
+        rewrite look_up_sub_comp_exp in HEq3. rewrite in_subcomp_second_arg_exp in HEq3.
+        simpl in HEq3.  destruct (var_eqdec X0 X0); [assumption | contradiction].
+        eapply set_nocommon_inter_forall_flip with (X:= exp_var X0) in HVl.
+        apply HVl. eapply in_right_problem_then_in_problem.
+        eapply in_exp_then_in_right_problem.
+        2: apply H0. simpl. apply set_union_intro1. simpl. now left.
+
+   *  apply HEq2.
+      eapply (set_remove_3 Equation_eqdec) in  HinP.
+      2: apply nEq.
+      eapply push_subst_problem_sexp in HinP.
+        rewrite (proj2 vacous_subst_same) in HinP.
+        apply HinP. eapply set_nocommon_forall_inter; intros.
+        destruct X0 as [X'| Y'].
+        apply <- In_dom_eq_dom_rec_exp in H2. unfold In_dom_exp in H2. simpl in H2.
+        destruct (var_eqdec X X'); subst.
+        now apply Hnτ0. contradiction. 
+        apply <- In_dom_eq_dom_rec_sexp in H2. unfold In_dom_sexp in H2. simpl in H2. contradiction.
+   -  
+    rewrite H1 in HEq3. rewrite H1 in HEq3'.
+    exists (sub_comp ([exp_assign X s[lift σ]])%list S'').   
+    split; intros.
+    specialize (HEq3 X0).
+    now rewrite <- subst_comp_assoc_exp in HEq3.
+    specialize (HEq3' X0).
+    now rewrite <- subst_comp_assoc_sexp in HEq3'.
+
+     
 Admitted.
 
 Lemma match_step_validity : forall T T', smatch T T' -> valid_tuple T -> valid_tuple T'.
@@ -1540,8 +1720,49 @@ Proof.
         apply set_nocommon_inter_forall with (X:= sexp_var Y') in H'; eauto.
         intro. apply H'. apply in_left_problem_then_in_problem.
         eapply in_exp_then_in_left_problem. apply H3. apply H0. 
-        
-Admitted.
+
+ - destruct X0 as [X' | Y']; subst.
+    + destruct (var_eqdec X X') as [Eq | nEq]; intros; subst.
+      *  apply problem_X_clear; trivial.
+         split; intro.
+         simpl in H1. apply H. eapply in_exp_then_in_left_problem.
+         2: apply H0. simpl.
+         apply set_union_elim in H1. destruct H1. 
+         now apply set_union_intro1.
+         apply set_union_elim in H1. destruct H1. now simpl in H1.
+         now repeat apply set_union_intro2.
+         
+         apply H. eapply problem_lhvar_remove_one_mem. apply H1.         
+         
+      * apply sub_comp_var_diff_left in H2; simpl; try congruence.
+        intro. apply problem_vars_desubst in H1; simpl; try congruence.
+        apply problem_var_remove_one_mem in H1.
+        apply set_nocommon_inter_forall with (X:= exp_var X') in H'; eauto.
+        apply set_nocommon_inter_forall with (X:= exp_var X') in H'; eauto.
+        intro. apply H'. apply in_left_problem_then_in_problem.
+        eapply in_exp_then_in_left_problem.
+        2: apply H0.
+         apply set_union_elim in H3. destruct H3. 
+         now apply set_union_intro1.
+         apply set_union_elim in H3. destruct H3. now simpl in H3.
+         now repeat apply set_union_intro2.
+
+ 
+    + apply sub_comp_var_diff_left in H2; simpl; try congruence.
+      intro. apply problem_vars_desubst in H1; simpl; try congruence.
+      apply problem_var_remove_one_mem in H1.
+      apply set_nocommon_inter_forall with (X:= sexp_var Y') in H'; eauto.
+      apply set_nocommon_inter_forall with (X:= sexp_var Y') in H'; eauto.
+      intro. apply H'. apply in_left_problem_then_in_problem.
+      eapply in_exp_then_in_left_problem.
+      2: apply H0.
+       apply set_union_elim in H3. destruct H3. 
+         now apply set_union_intro1.
+         apply set_union_elim in H3. destruct H3. now simpl in H3.
+         now repeat apply set_union_intro2.
+
+    
+Qed.
 
 
 Lemma match_step_lhvar_dom_preservation : forall T T' Sl, smatch T T' ->
@@ -1706,7 +1927,30 @@ Proof.
         apply lhvars_desubst in H3; eauto.
      apply problem_lhvar_remove_one_mem in H3.
      eapply set_nocommon_inter_forall in H3; eauto.
-Admitted.
+
+-  simpl in H3.
+    destruct X0 as [X' | Y'].
+    + destruct (var_eqdec X X') as [ | HnEq]; subst.
+      intro. apply in_left_problem_then_in_problem in H3. revert H3.
+      eapply problem_X_clear; repeat split; eauto.
+      simpl. intro. apply H. eapply in_exps_then_in_left_problem; swap 1 2.
+      apply H1. simpl.
+       apply set_union_elim in H3. destruct H3. 
+         now apply set_union_intro1.
+         apply set_union_elim in H3. destruct H3. now simpl in H3.
+         now repeat apply set_union_intro2.
+
+      
+      intro.  apply problem_lhvar_remove_one_mem in H3.
+      contradiction.   
+     apply lhvars_desubst in H3; eauto.
+     apply problem_lhvar_remove_one_mem in H3.
+     eapply set_nocommon_inter_forall in H3; eauto.
+    +  apply lhvars_desubst in H3; eauto.
+     apply problem_lhvar_remove_one_mem in H3.
+     eapply set_nocommon_inter_forall in H3; eauto.
+ 
+Qed.
 
 
 Lemma soundness_match : forall Sl T T',
