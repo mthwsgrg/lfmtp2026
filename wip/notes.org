@@ -13,3 +13,9 @@
 * Incremental strategy
 - A complete algorithm for σmatching
 - We can tell whether solution is unique, if not we can give MGU.
+* About Renaming
+- In order for the tactic to be useful, renaming has to be dealt.
+- Maybe, the theoretical guarantees can be limited to substitutions.
+- Also, whatever that work for substitution work for renaming as well.
+- Whatever that is of practical use of has to account renaming obviously and at the same time we can state theoretical guarantees are limited to substitutions.
+- Imagine we are dealing with a substified thing to prevent renaming to not keep bugging.
